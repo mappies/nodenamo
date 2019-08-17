@@ -6,6 +6,7 @@ enum Const
     RangeKey = "nodenamo:rangekey",
     HashRangeKey = "nodenamo:hashrangekey",
     IdKey = "nodenamo:idkey",
+    DataPrefix = "nodenamo:dataprefix",
 
     HashColumn = 'hash',
     RangeColumn = 'range',

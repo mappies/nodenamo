@@ -21,7 +21,19 @@ describe('DbTable', function ()
         class Entity {};
 
         let metadata = Reflect.getMetadata(Const.DBTable, new Entity());
+        let prefixMetadata = Reflect.getMetadata(Const.DataPrefix, new Entity());
         
         assert.equal(metadata, 'custom-name');
+        assert.equal(prefixMetadata, 'entity');
+    });
+
+    it('With a data prefix', function () 
+    {
+        @DBTable({dataPrefix:'prefix'})
+        class Entity {};
+
+        let metadata = Reflect.getMetadata(Const.DataPrefix, new Entity());
+        
+        assert.equal(metadata, 'prefix');
     });
 });

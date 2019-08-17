@@ -14,8 +14,7 @@ export class RepresentationFactory
         let hashRangeKeyPairs = reflector.getHashRangeKeyPairs(obj);
         let columns = reflector.getColumns(obj);
         let idKey = reflector.getIdKey(obj);
-
-        let idPropertyName = idKey.includes('#') ? idKey.split('#')[1] : idKey;
+        let dataPrefix = reflector.getDataPrefix(obj);
 
         let data:any = {};
         for(let column of columns)
@@ -32,20 +31,20 @@ export class RepresentationFactory
         {
             if(rangeKeys.length === 0)
             {
-                representations.push(new Representation(tableName, hashKey, undefined, idKey, data));
+                representations.push(new Representation(tableName, dataPrefix, hashKey, undefined, idKey, data));
             }
             else
             {
                 for(let rangeKey of rangeKeys)
                 {
-                    representations.push(new Representation(tableName, hashKey, rangeKey, idKey, data));
+                    representations.push(new Representation(tableName, dataPrefix, hashKey, rangeKey, idKey, data));
                 }
             }
         }
 
         for(let hashRangeKeyPair of Object.values(hashRangeKeyPairs))
         {
-            representations.push(new Representation(tableName, hashRangeKeyPair.hashes, hashRangeKeyPair.ranges, idKey, data));
+            representations.push(new Representation(tableName, dataPrefix, hashRangeKeyPair.hashes, hashRangeKeyPair.ranges, idKey, data));
         }
 
         return representations;

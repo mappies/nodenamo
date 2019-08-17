@@ -42,12 +42,11 @@ describe('RepresentationFactory', function ()
         let representations = RepresentationFactory.get(new Entity());
         
         assert.equal(representations.length, 1);
-        assert.equal(representations[0].hash, 'Some One');
-        assert.equal(representations[0].id, 123);
-        assert.isNumber(representations[0].id);
+        assert.equal(representations[0].hash, 'entity#Some One');
+        assert.equal(representations[0].id, 'entity#123');
     });
 
-    it('get() - a custo-named id key', function () 
+    it('get() - a custom-named id key', function () 
     {
         @DBTable()
         class Entity {
@@ -64,9 +63,8 @@ describe('RepresentationFactory', function ()
         let representations = RepresentationFactory.get(new Entity());
         
         assert.equal(representations.length, 1);
-        assert.equal(representations[0].hash, 'Some One');
-        assert.equal(representations[0].id, 123);
-        assert.isNumber(representations[0].id);
+        assert.equal(representations[0].hash, 'entity#Some One');
+        assert.equal(representations[0].id, 'entity#123');
     });
 
     it('get() - hash only', function () 
@@ -91,7 +89,7 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[0].data.id, 123);
         assert.equal(representations[0].data.name, 'Some One');
         assert.equal(representations[0].data.createdTimestamp, 'now');
-        assert.equal(representations[0].hash, 123);
+        assert.equal(representations[0].hash, 'entity#123');
         assert.equal(representations[0].range, undefined);
     });
 
@@ -117,16 +115,18 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[0].data.id, 123);
         assert.equal(representations[0].data.newName, 'Some One');
         assert.equal(representations[0].data.createdTimestamp, 'now');
-        assert.equal(representations[0].hash, 123);
+        assert.equal(representations[0].hash, 'entity#123');
         assert.equal(representations[0].range, 'Some One');
+        assert.isUndefined(representations[0].id);
         assert.isTrue(representations[1] instanceof Representation);
         assert.equal(representations[1].tableName, 'Entity');
         assert.equal(representations[1].tableName, 'Entity');
         assert.equal(representations[1].data.id, 123);
         assert.equal(representations[1].data.newName, 'Some One');
         assert.equal(representations[1].data.createdTimestamp, 'now');
-        assert.equal(representations[1].hash, 123);
+        assert.equal(representations[1].hash, 'entity#123');
         assert.equal(representations[1].range, 'now');
+        assert.isUndefined(representations[1].id);
     });
 
     it('get() - hashes and ranges', function () 
@@ -149,13 +149,13 @@ describe('RepresentationFactory', function ()
         let representations = RepresentationFactory.get(new Entity());
         
         assert.equal(representations.length, 4);
-        assert.equal(representations[0].hash, 123);
+        assert.equal(representations[0].hash, 'entity#123');
         assert.equal(representations[0].range, 'Some One');
-        assert.equal(representations[1].hash, 123);
+        assert.equal(representations[1].hash, 'entity#123');
         assert.equal(representations[1].range, 'now');
-        assert.equal(representations[2].hash, 'cat');
+        assert.equal(representations[2].hash, 'entity#cat');
         assert.equal(representations[2].range, 'Some One');
-        assert.equal(representations[3].hash, 'cat');
+        assert.equal(representations[3].hash, 'entity#cat');
         assert.equal(representations[3].range, 'now');
     });
     
@@ -173,7 +173,7 @@ describe('RepresentationFactory', function ()
         let representations = RepresentationFactory.get(new Entity());
         
         assert.equal(representations.length, 1);
-        assert.equal(representations[0].hash, 123);
+        assert.equal(representations[0].hash, 'entity#123');
         assert.equal(representations[0].range, 'Some One');
         assert.equal(representations[0].tableName, 'Entity');
         assert.equal(representations[0].data.id, 123);
@@ -200,9 +200,9 @@ describe('RepresentationFactory', function ()
         let representations = RepresentationFactory.get(new Entity());
         
         assert.equal(representations.length, 2);
-        assert.equal(representations[0].hash, 123);
+        assert.equal(representations[0].hash, 'entity#123');
         assert.equal(representations[0].range, 'Some One');
-        assert.equal(representations[1].hash, 'cat');
+        assert.equal(representations[1].hash, 'entity#cat');
         assert.equal(representations[1].range, 'now');
     });
 
@@ -226,7 +226,7 @@ describe('RepresentationFactory', function ()
         let representations = RepresentationFactory.get(new Entity());
         
         assert.equal(representations.length, 1);
-        assert.equal(representations[0].hash, '123#cat');
+        assert.equal(representations[0].hash, 'entity#123#cat');
         assert.equal(representations[0].range, 'Some One#now');
     });
 
@@ -250,9 +250,31 @@ describe('RepresentationFactory', function ()
         let representations = RepresentationFactory.get(new Entity());
         
         assert.equal(representations.length, 2);
-        assert.equal(representations[0].hash, 'cat');
+        assert.equal(representations[0].hash, 'entity#cat');
         assert.equal(representations[0].range, 'now');
-        assert.equal(representations[1].hash, 123);
+        assert.equal(representations[1].hash, 'entity#123');
         assert.equal(representations[1].range, 'Some One');
+    });
+
+    it('get() - data prefix', function () 
+    {
+        @DBTable({dataPrefix:'pfx'})
+        class Entity {
+            @DBColumn({id:true})
+            id:number = 123;
+
+            @DBColumn({hash:true})
+            name:string = 'Some One';
+
+            @DBColumn({range:true})
+            createdTimestamp:number = 234;
+        };
+
+        let representations = RepresentationFactory.get(new Entity());
+        
+        assert.equal(representations.length, 1);
+        assert.equal(representations[0].hash, 'pfx#Some One');
+        assert.equal(representations[0].range, 234);
+        assert.equal(representations[0].id, 'pfx#123');
     });
 });

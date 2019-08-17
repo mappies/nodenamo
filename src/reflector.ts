@@ -32,4 +32,9 @@ export class Reflector
     {
         return Reflect.getMetadata(Const.IdKey, obj) || '';
     }
+
+    getDataPrefix(obj:object): string
+    {
+        return Reflect.getMetadata(Const.DataPrefix, obj) || '';
+    }
 }
