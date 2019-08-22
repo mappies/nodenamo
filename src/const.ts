@@ -10,7 +10,7 @@ enum Const
 
     HashColumn = 'hash',
     RangeColumn = 'range',
-    IdColumn = 'id'
+    IdColumn = 'objid'
 };
 
 export default Const;

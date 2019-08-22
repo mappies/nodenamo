@@ -1,20 +1,17 @@
 import { Reflector } from "./reflector";
 import { Representation } from "./representation";
-import Const from './const';
-
-const reflector = new Reflector();
 
 export class RepresentationFactory
 {
     static get(obj:any): Representation[]
     {
-        let tableName = reflector.getTableName(obj);
-        let hashKeys = reflector.getHashKeys(obj);
-        let rangeKeys = reflector.getRangeKeys(obj);
-        let hashRangeKeyPairs = reflector.getHashRangeKeyPairs(obj);
-        let columns = reflector.getColumns(obj);
-        let idKey = reflector.getIdKey(obj);
-        let dataPrefix = reflector.getDataPrefix(obj);
+        let tableName = Reflector.getTableName(obj);
+        let hashKeys = Reflector.getHashKeys(obj);
+        let rangeKeys = Reflector.getRangeKeys(obj);
+        let hashRangeKeyPairs = Reflector.getHashRangeKeyPairs(obj);
+        let columns = Reflector.getColumns(obj);
+        let idKey = Reflector.getIdKey(obj);
+        let dataPrefix = Reflector.getDataPrefix(obj);
 
         let data:any = {};
         for(let column of columns)

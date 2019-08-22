@@ -1,14 +1,18 @@
+import Const from './const';
 export class Representation
 {
     public data:any;
+    public hash:any;
+    public range:any;
+    public objId:any;
 
-    constructor(public tableName:string, public dataPrefix:string = '', public hash:any, public range:any, public id:any, public originalData:object)
+    constructor(public tableName:string, dataPrefix:string = '', hash:any, range:any, id:any, originalData:object)
     {
         this.data = Object.assign({}, originalData);
-        
-        this.id = this.addDataPrefix(dataPrefix, this.getPropertyValue(originalData, id));
-        this.hash = this.addDataPrefix(dataPrefix, this.getPropertyValue(originalData, hash));
-        this.range = this.getPropertyValue(originalData, range);
+
+        this.objId = this.data[Const.IdColumn] = this.addDataPrefix(dataPrefix, this.getPropertyValue(this.data, id));
+        this.hash = this.data[Const.HashColumn] = this.addDataPrefix(dataPrefix, this.getPropertyValue(this.data, hash));
+        this.range = this.data[Const.RangeColumn] = this.getPropertyValue(this.data, range);
     }
 
     private getPropertyValue(d:any, properyNameOrNames:string|string[]) : any
