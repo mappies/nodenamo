@@ -1,7 +1,6 @@
-import "reflect-metadata";
 import {assert as assert} from 'chai';
 import { DBTable } from '../src';
-import Const from '../src/const';
+import { Reflector } from '../src/reflector';
 
 describe('DbTable', function () 
 {
@@ -10,9 +9,11 @@ describe('DbTable', function ()
         @DBTable()
         class Entity {};
 
-        let metadata = Reflect.getMetadata(Const.DBTable, new Entity());
+        let metadata = Reflector.getTableName(new Entity());
+        let prefixMetadata = Reflector.getDataPrefix(new Entity());
         
         assert.equal(metadata, 'Entity');
+        assert.equal(prefixMetadata, 'entity');
     });
 
     it('With a custom table name.', function () 
@@ -20,8 +21,8 @@ describe('DbTable', function ()
         @DBTable({name:'custom-name'})
         class Entity {};
 
-        let metadata = Reflect.getMetadata(Const.DBTable, new Entity());
-        let prefixMetadata = Reflect.getMetadata(Const.DataPrefix, new Entity());
+        let metadata = Reflector.getTableName(new Entity());
+        let prefixMetadata = Reflector.getDataPrefix(new Entity());
         
         assert.equal(metadata, 'custom-name');
         assert.equal(prefixMetadata, 'entity');
@@ -32,7 +33,7 @@ describe('DbTable', function ()
         @DBTable({dataPrefix:'prefix'})
         class Entity {};
 
-        let metadata = Reflect.getMetadata(Const.DataPrefix, new Entity());
+        let metadata = Reflector.getDataPrefix(new Entity());
         
         assert.equal(metadata, 'prefix');
     });

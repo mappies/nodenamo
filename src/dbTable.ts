@@ -1,5 +1,4 @@
-import "reflect-metadata";
-import Const from './const';
+import { Reflector } from './reflector';
 
 export function DBTable(params:{name?: string, dataPrefix?:string} = {}) 
 {
@@ -7,8 +6,8 @@ export function DBTable(params:{name?: string, dataPrefix?:string} = {})
     {
         return function (...args:any[]): any {
             let instance = new constructor(...args);
-            Reflect.defineMetadata(Const.DBTable, params.name || constructor.name, instance);
-            Reflect.defineMetadata(Const.DataPrefix, (params.dataPrefix || constructor.name).toLowerCase(), instance);
+            Reflector.setTableName(instance, params.name || constructor.name);
+            Reflector.setDataPrefix(instance, (params.dataPrefix || constructor.name).toLowerCase());
             return instance;
         }
     };

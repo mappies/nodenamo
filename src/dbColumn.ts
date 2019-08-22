@@ -1,42 +1,4 @@
-import "reflect-metadata";
-import Const from './const';
-
-function appendMetadataAsArray(key:any, value:any, target:object)
-{
-    let values = [];
-
-    if(Reflect.hasMetadata(key, target))
-    {
-        values = Reflect.getMetadata(key, target);
-    }
-
-    values.push(value);
-
-    Reflect.defineMetadata(key, values, target);
-}
-
-function addHashRangeKeyPairMetadata(key:any, name:string, hash:any, range:any, target:object)
-{
-    let obj:any = {};
-
-    if(Reflect.hasMetadata(key, target))
-    {
-        obj = Reflect.getMetadata(key, target);
-    }
-
-    if(name in obj)
-    {
-        if(hash) obj[name].hashes.push(hash);
-        if(range) obj[name].ranges.push(range);
-    }
-    else
-    {
-        if(hash) obj[name] = {hashes: [hash], ranges: []};
-        if(range) obj[name] = {hashes: [], ranges: [range]};
-    }
-    
-    Reflect.defineMetadata(key, obj, target);
-}
+import { Reflector } from "./reflector";
 
 export function DBColumn(params:{id?:boolean, name?:string, hash?:boolean|string, range?:boolean|string} = {}) 
 {
@@ -49,22 +11,22 @@ export function DBColumn(params:{id?:boolean, name?:string, hash?:boolean|string
             value = `${value}#${propertyName}`;
         }
 
-        appendMetadataAsArray(Const.DBColumn, value, target);
+        Reflector.addColumn(target, value);
 
         if(params.id)
         {
-            Reflect.defineMetadata(Const.IdKey, value, target);
+            Reflector.setIdKey(target, value);
         }
 
         if(params.hash)
         {
             if(params.hash === true)
             {
-                appendMetadataAsArray(Const.HashKey, value, target);
+                Reflector.addHashKey(target, value);
             }
             else
             {
-                addHashRangeKeyPairMetadata(Const.HashRangeKey, params.hash, value, undefined, target);
+                Reflector.setHashRangeKeyParis(target, params.hash, value, undefined);
             }
         }
 
@@ -72,11 +34,11 @@ export function DBColumn(params:{id?:boolean, name?:string, hash?:boolean|string
         {
             if(params.range === true)
             {
-                appendMetadataAsArray(Const.RangeKey, value, target);
+                Reflector.addRangeKey(target, value);
             }
             else
             {
-                addHashRangeKeyPairMetadata(Const.HashRangeKey, params.range, undefined, value, target);
+                Reflector.setHashRangeKeyParis(target, params.range, undefined, value);
             }
         }
     }

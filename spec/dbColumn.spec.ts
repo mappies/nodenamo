@@ -1,7 +1,7 @@
-import "reflect-metadata";
 import {assert as assert} from 'chai';
-import { DBTable, DBColumn } from '../src';
+import { DBColumn } from '../src';
 import Const from '../src/const';
+import { Reflector } from '../src/reflector';
 
 describe('DbColumn', function () 
 {
@@ -15,11 +15,11 @@ describe('DbColumn', function ()
             get name():string { return 'myname'}
         };
 
-        let metadata = Reflect.getMetadata(Const.DBColumn, new Entity());
+        let columns = Reflector.getColumns(new Entity());
         
-        assert.equal(metadata.length, 2);
-        assert.equal(metadata[0], 'id');
-        assert.equal(metadata[1], 'name');
+        assert.equal(columns.length, 2);
+        assert.equal(columns[0], 'id');
+        assert.equal(columns[1], 'name');
     });
     
     it('with an ID key', function () 
@@ -32,9 +32,9 @@ describe('DbColumn', function ()
             get name():string { return 'myname'}
         };
 
-        let metadata = Reflect.getMetadata(Const.IdKey, new Entity());
+        let idKey = Reflector.getIdKey(new Entity());
         
-        assert.equal(metadata, 'myId');
+        assert.equal(idKey, 'myId');
     });
 
     it('With a custom column name.', function () 
@@ -47,11 +47,11 @@ describe('DbColumn', function ()
             get name():string {return 'myname';}
         };
 
-        let metadata = Reflect.getMetadata(Const.DBColumn, new Entity());
+        let columns = Reflector.getColumns(new Entity());
         
-        assert.equal(metadata.length, 2);
-        assert.equal(metadata[0], 'id');
-        assert.equal(metadata[1], 'custom-name#name');
+        assert.equal(columns.length, 2);
+        assert.equal(columns[0], 'id');
+        assert.equal(columns[1], 'custom-name#name');
     });
 
     it('With a hash key.', function () 
@@ -64,10 +64,10 @@ describe('DbColumn', function ()
             name:string;
         };
 
-        let metadata = Reflect.getMetadata(Const.HashKey, new Entity());
+        let keys = Reflector.getHashKeys(new Entity());
         
-        assert.equal(metadata.length, 1);
-        assert.equal(metadata[0], 'id');
+        assert.equal(keys.length, 1);
+        assert.equal(keys[0], 'id');
     });
 
     it('With a range key.', function () 
@@ -80,10 +80,10 @@ describe('DbColumn', function ()
             name:string;
         };
 
-        let metadata = Reflect.getMetadata(Const.RangeKey, new Entity());
+        let keys = Reflector.getRangeKeys(new Entity());
         
-        assert.equal(metadata.length, 1);
-        assert.equal(metadata[0], 'name');
+        assert.equal(keys.length, 1);
+        assert.equal(keys[0], 'name');
     });
 
     it('With all combinations', function () 
@@ -99,11 +99,11 @@ describe('DbColumn', function ()
             createdTimestamp:string;
         };
 
-        let columnMetadata = Reflect.getMetadata(Const.DBColumn, new Entity());
-        let hashMetadata = Reflect.getMetadata(Const.HashKey, new Entity());
-        let rangeMetadata = Reflect.getMetadata(Const.RangeKey, new Entity());
-        let idMetadata = Reflect.getMetadata(Const.IdKey, new Entity());
-        let hashRangePairMetadata = Reflect.getMetadata(Const.HashRangeKey, new Entity());
+        let columnMetadata = Reflector.getColumns(new Entity());
+        let hashMetadata = Reflector.getHashKeys(new Entity());
+        let rangeMetadata = Reflector.getRangeKeys(new Entity());
+        let idMetadata = Reflector.getIdKey(new Entity());
+        let hashRangePairMetadata = Reflector.getHashRangeKeyPairs(new Entity());
         
         assert.equal(columnMetadata.length, 3);
         assert.equal(columnMetadata[0], 'uniqueId#id');
@@ -114,7 +114,7 @@ describe('DbColumn', function ()
         assert.equal(rangeMetadata.length, 2);
         assert.equal(rangeMetadata[0], 'newName#name');
         assert.equal(rangeMetadata[1], 'createdTimestamp');
-        assert.isUndefined(hashRangePairMetadata);
+        assert.isEmpty(hashRangePairMetadata);
         assert.equal(idMetadata, 'uniqueId#id');
     });
 
@@ -134,12 +134,12 @@ describe('DbColumn', function ()
             name:string;
         };
 
-        let hashMetadata = Reflect.getMetadata(Const.HashKey, new Entity());
-        let rangeMetadata = Reflect.getMetadata(Const.RangeKey, new Entity());
-        let hashRangePairMetadata = Reflect.getMetadata(Const.HashRangeKey, new Entity());
+        let hashMetadata = Reflector.getHashKeys(new Entity());
+        let rangeMetadata = Reflector.getRangeKeys(new Entity());
+        let hashRangePairMetadata:any = Reflector.getHashRangeKeyPairs(new Entity());
 
-        assert.isUndefined(hashMetadata);
-        assert.isUndefined(rangeMetadata);
+        assert.isEmpty(hashMetadata);
+        assert.isEmpty(rangeMetadata);
         assert.isDefined(hashRangePairMetadata);
         assert.isDefined(hashRangePairMetadata.key1);
         assert.equal(hashRangePairMetadata.key1.hashes.length, 1);
@@ -169,12 +169,12 @@ describe('DbColumn', function ()
             name:string;
         };
 
-        let hashMetadata = Reflect.getMetadata(Const.HashKey, new Entity());
-        let rangeMetadata = Reflect.getMetadata(Const.RangeKey, new Entity());
-        let hashRangePairMetadata = Reflect.getMetadata(Const.HashRangeKey, new Entity());
+        let hashMetadata = Reflector.getHashKeys(new Entity());
+        let rangeMetadata = Reflector.getRangeKeys(new Entity());
+        let hashRangePairMetadata:any = Reflector.getHashRangeKeyPairs(new Entity());
 
-        assert.isUndefined(hashMetadata);
-        assert.isUndefined(rangeMetadata);
+        assert.isEmpty(hashMetadata);
+        assert.isEmpty(rangeMetadata);
         assert.isDefined(hashRangePairMetadata);
         assert.isDefined(hashRangePairMetadata.key1);
         assert.equal(hashRangePairMetadata.key1.hashes.length, 2);
