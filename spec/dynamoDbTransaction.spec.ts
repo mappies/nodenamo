@@ -1,9 +1,9 @@
 import {IMock, Mock, It} from "typemoq";
 import { assert as assert } from 'chai';
-import { DynamoDbTransactionManager } from '../src/manager/dynamodbTransactionManager';
+import { DynamoDbTransaction } from '../src/manager/dynamodbTransaction';
 import { DocumentClient, TransactWriteItem, ConditionCheck } from 'aws-sdk/clients/dynamodb';
 
-describe('DynamoDbTransactionManager', function () 
+describe('DynamoDbTransaction', function () 
 {
     let mockedClient:IMock<DocumentClient>;
     let called:boolean;
@@ -29,8 +29,8 @@ describe('DynamoDbTransactionManager', function ()
     {
         mockedClient.setup(c => c.transactWrite({TransactItems: [putParam, updateParam, deleteParam]})).callback(()=>called=true).returns(()=>transactionOutput);
 
-        let manager = await new DynamoDbTransactionManager(mockedClient.object)
-        manager.add(putParam).add(updateParam).add(deleteParam).execute();
+        let manager = await new DynamoDbTransaction(mockedClient.object)
+        manager.add(putParam).add(updateParam).add(deleteParam).commit();
 
         assert.isTrue(called);
     });
@@ -54,11 +54,11 @@ describe('DynamoDbTransactionManager', function ()
         mockedClient.setup(c => c.transactWrite({TransactItems: [putParams[10], putParams[11]]})).callback(()=>secondBatchCalled=true).returns(()=>transactionOutput);
         mockedClient.setup(c => c.transactWrite(It.isAny())).callback(()=>otherBatchCalled=true).returns(()=>transactionOutput);
 
-        let manager = await new DynamoDbTransactionManager(mockedClient.object);
+        let manager = await new DynamoDbTransaction(mockedClient.object);
 
         for(let putParam of putParams) manager.add(putParam);
 
-        await manager.execute();
+        await manager.commit();
 
         assert.isTrue(firstBatchCalled);
         assert.isTrue(secondBatchCalled);
@@ -71,7 +71,7 @@ describe('DynamoDbTransactionManager', function ()
 
         mockedClient.setup(c => c.transactWrite({TransactItems: [putParam]})).callback(()=>called=true).returns(()=>transactionOutput);
 
-        await new DynamoDbTransactionManager(mockedClient.object).add(putParam).execute();
+        await new DynamoDbTransaction(mockedClient.object).add(putParam).commit();
 
         assert.isTrue(called);
     });
