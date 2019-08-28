@@ -76,7 +76,7 @@ export class DynamoDbManager
         }
 
         for(let representation of representations)
-        {console.log(representation, additionalParams)
+        {
             transaction.add({
                 Put: {
                     TableName: representation.tableName,

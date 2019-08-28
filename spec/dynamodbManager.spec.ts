@@ -1,10 +1,10 @@
 import {assert as assert} from 'chai';
-import { DynamoDbManager } from '../src/manager/dynamodbManager';
+import { DynamoDbManager } from '../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { DBTable, DBColumn } from '../src';
-import { DynamoDbTransaction } from '../src/manager/dynamodbTransaction';
-import { Put } from '../src/queries/put/put';
+import { DynamoDbTransaction } from '../src/managers/dynamodbTransaction';
+import { Add } from '../src/queries/add/add';
 import { Reflector } from '../src/reflector';
 
 @DBTable()

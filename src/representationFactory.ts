@@ -1,5 +1,6 @@
 import { Reflector } from "./reflector";
 import { Representation } from "./representation";
+import Const from "./const";
 
 export class RepresentationFactory
 {
@@ -28,20 +29,25 @@ export class RepresentationFactory
         {
             if(rangeKeys.length === 0)
             {
-                representations.push(new Representation(tableName, dataPrefix, hashKey, undefined, idKey, data));
+                representations.push(new Representation(tableName, dataPrefix, hashKey, undefined, data));
             }
             else
             {
                 for(let rangeKey of rangeKeys)
                 {
-                    representations.push(new Representation(tableName, dataPrefix, hashKey, rangeKey, idKey, data));
+                    representations.push(new Representation(tableName, dataPrefix, hashKey, rangeKey, data));
                 }
             }
         }
 
         for(let hashRangeKeyPair of Object.values(hashRangeKeyPairs))
         {
-            representations.push(new Representation(tableName, dataPrefix, hashRangeKeyPair.hashes, hashRangeKeyPair.ranges, idKey, data));
+            representations.push(new Representation(tableName, dataPrefix, hashRangeKeyPair.hashes, hashRangeKeyPair.ranges, data));
+        }
+
+        if(idKey !== undefined && idKey !== '' && !hashKeys.includes(idKey))
+        {
+            representations.push(new Representation(tableName, dataPrefix, idKey, Const.NodeNamo, data));
         }
 
         return representations;

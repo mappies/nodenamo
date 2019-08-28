@@ -1,5 +1,6 @@
 enum Const
 {
+    NodeNamo = "nodenamo",
     DBTable = "nodenamo:dbtable",
     DBColumn = "nodenamo:dbcolumn",
     HashKey = "nodenamo:hashkey",

@@ -92,7 +92,7 @@ export class Reflector
 
     static getIdKey(obj:object): string
     {
-        return Reflect.getMetadata(Const.IdKey, obj) || '';
+        return Reflect.getMetadata(Const.IdKey, obj) || undefined;
     }
 
     static setIdKey(obj:object, key:string): void

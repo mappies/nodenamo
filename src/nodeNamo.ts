@@ -1,6 +1,8 @@
-import { Put } from "./queries/put/put";
+import { Add } from "./queries/add/add";
 import { DocumentClient } from "aws-sdk/clients/dynamodb";
-import { DynamoDbManager } from "./manager/dynamodbManager";
+import { DynamoDbManager } from "./managers/dynamodbManager";
+import { Reflector } from "./reflector";
+import { NodenamoError } from "./errors/nodenamoError";
 
 export class NodeNamo
 {
@@ -9,8 +11,13 @@ export class NodeNamo
 
     }
 
-    put(data:object): Put
+    add(obj:object): Add
     {
-        return new Put(new DynamoDbManager(this.client), data);
+        if(!Reflector.getIdKey(obj))
+        {
+            throw new NodenamoError(`Could not add an object because it has no ID property. Try adding @DBColumn({id:true}) to one of its property to represent a unique object ID.`)
+        }
+
+        return new Add(new DynamoDbManager(this.client), obj);
     }
 };

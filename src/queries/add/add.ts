@@ -1,8 +1,8 @@
 import { Execute } from './execute';
-import { DynamoDbManager } from '../../manager/dynamodbManager';
+import { DynamoDbManager } from '../../managers/dynamodbManager';
 import { Where } from './where';
 
-export class Put 
+export class Add 
 {
     constructor(private manager:DynamoDbManager, private obj:object)
     {

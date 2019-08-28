@@ -1,6 +1,7 @@
-import { DynamoDbManager } from "../../manager/dynamodbManager";
+import { DynamoDbManager } from "../../managers/dynamodbManager";
+import { Execute } from "./execute";
 
-export class Execute
+export class Where
 {
     constructor(private manager:DynamoDbManager, private obj:object, private params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object})
     {
@@ -9,6 +10,6 @@ export class Execute
 
     async execute(): Promise<void>
     {
-        await this.manager.put(this.obj, this.params);
+        return await new Execute(this.manager, this.obj, this.params).execute();
     }
 }
