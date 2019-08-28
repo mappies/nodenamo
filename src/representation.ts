@@ -12,7 +12,7 @@ export class Representation
 
         this.objId = this.data[Const.IdColumn] = this.addDataPrefix(dataPrefix, this.getPropertyValue(this.data, id));
         this.hash = this.data[Const.HashColumn] = this.addDataPrefix(dataPrefix, this.getPropertyValue(this.data, hash));
-        this.range = this.data[Const.RangeColumn] = this.getPropertyValue(this.data, range);
+        this.range = this.data[Const.RangeColumn] = (range === Const.IdRangeKey ? Const.IdRangeKey : this.getPropertyValue(this.data, range));
     }
 
     private getPropertyValue(d:any, properyNameOrNames:string|string[]) : any

@@ -3,6 +3,7 @@ import {assert as assert} from 'chai';
 import { DBColumn, DBTable } from "../src";
 import { RepresentationFactory } from '../src/representationFactory';
 import { Representation } from "../src/representation";
+import Const from "../src/const";
 
 describe('RepresentationFactory', function () 
 {
@@ -41,7 +42,7 @@ describe('RepresentationFactory', function ()
 
         let representations = RepresentationFactory.get(new Entity());
         
-        assert.equal(representations.length, 1);
+        assert.equal(representations.length, 2);
         assert.equal(representations[0].hash, 'entity#Some One');
         assert.equal(representations[0].range, undefined);
         assert.equal(representations[0].objId, 'entity#123');
@@ -50,6 +51,14 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[0].data.objid, 'entity#123');
         assert.equal(representations[0].data.name, 'Some One');
         assert.equal(representations[0].data.createdTimestamp, 'now');
+        assert.equal(representations[1].hash, 'entity#123');
+        assert.equal(representations[1].range, Const.IdRangeKey);
+        assert.equal(representations[1].objId, 'entity#123');
+        assert.equal(representations[1].data.hash, 'entity#123');
+        assert.equal(representations[1].data.id, 123);
+        assert.equal(representations[1].data.objid, 'entity#123');
+        assert.equal(representations[1].data.name, 'Some One');
+        assert.equal(representations[1].data.createdTimestamp, 'now');
     });
 
     it('get() - a custom-named id key', function () 
@@ -68,7 +77,7 @@ describe('RepresentationFactory', function ()
 
         let representations = RepresentationFactory.get(new Entity());
         
-        assert.equal(representations.length, 1);
+        assert.equal(representations.length, 2);
         assert.equal(representations[0].hash, 'entity#Some One');
         assert.equal(representations[0].range, undefined);
         assert.equal(representations[0].objId, 'entity#123');
@@ -78,6 +87,15 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[0].data.objid, 'entity#123');
         assert.equal(representations[0].data.name, 'Some One');
         assert.equal(representations[0].data.createdTimestamp, 'now');
+        assert.equal(representations[1].hash, 'entity#123');
+        assert.equal(representations[1].range, Const.IdRangeKey);
+        assert.equal(representations[1].objId, 'entity#123');
+        assert.equal(representations[1].data.hash, 'entity#123');
+        assert.equal(representations[1].data.range, Const.IdRangeKey);
+        assert.equal(representations[1].data.newId, 123);
+        assert.equal(representations[1].data.objid, 'entity#123');
+        assert.equal(representations[1].data.name, 'Some One');
+        assert.equal(representations[1].data.createdTimestamp, 'now');
     });
 
     it('get() - hash and id', function () 
@@ -371,7 +389,7 @@ describe('RepresentationFactory', function ()
 
         let representations = RepresentationFactory.get(new Entity());
         
-        assert.equal(representations.length, 1);
+        assert.equal(representations.length, 2);
         assert.equal(representations[0].hash, 'pfx#Some One');
         assert.equal(representations[0].range, 234);
         assert.equal(representations[0].objId, 'pfx#123');
@@ -381,5 +399,14 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[0].data.objid, 'pfx#123');
         assert.equal(representations[0].data.name, 'Some One');
         assert.equal(representations[0].data.createdTimestamp, 234);
+        assert.equal(representations[1].hash, 'pfx#123');
+        assert.equal(representations[1].range, Const.IdRangeKey);
+        assert.equal(representations[1].objId, 'pfx#123');
+        assert.equal(representations[1].data.hash, 'pfx#123');
+        assert.equal(representations[1].data.range, Const.IdRangeKey);
+        assert.equal(representations[1].data.id, 123);
+        assert.equal(representations[1].data.objid, 'pfx#123');
+        assert.equal(representations[1].data.name, 'Some One');
+        assert.equal(representations[1].data.createdTimestamp, 234);
     });
 });
