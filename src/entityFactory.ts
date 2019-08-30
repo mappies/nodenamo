@@ -3,6 +3,35 @@ import { Reflector } from './reflector';
 
 const excludedColumns = [<string>Const.HashColumn, <string>Const.RangeColumn, <string>Const.IdColumn];
 
+export class EntityFactory
+{
+    static create<T>(type:{new(...args: any[]):T}, data:any):T
+    {
+        let result:any = new type();
+
+        //Get column names mapping 
+        let columnNames:any = getColumnNameMapping(result);
+
+        //Get data prefix
+        let dataPrefix = Reflector.getDataPrefix(result);
+
+        for(let property of Object.keys(data))
+        {
+            if(excludedColumns.includes(property)) continue;
+
+            let descriptor = getPropertyDescriptor(result, property);
+
+            if(!descriptor)
+            {
+                //It is a regular property.
+                result[columnNames[property]] = removePrefixIfAny(data[property], dataPrefix);
+            }
+        }
+
+        return result;
+    }
+}
+
 function getPropertyDescriptor(obj: any, prop: string) : PropertyDescriptor 
 {
     let result;
@@ -38,33 +67,4 @@ function removePrefixIfAny(value:any, prefix:string): any
     }
 
     return value;
-}
-
-export class EntityFactory
-{
-    static create(type:{new():object}, data:any)
-    {
-        let result:any = new type();
-
-        //Get column names mapping 
-        let columnNames:any = getColumnNameMapping(result);
-
-        //Get data prefix
-        let dataPrefix = Reflector.getDataPrefix(result);
-
-        for(let property of Object.keys(data))
-        {
-            if(excludedColumns.includes(property)) continue;
-
-            let descriptor = getPropertyDescriptor(result, property);
-
-            if(!descriptor)
-            {
-                //It is a regular property.
-                result[columnNames[property]] = removePrefixIfAny(data[property], dataPrefix);
-            }
-        }
-
-        return result;
-    }
 }

@@ -50,9 +50,9 @@ describe('EntityFactory', function ()
         assert.deepEqual(entity.array, ['some', 1]);
         assert.equal(entity.readOnlyProperty, 'myname');
         assert.equal(entity.propertyWithSetter, undefined);
-        assert.equal(entity.hash, undefined);
-        assert.equal(entity.range, undefined);
-        assert.equal(entity.objid, undefined);
+        assert.equal(entity['hash'], undefined);
+        assert.equal(entity['range'], undefined);
+        assert.equal(entity['objid'], undefined);
     });
 
     it('create() - with a custom name', function () 
@@ -63,11 +63,13 @@ describe('EntityFactory', function ()
             @DBColumn({name:'customId', id:true})
             id:number;
             @DBColumn({name:'customHash', hash:true})
-            hash:number;
+            hash:string;
             @DBColumn({name:'customRange', range:true})
-            range:number;
+            range:string;
             @DBColumn()
             noChanged:boolean;
+
+            constructor(s:string){}
         };
 
         let entity = EntityFactory.create(Entity, {
@@ -80,13 +82,13 @@ describe('EntityFactory', function ()
         
         assert.instanceOf(entity, Entity);
         assert.equal(entity.name, 'hi');
-        assert.equal(entity.customName, undefined);
+        assert.equal(entity['customName'], undefined);
         assert.equal(entity.id, 42);
-        assert.equal(entity.customId, undefined);
+        assert.equal(entity['customId'], undefined);
         assert.equal(entity.hash, 'thisisahash');
-        assert.equal(entity.customHash, undefined);
+        assert.equal(entity['customHash'], undefined);
         assert.equal(entity.range, 'thisisarange');
-        assert.equal(entity.customRange, undefined);
+        assert.equal(entity['customRange'], undefined);
         assert.equal(entity.noChanged, true);
     });
 
@@ -95,7 +97,7 @@ describe('EntityFactory', function ()
         @DBTable({dataPrefix:'tbl'})
         class Entity {
             @DBColumn()
-            data:number;
+            data:string;
         };
 
         let entity = EntityFactory.create(Entity, {

@@ -2,7 +2,6 @@
     "compilerOptions": {
         "module": "commonjs",
         "target": "es6",
-        "noImplicitAny": true,
         "sourceMap": false,       
         "forceConsistentCasingInFileNames": true,
         "experimentalDecorators": true,
