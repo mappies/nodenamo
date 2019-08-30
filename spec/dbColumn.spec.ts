@@ -1,6 +1,5 @@
 import {assert as assert} from 'chai';
 import { DBColumn } from '../src';
-import Const from '../src/const';
 import { Reflector } from '../src/reflector';
 
 describe('DbColumn', function () 
