@@ -3,6 +3,7 @@ import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import { DynamoDbManager } from "./managers/dynamodbManager";
 import { Reflector } from "./reflector";
 import { NodenamoError } from "./errors/nodenamoError";
+import { Get } from "./queries/get/get";
 
 export class NodeNamo
 {
@@ -19,5 +20,10 @@ export class NodeNamo
         }
 
         return new Add(new DynamoDbManager(this.client), obj);
+    }
+
+    get(id:string|number): Get
+    {
+        return new Get(new DynamoDbManager(this.client), id);
     }
 };
