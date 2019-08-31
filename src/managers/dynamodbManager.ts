@@ -2,6 +2,8 @@ import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { DynamoDbTransaction } from './dynamodbTransaction';
 import { RepresentationFactory } from '../representationFactory';
 import { Reflector } from '../reflector';
+import Const from '../const';
+import { EntityFactory } from '../entityFactory';
 
 function addColumnValuePrefix(obj:object, expressionAttributeValues:object): void
 {
@@ -87,5 +89,24 @@ export class DynamoDbManager
         }
 
         await transaction.commit();
+    }
+
+    async getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number): Promise<T>
+    {
+        let obj:T = new type();
+        let tableName = Reflector.getTableName(obj);
+        let dataPrefix = Reflector.getDataPrefix(obj);
+
+        let query = {
+            TableName: tableName,
+            Key: {
+                'hash': `${dataPrefix}#${id}`,
+                "range": Const.IdRangeKey
+            }
+        };
+
+        let response =  await this.client.get(query).promise();
+        
+        return response.Item === undefined ? undefined : EntityFactory.create(type, response.Item);
     }
 }

@@ -5,9 +5,9 @@ const excludedColumns = [<string>Const.HashColumn, <string>Const.RangeColumn, <s
 
 export class EntityFactory
 {
-    static create<T>(type:{new(...args: any[]):T}, data:any):T
+    static create<T extends object>(type:{new(...args: any[]):T}, data:any):T
     {
-        let result:any = new type();
+        let result:T = new type();
 
         //Get column names mapping 
         let columnNames:any = getColumnNameMapping(result);
@@ -21,7 +21,7 @@ export class EntityFactory
 
             let descriptor = getPropertyDescriptor(result, property);
 
-            if(!descriptor)
+            if(!descriptor || (descriptor.writable && !descriptor.set))
             {
                 //It is a regular property.
                 result[columnNames[property]] = removePrefixIfAny(data[property], dataPrefix);
