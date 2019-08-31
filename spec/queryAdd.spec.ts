@@ -11,7 +11,7 @@ class Entity {
     id:number = 123;
 };
 
-describe('Queury.Put', function () 
+describe('Queury.Add', function () 
 {
     let called:boolean;
     let mockedManager:IMock<DynamoDbManager>;
