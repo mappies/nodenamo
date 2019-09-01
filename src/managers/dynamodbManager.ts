@@ -1,4 +1,4 @@
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { DocumentClient, QueryInput, QueryOutput } from 'aws-sdk/clients/dynamodb';
 import { DynamoDbTransaction } from './dynamodbTransaction';
 import { RepresentationFactory } from '../representationFactory';
 import { Reflector } from '../reflector';
@@ -8,7 +8,7 @@ import { EntityFactory } from '../entityFactory';
 function addColumnValuePrefix(obj:object, expressionAttributeValues:object): void
 {
     let hashes = Reflector.getHashKeys(obj);
-    let id = Reflector.getIdKey(obj);
+    let id = Const.IdColumn;
     let prefix = Reflector.getDataPrefix(obj);
 
     let columnsWithPrefix = [...hashes, id];
@@ -18,7 +18,7 @@ function addColumnValuePrefix(obj:object, expressionAttributeValues:object): voi
         let originalValue = (<any>expressionAttributeValues)[key];
         let newValue = originalValue;
 
-        if(columnsWithPrefix.includes(key))
+        if(columnsWithPrefix.includes(key.replace(/^:/, ''))) //A value key may start with :
         {
             newValue = `${prefix}#${newValue}`;
         }
@@ -30,6 +30,7 @@ function addColumnValuePrefix(obj:object, expressionAttributeValues:object): voi
 function changeColumnNames(obj:object, expressionAttributeNames:object): void
 {
     let hashes = Reflector.getHashKeys(obj);
+    let ranges = Reflector.getRangeKeys(obj);
 
     for(let key of Object.keys(expressionAttributeNames))
     {
@@ -40,6 +41,12 @@ function changeColumnNames(obj:object, expressionAttributeNames:object): void
         {
             newValue = 'hash';
         }
+
+        if(ranges.includes(originalValue))
+        {
+            newValue = 'range';
+        }
+
 
         (<any>expressionAttributeNames)[key] = newValue;
     }
@@ -108,5 +115,75 @@ export class DynamoDbManager
         let response =  await this.client.get(query).promise();
         
         return response.Item === undefined ? undefined : EntityFactory.create(type, response.Item);
+    }
+
+    async find<T extends object>(type:{new(...args: any[]):T}, 
+                                 keyParams?:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, 
+                                 filterParams?: {filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
+                                 params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key}): Promise<T[]>
+    {
+        let obj:T = new type();
+
+        let tableName = Reflector.getTableName(obj);
+
+        let additionalParams = {};
+
+        if(keyParams && keyParams.expressionAttributeValues)
+        {
+            addColumnValuePrefix(obj, keyParams.expressionAttributeValues);
+            additionalParams['ExpressionAttributeValues'] = keyParams.expressionAttributeValues;
+        }
+
+        if(keyParams && keyParams.expressionAttributeNames)
+        {
+            changeColumnNames(obj, keyParams.expressionAttributeNames)
+            additionalParams['ExpressionAttributeNames'] = keyParams.expressionAttributeNames;
+        }
+
+        if(filterParams && filterParams.expressionAttributeValues)
+        {
+            addColumnValuePrefix(obj, filterParams.expressionAttributeValues);
+            additionalParams['ExpressionAttributeValues'] = Object.assign(filterParams.expressionAttributeValues, additionalParams['ExpressionAttributeValues']);
+        }
+
+        if(filterParams && filterParams.expressionAttributeNames)
+        {
+            changeColumnNames(obj, filterParams.expressionAttributeNames)
+            additionalParams['ExpressionAttributeNames'] = Object.assign(filterParams.expressionAttributeNames, additionalParams['ExpressionAttributeNames']);
+        }
+
+        let query:QueryInput = {
+            TableName: tableName,
+            KeyConditionExpression: keyParams ? keyParams.keyConditions : undefined,
+            FilterExpression: filterParams ? filterParams.filterExpression : undefined,
+            IndexName: params ? params.indexName : undefined,
+            Limit: params ? params.limit : undefined,
+            ExclusiveStartKey: params ? params.exclusiveStartKey : undefined,
+            ScanIndexForward: params && (params.order || 1) >= 0,
+            ...additionalParams
+        };
+
+        let result:{} = {};
+        let response:QueryOutput;
+        let itemCount = 0;
+
+        do
+        {
+            response =  await this.client.query(query).promise();
+
+            for(let item of response.Items)
+            {
+                if(<any>item[Const.IdColumn] in result) continue;
+
+                result[<any>item[Const.IdColumn]] = EntityFactory.create(type, item);
+                
+                if(!!params && !!params.limit && ++itemCount >= params.limit) break;
+            }
+
+            query.ExclusiveStartKey = response.LastEvaluatedKey;
+        }
+        while(response.LastEvaluatedKey && itemCount < params.limit)
+
+        return Object.values(result);
     }
 }
