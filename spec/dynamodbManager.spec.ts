@@ -69,15 +69,15 @@ describe('DynamoDbManager', function ()
         assert.isTrue(committed);
     });
 
-    it('put() - id column value prefixed', async () =>
+    it('put() - objid column value is prefixed, id isn\'t', async () =>
     {
         let obj = new Entity();
         Reflector.setDataPrefix(obj, 'user');
 
-        mockedTransaction.setup(t => t.add(It.is(p=>(p.Put.ExpressionAttributeValues['id'] === 'user#123' )))).callback(()=>put=true);
+        mockedTransaction.setup(t => t.add(It.is(p=>(p.Put.ExpressionAttributeValues['id'] === 123 && p.Put.ExpressionAttributeValues['objid'] === 'user#123' )))).callback(()=>put=true);
         
         let manager = new DynamoDbManager(mockedClient.object);
-        await manager.put(obj, {conditionExpression:'a', expressionAttributeValues: {id:123}}, mockedTransaction.object);
+        await manager.put(obj, {conditionExpression:'a', expressionAttributeValues: {id:123, objid:123}}, mockedTransaction.object);
 
         assert.isTrue(put);
         assert.isTrue(committed);
