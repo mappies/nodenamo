@@ -11,6 +11,9 @@ function addColumnValuePrefix(obj:object, expressionAttributeValues:object): voi
     let id = Const.IdColumn;
     let prefix = Reflector.getDataPrefix(obj);
 
+    //When there is no hashes, ID is the hash
+    if(hashes.length === 0) hashes.push(Reflector.getIdKey(obj));
+
     let columnsWithPrefix = [...hashes, id];
 
     for(let key of Object.keys(expressionAttributeValues))
@@ -31,7 +34,10 @@ function changeColumnNames(obj:object, expressionAttributeNames:object): void
 {
     let hashes = Reflector.getHashKeys(obj);
     let ranges = Reflector.getRangeKeys(obj);
-
+    
+    //When there is no hashes, ID is the hash
+    if(hashes.length === 0) hashes.push(Reflector.getIdKey(obj));
+    
     for(let key of Object.keys(expressionAttributeNames))
     {
         let originalValue = (<any>expressionAttributeNames)[key];
