@@ -5,59 +5,6 @@ import { Reflector } from '../reflector';
 import Const from '../const';
 import { EntityFactory } from '../entityFactory';
 
-function addColumnValuePrefix(obj:object, expressionAttributeValues:object): void
-{
-    let hashes = Reflector.getHashKeys(obj);
-    let id = Const.IdColumn;
-    let prefix = Reflector.getDataPrefix(obj);
-
-    //When there is no hashes, ID is the hash
-    if(hashes.length === 0) hashes.push(Reflector.getIdKey(obj));
-
-    let columnsWithPrefix = [...hashes, id];
-
-    for(let key of Object.keys(expressionAttributeValues))
-    {
-        let originalValue = (<any>expressionAttributeValues)[key];
-        let newValue = originalValue;
-
-        if(columnsWithPrefix.includes(key.replace(/^:/, ''))) //A value key may start with :
-        {
-            newValue = `${prefix}#${newValue}`;
-        }
-
-        (<any>expressionAttributeValues)[key] = newValue;
-    }
-}
-
-function changeColumnNames(obj:object, expressionAttributeNames:object): void
-{
-    let hashes = Reflector.getHashKeys(obj);
-    let ranges = Reflector.getRangeKeys(obj);
-    
-    //When there is no hashes, ID is the hash
-    if(hashes.length === 0) hashes.push(Reflector.getIdKey(obj));
-    
-    for(let key of Object.keys(expressionAttributeNames))
-    {
-        let originalValue = (<any>expressionAttributeNames)[key];
-        let newValue = originalValue;
-
-        if(hashes.includes(originalValue))
-        {
-            newValue = 'hash';
-        }
-
-        if(ranges.includes(originalValue))
-        {
-            newValue = 'range';
-        }
-
-
-        (<any>expressionAttributeNames)[key] = newValue;
-    }
-}
-
 export class DynamoDbManager
 {
     constructor(private client:DocumentClient)
@@ -191,5 +138,59 @@ export class DynamoDbManager
         while(response.LastEvaluatedKey && itemCount < params.limit)
 
         return Object.values(result);
+    }
+}
+
+
+function addColumnValuePrefix(obj:object, expressionAttributeValues:object): void
+{
+    let hashes = Reflector.getHashKeys(obj);
+    let id = Const.IdColumn;
+    let prefix = Reflector.getDataPrefix(obj);
+
+    //When there is no hashes, ID is the hash
+    if(hashes.length === 0) hashes.push(Reflector.getIdKey(obj));
+
+    let columnsWithPrefix = [...hashes, id];
+
+    for(let key of Object.keys(expressionAttributeValues))
+    {
+        let originalValue = (<any>expressionAttributeValues)[key];
+        let newValue = originalValue;
+
+        if(columnsWithPrefix.includes(key.replace(/^:/, ''))) //A value key may start with :
+        {
+            newValue = `${prefix}#${newValue}`;
+        }
+
+        (<any>expressionAttributeValues)[key] = newValue;
+    }
+}
+
+function changeColumnNames(obj:object, expressionAttributeNames:object): void
+{
+    let hashes = Reflector.getHashKeys(obj);
+    let ranges = Reflector.getRangeKeys(obj);
+    
+    //When there is no hashes, ID is the hash
+    if(hashes.length === 0) hashes.push(Reflector.getIdKey(obj));
+    
+    for(let key of Object.keys(expressionAttributeNames))
+    {
+        let originalValue = (<any>expressionAttributeNames)[key];
+        let newValue = originalValue;
+
+        if(hashes.includes(originalValue))
+        {
+            newValue = 'hash';
+        }
+
+        if(ranges.includes(originalValue))
+        {
+            newValue = 'range';
+        }
+
+
+        (<any>expressionAttributeNames)[key] = newValue;
     }
 }
