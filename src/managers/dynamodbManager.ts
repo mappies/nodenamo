@@ -73,7 +73,8 @@ export class DynamoDbManager
     async find<T extends object>(type:{new(...args: any[]):T}, 
                                  keyParams?:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, 
                                  filterParams?: {filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
-                                 params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key}): Promise<T[]>
+                                 params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key})
+                                 : Promise<{items:T[], LastEvaluatedKey: DocumentClient.Key}>
     {
         let obj:T = new type();
 
@@ -137,7 +138,7 @@ export class DynamoDbManager
         }
         while(response.LastEvaluatedKey && itemCount < params.limit)
 
-        return Object.values(result);
+        return {items: Object.values(result), LastEvaluatedKey: response.LastEvaluatedKey}
     }
 }
 

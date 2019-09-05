@@ -155,8 +155,8 @@ describe('DynamoDbManager', function ()
                                        {keyConditions:'#id = :id', expressionAttributeNames: {'#id': 'id'}, expressionAttributeValues: {':id': 42}});
 
         assert.isTrue(called);
-        assert.equal(entities.length, 1);
-        assert.equal(entities[0].id, 42);
+        assert.equal(entities.items.length, 1);
+        assert.equal(entities.items[0].id, 42);
     });
 
     it('find() - filter', async () =>
@@ -187,8 +187,8 @@ describe('DynamoDbManager', function ()
                                        {filterExpression:'#created > :created', expressionAttributeNames: {'#created': 'created'}, expressionAttributeValues: {':created': 2019}});
 
         assert.isTrue(called);
-        assert.equal(entities.length, 1);
-        assert.equal(entities[0].id, 42);
+        assert.equal(entities.items.length, 1);
+        assert.equal(entities.items[0].id, 42);
     });
     
     it('find() - id as the hash key', async () =>
@@ -211,8 +211,8 @@ describe('DynamoDbManager', function ()
                                        {keyConditions:'#id = :id', expressionAttributeNames:{'#id': 'id'}, expressionAttributeValues:{':id': 42}});
         
         assert.isTrue(called);
-        assert.equal(entities.length, 1);
-        assert.equal(entities[0].id, 42);
+        assert.equal(entities.items.length, 1);
+        assert.equal(entities.items[0].id, 42);
     });
 
     it('find() - objid and hash columns are prefixed but id in a table with another hash is\'t', async () =>
@@ -246,11 +246,47 @@ describe('DynamoDbManager', function ()
                                        {filterExpression:'fcondition', expressionAttributeNames: {'#name': 'name', '#objid': 'objid'}, expressionAttributeValues: {':name': 'Some One', ':objid': 42}});
 
         assert.isTrue(called);
-        assert.equal(entities.length, 1);
-        assert.equal(entities[0].id, 42);
+        assert.equal(entities.items.length, 1);
+        assert.equal(entities.items[0].id, 42);
     });
 
-    it('find() - pagination', async () =>
+    it('find() - pagination - more pages', async () =>
+    {
+        @DBTable()
+        class Entity
+        {
+            @DBColumn()
+            id:number;
+        };
+
+        let page1called = false;
+        let page2called = false;
+        let response1 = getMockedQueryResponse({LastEvaluatedKey: <any>'lek1', Items:<any>[{id:42, objid:42}]});
+        let response2 = getMockedQueryResponse({LastEvaluatedKey: <any>'lek2', Items:<any>[{id:99, objid:99}]});
+
+        mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
+                                                    && p.FilterExpression === 'fcondition'
+                                                    && p.ExclusiveStartKey === undefined))).callback(()=>page1called=true).returns(()=>response1.object);
+
+        mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
+                                                    && p.FilterExpression === 'fcondition'
+                                                    && p.ExclusiveStartKey === <any>'lek1'))).callback(()=>page2called=true).returns(()=>response2.object);
+
+        let manager = new DynamoDbManager(mockedClient.object);
+        let entities = await manager.find(Entity, 
+                                       {keyConditions:'kcondition'},
+                                       {filterExpression:'fcondition'},
+                                       {limit:2});
+        
+        assert.isTrue(page1called);
+        assert.isTrue(page2called);
+        assert.equal(entities.LastEvaluatedKey, <any>'lek2');
+        assert.equal(entities.items.length, 2);
+        assert.equal(entities.items[0].id, 42);
+        assert.equal(entities.items[1].id, 99);
+    });
+
+    it('find() - pagination - last page', async () =>
     {
         @DBTable()
         class Entity
@@ -280,9 +316,10 @@ describe('DynamoDbManager', function ()
         
         assert.isTrue(page1called);
         assert.isTrue(page2called);
-        assert.equal(entities.length, 2);
-        assert.equal(entities[0].id, 42);
-        assert.equal(entities[1].id, 99);
+        assert.equal(entities.LastEvaluatedKey, undefined);
+        assert.equal(entities.items.length, 2);
+        assert.equal(entities.items[0].id, 42);
+        assert.equal(entities.items[1].id, 99);
     });
 
     it('find() - index', async () =>
@@ -307,8 +344,8 @@ describe('DynamoDbManager', function ()
                                        {indexName:'custom-index'});
         
         assert.isTrue(called);
-        assert.equal(entities.length, 1);
-        assert.equal(entities[0].id, 42);
+        assert.equal(entities.items.length, 1);
+        assert.equal(entities.items[0].id, 42);
     });
 
     it('find() - exclusive start key', async () =>
@@ -333,8 +370,8 @@ describe('DynamoDbManager', function ()
                                        {exclusiveStartKey:<any>'lek'});
         
         assert.isTrue(called);
-        assert.equal(entities.length, 1);
-        assert.equal(entities[0].id, 42);
+        assert.equal(entities.items.length, 1);
+        assert.equal(entities.items[0].id, 42);
     });
 
     it('find() - sort order - reversed', async () =>
@@ -358,8 +395,8 @@ describe('DynamoDbManager', function ()
                                        {order:-1});
         
         assert.isTrue(called);
-        assert.equal(entities.length, 1);
-        assert.equal(entities[0].id, 42);
+        assert.equal(entities.items.length, 1);
+        assert.equal(entities.items[0].id, 42);
     });
 
     it('find() - sort order - forwarded', async () =>
@@ -383,8 +420,8 @@ describe('DynamoDbManager', function ()
                                        {order:1});
         
         assert.isTrue(called);
-        assert.equal(entities.length, 1);
-        assert.equal(entities[0].id, 42);
+        assert.equal(entities.items.length, 1);
+        assert.equal(entities.items[0].id, 42);
     });
 });
 
