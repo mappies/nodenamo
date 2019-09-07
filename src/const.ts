@@ -11,7 +11,8 @@ enum Const
 
     HashColumn = 'hash',
     RangeColumn = 'range',
-    IdColumn = 'objid'
+    IdColumn = 'objid',
+    IdIndexName = 'objid-index'
 };
 
 export default Const;

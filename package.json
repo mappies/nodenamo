@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/mappies/nodenamo#readme",
   "dependencies": {
+    "aggregate-error": "^3.0.0",
     "aws-sdk": "^2.507.0",
     "reflect-metadata": "^0.1.13"
   },

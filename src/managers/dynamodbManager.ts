@@ -59,11 +59,11 @@ export class DynamoDbManager
 
         let query = {
             TableName: tableName,
-            Key: {
-                'hash': `${dataPrefix}#${id}`,
-                "range": Const.IdRangeKey
-            }
+            Key: {}
         };
+
+        query.Key[Const.HashColumn] = `${dataPrefix}#${id}`;
+        query.Key[Const.RangeColumn] = Const.IdRangeKey;
 
         let response =  await this.client.get(query).promise();
         
@@ -139,6 +139,85 @@ export class DynamoDbManager
         while(response.LastEvaluatedKey && itemCount < params.limit)
 
         return {items: Object.values(result), lastEvaluatedKey: response.LastEvaluatedKey}
+    }
+
+    async delete<T extends object>(type:{new(...args: any[]):T}, id:string|number,  params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
+    {
+        let obj:T = new type();
+        let tableName = Reflector.getTableName(obj);
+
+        let additionalParams:any = {};
+
+        if(params && params.conditionExpression)
+        {
+            additionalParams['ConditionExpression'] = params.conditionExpression;
+        }
+
+        if(params && params.expressionAttributeValues)
+        {
+            addColumnValuePrefix(obj, params.expressionAttributeValues);
+            additionalParams['ExpressionAttributeValues'] = params.expressionAttributeValues;
+        }
+
+        if(params && params.expressionAttributeNames)
+        {
+            changeColumnNames(obj, params.expressionAttributeNames)
+            additionalParams['ExpressionAttributeNames'] = params.expressionAttributeNames;
+        }
+
+        let rows = await this.getById(type, id);
+
+        transaction = transaction || new DynamoDbTransaction(this.client);
+
+        
+        for(let row of rows)
+        {
+            let query = {
+                TableName: tableName,
+                Key: {},
+                ...additionalParams
+            };
+            query.Key[Const.HashColumn] = row[Const.HashColumn];
+            query.Key[Const.RangeColumn] = row[Const.RangeColumn];
+
+            transaction.add({Delete: query});
+        }
+
+        await transaction.commit();
+    }
+
+    private async getById<T extends object>(type:{new(...args: any[]):T}, id:string|number): Promise<object[]>
+    {
+        let obj:T = new type();
+        let tableName = Reflector.getTableName(obj);
+
+        let getAttributeValues = {':objid': <any>id};
+        addColumnValuePrefix(obj, getAttributeValues)
+
+        let query:QueryInput = {
+            TableName: tableName,
+            KeyConditionExpression: '#objid = :objid',
+            ExpressionAttributeNames: {'#objid': Const.IdColumn},
+            ExpressionAttributeValues: getAttributeValues,
+            IndexName: Const.IdIndexName
+        };
+
+        let result:object[] = [];
+
+        do
+        {
+            let response =  await this.client.query(query).promise();
+
+            if(response.Items)
+            {
+                result = result.concat(response.Items)
+            }
+
+            query.ExclusiveStartKey = response.LastEvaluatedKey;
+        }
+        while(query.ExclusiveStartKey);
+
+        return result;
     }
 }
 
