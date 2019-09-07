@@ -280,7 +280,7 @@ describe('DynamoDbManager', function ()
         
         assert.isTrue(page1called);
         assert.isTrue(page2called);
-        assert.equal(entities.LastEvaluatedKey, <any>'lek2');
+        assert.equal(entities.lastEvaluatedKey, <any>'lek2');
         assert.equal(entities.items.length, 2);
         assert.equal(entities.items[0].id, 42);
         assert.equal(entities.items[1].id, 99);
@@ -316,7 +316,7 @@ describe('DynamoDbManager', function ()
         
         assert.isTrue(page1called);
         assert.isTrue(page2called);
-        assert.equal(entities.LastEvaluatedKey, undefined);
+        assert.equal(entities.lastEvaluatedKey, undefined);
         assert.equal(entities.items.length, 2);
         assert.equal(entities.items[0].id, 42);
         assert.equal(entities.items[1].id, 99);
