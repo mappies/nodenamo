@@ -1,7 +1,9 @@
 import {IMock, Mock, It} from "typemoq";
 import { assert as assert } from 'chai';
 import { DynamoDbTransaction } from '../src/managers/dynamodbTransaction';
-import { DocumentClient, TransactWriteItem, ConditionCheck } from 'aws-sdk/clients/dynamodb';
+import { DocumentClient, TransactWriteItem, ConditionCheck, TransactWriteItemsOutput } from 'aws-sdk/clients/dynamodb';
+import { AWSError } from 'aws-sdk/lib/error';
+import { Request } from 'aws-sdk/lib/request';
 
 describe('DynamoDbTransaction', function () 
 {
@@ -17,7 +19,7 @@ describe('DynamoDbTransaction', function ()
     {
         called = false;
         mockedClient = Mock.ofType<DocumentClient>();
-        transactionOutput = {promise: ()=>new Promise((resolve)=>resolve({Items:[true]}))}
+        transactionOutput = {on: ()=>{}, send: ()=>{}, promise: ()=>new Promise((resolve)=>resolve({Items:[true]}))}
 
         putParam = { Put: {TableName: 'table', Item: {}}};
         updateParam = { Update: {TableName: 'table', Key: {id: <any>'id'}, UpdateExpression: "Set something = 2"}};
@@ -76,3 +78,11 @@ describe('DynamoDbTransaction', function ()
         assert.isTrue(called);
     });
 });
+
+
+function getMockedResponse(response:TransactWriteItemsOutput): IMock<Request<TransactWriteItemsOutput, AWSError>>
+{
+    let mock = Mock.ofType<Request<TransactWriteItemsOutput, AWSError>>();
+    mock.setup(r => r.promise()).returns(async()=><any>response);
+    return mock;
+}
