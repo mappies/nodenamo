@@ -5,6 +5,7 @@ import { Reflector } from "./reflector";
 import { NodenamoError } from "./errors/nodenamoError";
 import { Get } from "./queries/get/get";
 import { Find } from "./queries/find/find";
+import { Delete } from "./queries/delete/delete";
 
 export class NodeNamo
 {
@@ -31,5 +32,10 @@ export class NodeNamo
     find(): Find
     {
         return new Find(new DynamoDbManager(this.client));
+    }
+
+    delete(id:string|number): Delete
+    {
+        return new Delete(new DynamoDbManager(this.client), id);
     }
 };
