@@ -18,11 +18,14 @@ export class DynamoDbManager
 
         let representations = RepresentationFactory.get(obj);
 
-        let additionalParams:any = {};
+        let additionalParams:any = {
+            ConditionExpression: '(attribute_not_exists(#hash) AND attribute_not_exists(#range))',
+            ExpressionAttributeNames: {'#hash': Const.HashColumn, '#range': Const.RangeColumn}
+        };
 
         if(params && params.conditionExpression)
         {
-            additionalParams['ConditionExpression'] = params.conditionExpression;
+            additionalParams['ConditionExpression'] =  ` AND (${params.conditionExpression})`;
         }
 
         if(params && params.expressionAttributeValues)
@@ -34,7 +37,7 @@ export class DynamoDbManager
         if(params && params.expressionAttributeNames)
         {
             changeColumnNames(obj, params.expressionAttributeNames)
-            additionalParams['ExpressionAttributeNames'] = params.expressionAttributeNames;
+            additionalParams['ExpressionAttributeNames'] = Object.assign(params.expressionAttributeNames, additionalParams['ExpressionAttributeNames']);
         }
 
         for(let representation of representations)
