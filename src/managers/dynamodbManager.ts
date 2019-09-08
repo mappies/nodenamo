@@ -234,7 +234,7 @@ function addColumnValuePrefix(obj:object, expressionAttributeValues:object): voi
     //When there is no hashes, ID is the hash
     if(hashes.length === 0) hashes.push(Reflector.getIdKey(obj));
 
-    let columnsWithPrefix = [...hashes, id];
+    let columnsWithPrefix = [...hashes, id, Const.HashColumn, Const.IdColumn];
 
     for(let key of Object.keys(expressionAttributeValues))
     {
