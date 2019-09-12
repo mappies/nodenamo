@@ -4,6 +4,7 @@ import { RepresentationFactory } from '../representationFactory';
 import { Reflector } from '../reflector';
 import Const from '../const';
 import { EntityFactory } from '../entityFactory';
+import { NodenamoError } from '../errors/nodenamoError';
 
 export class DynamoDbManager
 {
@@ -185,10 +186,14 @@ export class DynamoDbManager
         }
 
         //Must assign data to `instance` so it has @DBColumn() and @DBTable() metadata.
-        let desiredObject = Object.assign(Object.assign(instance, rows[0]), obj);
+        let desiredObject = Object.assign(instance, Object.assign(Object.assign({}, rows[0]), obj));
         
         let newRepresentations = RepresentationFactory.get(desiredObject)
 
+        if(newRepresentations.length === 0)
+        {
+            throw new NodenamoError(`Could not create a data representation for '${JSON.stringify(obj)}'.  Try adding @DBColumn({hash:true}) to one its column.`);
+        }
         transaction = transaction || new DynamoDbTransaction(this.client);
 
         //Update/delete rows
