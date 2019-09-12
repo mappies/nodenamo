@@ -144,6 +144,87 @@ export class DynamoDbManager
         return {items: Object.values(result), lastEvaluatedKey: response.LastEvaluatedKey}
     }
 
+    async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction)
+    {
+        let instance = new type();
+        let tableName = Reflector.getTableName(instance);
+
+        //Setup additionalParams
+        let additionalParams = {};
+        if(params && params.conditionExpression)
+        {
+            additionalParams['ConditionExpression'] =  `${params.conditionExpression}`;
+        }
+
+        if(params && params.expressionAttributeValues)
+        {
+            addColumnValuePrefix(obj, params.expressionAttributeValues);
+            additionalParams['ExpressionAttributeValues'] = params.expressionAttributeValues;
+        }
+
+        if(params && params.expressionAttributeNames)
+        {
+            changeColumnNames(obj, params.expressionAttributeNames)
+            additionalParams['ExpressionAttributeNames'] = params.expressionAttributeNames;
+        }
+
+        //Calculate new representations
+        let rows = await this.getById(id, type); 
+
+        if(rows.length === 0)
+        {
+            throw new Error(`The object '${id}' could not be found.`);
+        }
+
+        let getKey = (o:object) => `${o[Const.HashColumn]}|${o[Const.RangeColumn]}`;
+
+        let currentRepresentationKeys = {};
+        for(let row of rows)
+        {
+            currentRepresentationKeys[getKey(row)] = row;
+        }
+
+        //Must assign data to `instance` so it has @DBColumn() and @DBTable() metadata.
+        let desiredObject = Object.assign(Object.assign(instance, rows[0]), obj);
+        
+        let newRepresentations = RepresentationFactory.get(desiredObject)
+
+        transaction = transaction || new DynamoDbTransaction(this.client);
+
+        //Update/delete rows
+        for(let representation of newRepresentations)
+        {
+            let representationKey = getKey(representation);
+
+            let putParams = {
+                TableName: tableName,
+                Item: representation.data,
+                ...additionalParams
+            };
+            
+            transaction.add({Put: putParams});
+
+            delete currentRepresentationKeys[representationKey];
+        }
+
+        //Delete entries with old keys
+        for(let entry of Object.values(currentRepresentationKeys))
+        {
+            let deleteParam = {
+                TableName: tableName,
+                Key: {}
+            }
+
+            deleteParam.Key[Const.HashColumn] = entry[Const.HashColumn];
+            deleteParam.Key[Const.RangeColumn] = entry[Const.RangeColumn];
+            
+            transaction.add({Delete: deleteParam});
+        }
+
+        await transaction.commit();
+    }
+
+
     async delete<T extends object>(type:{new(...args: any[]):T}, id:string|number,  params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
     {
         let obj:T = new type();
@@ -168,7 +249,7 @@ export class DynamoDbManager
             additionalParams['ExpressionAttributeNames'] = params.expressionAttributeNames;
         }
 
-        let rows = await this.getById(type, id);
+        let rows = await this.getById(id, type);
 
         transaction = transaction || new DynamoDbTransaction(this.client);
 
@@ -189,7 +270,7 @@ export class DynamoDbManager
         await transaction.commit();
     }
 
-    private async getById<T extends object>(type:{new(...args: any[]):T}, id:string|number): Promise<object[]>
+    private async getById<T extends object>(id:string|number, type?:{new(...args: any[]):T}): Promise<object[]>
     {
         let obj:T = new type();
         let tableName = Reflector.getTableName(obj);
