@@ -24,9 +24,9 @@ describe('Queury.Add', function ()
 
     it('execute()', async ()=>
     {
-        mockedManager.setup(m => m.put(It.isAny(), undefined)).callback(()=>called=true);
+        mockedManager.setup(m => m.put(Entity, {id:1}, undefined)).callback(()=>called=true);
 
-        let put = new Add(mockedManager.object, new Entity());
+        let put = new Add(mockedManager.object, {id:1}).into(Entity);
         await put.execute();
 
         assert.isTrue(called);
@@ -34,13 +34,13 @@ describe('Queury.Add', function ()
 
     it('where()', async ()=>
     {
-        mockedManager.setup(m => m.put(It.isAny(), {
+        mockedManager.setup(m => m.put(Entity, {id:1}, {
             conditionExpression:'condition', 
             expressionAttributeNames: {name: 'n'},
             expressionAttributeValues: {value: 'v'}
         })).callback(()=>called=true);
 
-        let put = new Add(mockedManager.object, new Entity());
+        let put = new Add(mockedManager.object, {id:1}).into(Entity);
         await put.where('condition', {'name':'n'}, {'value':'v'}).execute();
 
         assert.isTrue(called);

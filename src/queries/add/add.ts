@@ -1,6 +1,7 @@
 import { Execute } from './execute';
 import { DynamoDbManager } from '../../managers/dynamodbManager';
 import { Where } from './where';
+import { Into } from './into';
 
 export class Add 
 {
@@ -9,13 +10,8 @@ export class Add
         return this;
     }
 
-    where(conditionExpression:string, expressionAttributeNames?:object, expressionAttributeValues?:object): Where
+    into(type:{new(...args: any[])}): Into
     {
-        return new Where(this.manager, this.obj, {conditionExpression, expressionAttributeNames, expressionAttributeValues})
-    }
-
-    async execute(): Promise<void>
-    {
-        return await new Execute(this.manager, this.obj).execute();
+        return new Into(this.manager, type, this.obj);
     }
 };

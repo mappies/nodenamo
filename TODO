@@ -1,3 +1,2 @@
 * @DBColumn({range:['key1','key2']})
 * @DBColumn({keyIndex:number})
-* Add a plain object Add({}).into(type)

@@ -13,11 +13,12 @@ export class DynamoDbManager
         
     }
 
-    async put(obj:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction)
+    async put<T extends object>(type:{new(...args: any[]):T}, object:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction)
     {
         transaction = transaction || new DynamoDbTransaction(this.client);
 
-        let representations = RepresentationFactory.get(obj);
+        let instance = Object.assign(new type(), object);
+        let representations = RepresentationFactory.get(instance);
 
         let additionalParams:any = {
             ConditionExpression: '(attribute_not_exists(#hash) AND attribute_not_exists(#range))',
@@ -31,13 +32,13 @@ export class DynamoDbManager
 
         if(params && params.expressionAttributeValues)
         {
-            addColumnValuePrefix(obj, params.expressionAttributeValues);
+            addColumnValuePrefix(instance, params.expressionAttributeValues);
             additionalParams['ExpressionAttributeValues'] = params.expressionAttributeValues;
         }
 
         if(params && params.expressionAttributeNames)
         {
-            changeColumnNames(obj, params.expressionAttributeNames)
+            changeColumnNames(instance, params.expressionAttributeNames)
             additionalParams['ExpressionAttributeNames'] = Object.assign(params.expressionAttributeNames, additionalParams['ExpressionAttributeNames']);
         }
 
