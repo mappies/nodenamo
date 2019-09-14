@@ -7,6 +7,7 @@ import { Get } from "./queries/get/get";
 import { Find } from "./queries/find/find";
 import { Delete } from "./queries/delete/delete";
 import { List } from "./queries/find/list";
+import { Update } from './queries/update/update';
 
 export class NodeNamo
 {
@@ -38,6 +39,11 @@ export class NodeNamo
     find(): Find
     {
         return new Find(new DynamoDbManager(this.client));
+    }
+
+    update(obj:object): Update
+    {
+        return new Update(new DynamoDbManager(this.client), obj);
     }
 
     delete(id:string|number): Delete

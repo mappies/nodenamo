@@ -174,7 +174,7 @@ export class DynamoDbManager
 
         if(rows.length === 0)
         {
-            throw new Error(`The object '${id}' could not be found.`);
+            throw new Error(`Could not update the object '${id}' because it could not be found.`);
         }
 
         let getKey = (o:object) => `${o[Const.HashColumn]}|${o[Const.RangeColumn]}`;
