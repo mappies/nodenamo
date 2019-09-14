@@ -1,5 +1,4 @@
 import {assert as assert} from 'chai';
-import { Add } from '../src/queries/add/add';
 import { DynamoDbManager } from '../src/managers/dynamodbManager';
 import { IMock, Mock, It } from 'typemoq';
 import { DBTable } from '../src/dbTable';

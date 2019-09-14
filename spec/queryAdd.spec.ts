@@ -1,5 +1,5 @@
 import {assert as assert} from 'chai';
-import { Add } from '../src/queries/add/add';
+import { Insert } from '../src/queries/insert/insert';
 import { DynamoDbManager } from '../src/managers/dynamodbManager';
 import { IMock, Mock, It } from 'typemoq';
 import { DBTable } from '../src/dbTable';
@@ -11,7 +11,7 @@ class Entity {
     id:number = 123;
 };
 
-describe('Queury.Add', function () 
+describe('Queury.Insert', function () 
 {
     let called:boolean;
     let mockedManager:IMock<DynamoDbManager>;
@@ -26,7 +26,7 @@ describe('Queury.Add', function ()
     {
         mockedManager.setup(m => m.put(Entity, {id:1}, undefined)).callback(()=>called=true);
 
-        let put = new Add(mockedManager.object, {id:1}).into(Entity);
+        let put = new Insert(mockedManager.object, {id:1}).into(Entity);
         await put.execute();
 
         assert.isTrue(called);
@@ -40,7 +40,7 @@ describe('Queury.Add', function ()
             expressionAttributeValues: {value: 'v'}
         })).callback(()=>called=true);
 
-        let put = new Add(mockedManager.object, {id:1}).into(Entity);
+        let put = new Insert(mockedManager.object, {id:1}).into(Entity);
         await put.where('condition', {'name':'n'}, {'value':'v'}).execute();
 
         assert.isTrue(called);
