@@ -22,6 +22,8 @@ export class ValidatedDynamoDbManager
 
     async getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number): Promise<T>
     {
+        validateType(type);
+        
         return await this.manager.getOne(type, id);
     }
 
@@ -44,7 +46,7 @@ export class ValidatedDynamoDbManager
     {
         validateType(type);
         validateConditionExpression(type, param);
-        
+
         await this.manager.delete(type, id, param);
     }
 }
