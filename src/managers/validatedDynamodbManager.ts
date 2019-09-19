@@ -42,6 +42,9 @@ export class ValidatedDynamoDbManager
 
     async delete<T extends object>(type:{new(...args: any[]):T}, id:string|number,  param?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
     {
+        validateType(type);
+        validateConditionExpression(type, param);
+        
         await this.manager.delete(type, id, param);
     }
 }
