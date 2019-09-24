@@ -4,6 +4,7 @@ import { DynamoDbManager } from './dynamodbManager';
 import { Reflector } from '../reflector';
 import { ValidationError } from '../errors/validationError';
 import { isNullOrUndefined } from 'util';
+import Const from '../const';
 
 export class ValidatedDynamoDbManager
 {
@@ -38,6 +39,10 @@ export class ValidatedDynamoDbManager
 
     async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, param?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction)
     {
+        validateType(type);
+        validateConditionExpression(type, param);
+        validateImmutableProperties(type, obj);
+
         await this.manager.update(type, id, obj, param);
     }
 
@@ -109,6 +114,31 @@ function validateConditionExpression<T extends object>(type:{new(...args: any[])
             {
                 throw new ValidationError(`Invalid value of '${key}'.  Expected a value but found '${value}'`);
             }
+        }
+    }
+}
+
+function validateImmutableProperties<T extends object>(type:{new(...args: any[]):T}, obj:object)
+{
+    let idProperty = Reflector.getIdKey(new type());
+
+    let immutableProperties = [Const.IdColumn.toLowerCase()];
+    
+    //customName#propertyname
+    if(idProperty.includes('#'))
+    {
+        immutableProperties = immutableProperties.concat(idProperty.split('#').map(p => p.toLowerCase()));
+    }
+    else
+    {
+        immutableProperties.push(idProperty);
+    }
+
+    for(let propertyName of Object.keys(obj))
+    {
+        if(immutableProperties.includes(propertyName.toLowerCase()))
+        {
+            throw new ValidationError(`Immutable property '${propertyName}' could not be updated.`);
         }
     }
 }

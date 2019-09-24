@@ -23,7 +23,7 @@ class Entity {
     realProperty:string = 'something else';
 };
 
-describe('ValidationDynamoDbManager - Add()', function () 
+describe('ValidationDynamoDbManager - Update()', function () 
 {
     let mockedManager:IMock<DynamoDbManager>;
     let called:boolean;
@@ -32,7 +32,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
     beforeEach(()=>
     {
         mockedManager = Mock.ofType<DynamoDbManager>();
-        mockedManager.setup(m => m.put(It.isAny(), It.isAny(), It.isAny())).callback(()=>called=true);
+        mockedManager.setup(m => m.update(Entity, 42, It.isAny(), It.isAny())).callback(()=>called=true);
 
         manager = new ValidatedDynamoDbManager(mockedManager.object);
 
@@ -44,7 +44,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
     {
         it('valid', async ()=>
         {
-            await manager.put(Entity, {});
+            await manager.update(Entity, 42, {});
 
             assert.isTrue(called);
             assert.isUndefined(error)
@@ -54,7 +54,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
         {
             try
             {
-                await manager.put(<any>{}, {});
+                await manager.update(<any>{}, 42, {});
             }
             catch(e) { error = e; }
 
@@ -66,7 +66,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
         {
             try
             {
-                await manager.put(<any>[], {});
+                await manager.update(<any>[], 42, {});
             }
             catch(e) { error = e; }
 
@@ -78,7 +78,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
         {
             try
             {
-                await manager.put(<any>false, {});
+                await manager.update(<any>false, 42, {});
             }
             catch(e) { error = e; }
 
@@ -90,7 +90,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
         {
             try
             {
-                await manager.put(<any>42, {});
+                await manager.update(<any>42, 42, {});
             }
             catch(e) { error = e; }
 
@@ -107,7 +107,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
             }
             try
             {
-                await manager.put(Empty, {});
+                await manager.update(Empty, 42, {});
             }
             catch(e) { error = e; }
 
@@ -125,7 +125,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
             }
             try
             {
-                await manager.put(Empty, {});
+                await manager.update(Empty, 42, {});
             }
             catch(e) { error = e; }
 
@@ -137,14 +137,14 @@ describe('ValidationDynamoDbManager - Add()', function ()
     {
         it('valid params - undefined', async () =>
         {
-            await manager.put(Entity, {}, undefined);
+            await manager.update(Entity, 42, {}, undefined);
 
             assert.isTrue(called);
             assert.isUndefined(error)
         });
         it('valid', async () =>
         {
-            await manager.put(Entity, {}, {conditionExpression: 'something'});
+            await manager.update(Entity, 42, {}, {conditionExpression: 'something'});
 
             assert.isTrue(called);
             assert.isUndefined(error)
@@ -154,7 +154,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
         {
             try
             {
-                await manager.put(Entity, {}, {conditionExpression:undefined});
+                await manager.update(Entity, 42, {}, {conditionExpression:undefined});
             }
             catch(e) { error = e; }
 
@@ -167,7 +167,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
     {
         it('valid - undefined param', async () =>
         {
-            await manager.put(Entity, {}, undefined);
+            await manager.update(Entity, 42, {}, undefined);
 
             assert.isTrue(called);
             assert.isUndefined(error)
@@ -175,7 +175,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
 
         it('valid - hash/range property', async () =>
         {
-            await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'hashProperty', "#m": 'rangeProperty'}});
+            await manager.update(Entity, 42, {}, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'hashProperty', "#m": 'rangeProperty'}});
             
             assert.isTrue(called);
             assert.isUndefined(error);
@@ -183,7 +183,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
 
         it('valid - using the real property name instead of a custom name', async () =>
         {
-            await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'realProperty'}});
+            await manager.update(Entity, 42, {}, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'realProperty'}});
 
             assert.isTrue(called);
             assert.isUndefined(error);
@@ -193,7 +193,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
         {
             try
             {
-                await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'nonexistent'}});
+                await manager.update(Entity, 42, {}, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'nonexistent'}});
             }
             catch(e) { error = e; }
 
@@ -205,7 +205,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
         {
             try
             {
-                await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'regularProperty'}});
+                await manager.update(Entity, 42, {}, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'regularProperty'}});
             }
             catch(e) { error = e; }
 
@@ -217,7 +217,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
         {
             try
             {
-                await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'customProperty'}});
+                await manager.update(Entity, 42, {}, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'customProperty'}});
             }
             catch(e) { error = e; }
 
@@ -238,7 +238,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
                 ':f': false,
                 ':a': []
             }
-            await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeValues: values});
+            await manager.update(Entity, 42, {}, {conditionExpression: 'condition', expressionAttributeValues: values});
         
             assert.isTrue(called);
             assert.isUndefined(error);
@@ -248,7 +248,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
         {
             try
             {
-                await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeValues: {':v': undefined}});
+                await manager.update(Entity, 42, {}, {conditionExpression: 'condition', expressionAttributeValues: {':v': undefined}});
             }
             catch(e) { error = e; }
 
@@ -260,7 +260,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
         {
             try
             {
-                await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeValues: {':v': null}});
+                await manager.update(Entity, 42, {}, {conditionExpression: 'condition', expressionAttributeValues: {':v': null}});
             }
             catch(e) { error = e; }
 
@@ -272,7 +272,43 @@ describe('ValidationDynamoDbManager - Add()', function ()
         {
             try
             {
-                await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeValues: {':v': NaN}});
+                await manager.update(Entity, 42, {}, {conditionExpression: 'condition', expressionAttributeValues: {':v': NaN}});
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+    });
+
+    describe('data', () =>
+    {
+        it('invalid - immutable property', async () =>
+        {
+            
+            try
+            {
+                await manager.update(Entity, 42, {id:99});
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+
+        it('invalid - immutable property (custom named)', async () =>
+        {
+            @DBTable()
+            class CustomIdEntity {
+                @DBColumn({id:true,name:'customId'})
+                id:number = 123;
+                @DBColumn({hash:true})
+                hash:string;
+            }
+
+            try
+            {
+                await manager.update(CustomIdEntity, 42, {CuStOmId:99});
             }
             catch(e) { error = e; }
 

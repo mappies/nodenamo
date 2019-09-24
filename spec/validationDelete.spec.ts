@@ -228,7 +228,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
 
     describe('expressionAttributeValues', () =>
     {
-        it('Valid', async () =>
+        it('valid', async () =>
         {
             let values = {
                 ':s': '',
