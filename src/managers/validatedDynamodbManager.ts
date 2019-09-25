@@ -16,7 +16,7 @@ export class ValidatedDynamoDbManager
     async put<T extends object>(type:{new(...args: any[]):T}, object:object, param?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
     {
         validateType(type);
-        validateConditionExpression(type, param);
+        validateKeyConditionExpression(type, param);
 
         await this.manager.put(type, object, param);
     }
@@ -34,13 +34,17 @@ export class ValidatedDynamoDbManager
                                  params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key})
                                  : Promise<{items:T[], lastEvaluatedKey: DocumentClient.Key}>
     {
+        validateType(type);
+        validateKeyConditionExpression(type, keyParams);
+        validateFilterConditionExpression(type, filterParams);
+
         return await this.manager.find(type, keyParams, filterParams, params);
     }
 
     async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, param?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction)
     {
         validateType(type);
-        validateConditionExpression(type, param);
+        validateKeyConditionExpression(type, param);
         validateImmutableProperties(type, obj);
 
         await this.manager.update(type, id, obj, param);
@@ -50,7 +54,7 @@ export class ValidatedDynamoDbManager
     async delete<T extends object>(type:{new(...args: any[]):T}, id:string|number,  param?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
     {
         validateType(type);
-        validateConditionExpression(type, param);
+        validateKeyConditionExpression(type, param);
 
         await this.manager.delete(type, id, param);
     }
@@ -77,18 +81,31 @@ function validateType<T extends object>(type:{new(...args: any[]):T})
     }
 }
 
-function validateConditionExpression<T extends object>(type:{new(...args: any[]):T}, param:{conditionExpression?:string, expressionAttributeNames?:object, expressionAttributeValues?:object})
+function validateKeyConditionExpression<T extends object>(type:{new(...args: any[]):T}, param:{keyConditions?:string, conditionExpression?:string, expressionAttributeNames?:object, expressionAttributeValues?:object})
 {
     if(param === undefined) return;
     
     let instance = new type();
     let hashes = Reflector.getHashKeys(instance).map(hash => hash.includes('#') ? hash.split('#')[1] : hash);
     let ranges = Reflector.getRangeKeys(instance).map(range => range.includes('#') ? range.split('#')[1] : range);
+    let columns = Reflector.getColumns(instance).map(column => column.includes('#') ? column.split('#')[1] : column);
 
     //conditionExpression
-    if(param.conditionExpression === undefined || param.conditionExpression.trim().length === 0)
+    if('conditionExpression' in param)
     {
-        throw new ValidationError(`ConditionExpression is not specified in ${JSON.stringify(param)}`);
+        if(param.conditionExpression === undefined || param.conditionExpression.trim().length === 0)
+        {
+            throw new ValidationError(`ConditionExpression is not specified in ${JSON.stringify(param)}`);
+        }
+    }
+
+    //keyConditions
+    if('keyConditions' in param)
+    {
+        if(param.keyConditions === undefined || param.keyConditions.trim().length === 0)
+        {
+            throw new ValidationError(`KeyConditions is not specified in ${JSON.stringify(param)}`);
+        }
     }
 
     //expressionAttributeNames
@@ -96,9 +113,66 @@ function validateConditionExpression<T extends object>(type:{new(...args: any[])
     {
         for(let columnName of Object.values(param.expressionAttributeNames))
         {
+            if(!columns.includes(columnName))
+            {
+                throw new ValidationError(`The property '${columnName}' specified in ExpressionAttributeNames is not a column.`);
+            }
+
             if(!hashes.includes(columnName) && !ranges.includes(columnName))
             {
-                throw new ValidationError(`The property '${columnName}' specified in ExpressionAttributeNames does not exists.`);
+                throw new ValidationError(`The regular property '${columnName}' could not be used. A hash or a range property is expected.`);
+            }
+        }
+    }
+
+    //expressionAttributeValues
+    if(param.expressionAttributeValues)
+    {
+        for(let key of Object.keys(param.expressionAttributeValues))
+        {
+            let value = param.expressionAttributeValues[key];
+
+            if(isNullOrUndefined(value) || isNaN(value))
+            {
+                throw new ValidationError(`Invalid value of '${key}'.  Expected a value but found '${value}'`);
+            }
+        }
+    }
+}
+
+function validateFilterConditionExpression<T extends object>(type:{new(...args: any[]):T}, param:{filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object})
+{
+    if(param === undefined) return;
+    
+    let instance = new type();
+    let hashes = Reflector.getHashKeys(instance).map(hash => hash.includes('#') ? hash.split('#')[1] : hash);
+    let ranges = Reflector.getRangeKeys(instance).map(range => range.includes('#') ? range.split('#')[1] : range);
+    let columns = Reflector.getColumns(instance).map(column => column.includes('#') ? column.split('#')[1] : column);
+
+    //filterExpression
+    if(param.filterExpression === undefined || param.filterExpression.trim().length === 0)
+    {
+        throw new ValidationError(`FilterExpression is not specified in ${JSON.stringify(param)}`);
+    }
+
+    //expressionAttributeNames
+    if(param.expressionAttributeNames)
+    {
+        for(let columnName of Object.values(param.expressionAttributeNames))
+        {
+            if(!columns.includes(columnName))
+            {
+                throw new ValidationError(`The property '${columnName}' specified in ExpressionAttributeNames is not a column.`);
+            }
+
+            if(hashes.includes(columnName))
+            {
+                throw new ValidationError(`The hash property '${columnName}' could not be used in a filter expression. Try using it in a keyConditions expression instead.`);
+            }
+
+            if(ranges.includes(columnName))
+            {
+                throw new ValidationError(`The hash property '${columnName}' could not be used in a filter expression. Try using it in a keyConditions expression instead.`);
             }
         }
     }
