@@ -11,7 +11,7 @@ class Entity {
     id:number = 123;
 };
 
-describe('Queury.Delete', function () 
+describe('Query.Delete', function () 
 {
     let called:boolean;
     let mockedManager:IMock<DynamoDbManager>;

@@ -13,12 +13,12 @@ export class ValidatedDynamoDbManager
         
     }
 
-    async put<T extends object>(type:{new(...args: any[]):T}, object:object, param?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
+    async put<T extends object>(type:{new(...args: any[]):T}, object:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
     {
         validateType(type);
-        validateKeyConditionExpression(type, param);
+        validateKeyConditionExpression(type, params);
 
-        await this.manager.put(type, object, param);
+        await this.manager.put(type, object, params);
     }
 
     async getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number): Promise<T>
@@ -41,22 +41,36 @@ export class ValidatedDynamoDbManager
         return await this.manager.find(type, keyParams, filterParams, params);
     }
 
-    async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, param?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction)
+    async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction)
     {
         validateType(type);
-        validateKeyConditionExpression(type, param);
+        validateKeyConditionExpression(type, params);
         validateImmutableProperties(type, obj);
 
-        await this.manager.update(type, id, obj, param);
+        await this.manager.update(type, id, obj, params);
     }
 
 
-    async delete<T extends object>(type:{new(...args: any[]):T}, id:string|number,  param?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
+    async delete<T extends object>(type:{new(...args: any[]):T}, id:string|number,  params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
     {
         validateType(type);
-        validateKeyConditionExpression(type, param);
+        validateKeyConditionExpression(type, params);
 
-        await this.manager.delete(type, id, param);
+        await this.manager.delete(type, id, params);
+    }
+
+    async createTable<T extends object>(type?:{new(...args: any[]):T}, params?:{onDemand?:boolean, readCapacityUnits?:number, writeCapacityUnits?:number}): Promise<void>
+    {
+        validateType(type);
+
+        await this.manager.createTable(type, params);
+    }
+
+    async deleteTable<T extends object>(type?:{new(...args: any[]):T}): Promise<void>
+    {
+        validateType(type);
+        
+        await this.manager.deleteTable(type);
     }
 }
 

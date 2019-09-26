@@ -5,6 +5,7 @@ import { Reflector } from '../reflector';
 import Const from '../const';
 import { EntityFactory } from '../entityFactory';
 import { NodenamoError } from '../errors/nodenamoError';
+import { DynamoDB } from 'aws-sdk/clients/all';
 
 export class DynamoDbManager
 {
@@ -308,6 +309,60 @@ export class DynamoDbManager
         while(query.ExclusiveStartKey);
 
         return result;
+    }
+
+    async createTable<T extends object>(type?:{new(...args: any[]):T}, params?:{onDemand?:boolean, readCapacityUnits?:number, writeCapacityUnits?:number}, dynamoDb?:DynamoDB): Promise<void>
+    {
+        let query = {
+            AttributeDefinitions: [ 
+                { AttributeName: 'objid', AttributeType: 'S' },
+                { AttributeName: 'hash', AttributeType: 'S' },
+                { AttributeName: 'range', AttributeType: 'S' }
+            ],
+            KeySchema: [
+                { AttributeName: 'hash', KeyType: 'HASH' },
+                { AttributeName: 'range', KeyType: 'RANGE' }
+            ],
+            GlobalSecondaryIndexes: [
+                { 
+                    IndexName: 'objid-index', 
+                    KeySchema: [ 
+                        { AttributeName: "objid", KeyType: "HASH" }
+                    ],
+                    Projection: {
+                        ProjectionType: "ALL"
+                    }
+                }
+            ],
+
+            TableName: Reflector.getTableName(new type())
+        }
+
+        if(params && params.onDemand)
+        {
+            query['BillingMode'] = 'PAY_PER_REQUEST';
+        }
+
+        if(params && (params.readCapacityUnits || params.writeCapacityUnits))
+        {
+            query['BillingMode'] = 'PROVISIONED';
+            query['ProvisionedThroughput'] = {
+                ReadCapacityUnits: params.readCapacityUnits,
+                WriteCapacityUnits: params.writeCapacityUnits
+            };
+            query['GlobalSecondaryIndexes'][0]['ProvisionedThroughput'] = Object.assign({}, query['ProvisionedThroughput']);
+        }
+        
+        await (dynamoDb || new DynamoDB(this.client['options'])).createTable(query).promise();
+    }
+
+    async deleteTable<T extends object>(type?:{new(...args: any[]):T}, dynamoDb?:DynamoDB): Promise<void>
+    {
+        let query = {
+            TableName: Reflector.getTableName(new type())
+        };
+
+        await (dynamoDb || new DynamoDB(this.client['options'])).deleteTable(query).promise();
     }
 }
 

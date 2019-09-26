@@ -388,7 +388,7 @@ describe('ValidationDynamoDbManager - Find()', function ()
             {
                 await manager.find(Entity, undefined, {filterExpression: 'condition', expressionAttributeNames: {'#n': 'customRealProperty'}});
             }
-            catch(e) { error = e; console.log(e)}
+            catch(e) { error = e; }
 
             assert.isFalse(called);
             assert.instanceOf(error, ValidationError);

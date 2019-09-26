@@ -3,15 +3,15 @@ import { DynamoDbManager } from '../src/managers/dynamodbManager';
 import { IMock, Mock, It } from 'typemoq';
 import { DBTable } from '../src/dbTable';
 import { DBColumn } from '../src/dbColumn';
-import { Get } from '../src/queries/get/get';
+import { DeleteTable } from '../src/queries/deleteTable/deleteTable';
 
 @DBTable()
 class Entity {
     @DBColumn({hash:true})
-    id:number = 42;
+    id:number = 123;
 };
 
-describe('Query.Get', function () 
+describe('Query.DeleteTable', function () 
 {
     let called:boolean;
     let mockedManager:IMock<DynamoDbManager>;
@@ -24,10 +24,10 @@ describe('Query.Get', function ()
 
     it('execute()', async ()=>
     {
-        mockedManager.setup(m => m.getOne(Entity, 42)).callback(()=>called=true);
+        mockedManager.setup(m => m.deleteTable(Entity)).callback(()=>called=true);
 
-        let get = new Get(mockedManager.object, 42).from(Entity);
-        await get.execute();
+        let query = new DeleteTable(mockedManager.object).for(Entity);
+        await query.execute();
 
         assert.isTrue(called);
     });

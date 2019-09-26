@@ -11,7 +11,7 @@ class Entity {
     id:number = 123;
 };
 
-describe('Queury.Update', function () 
+describe('Query.Update', function () 
 {
     let called:boolean;
     let mockedManager:IMock<DynamoDbManager>;

@@ -21,7 +21,7 @@ class Entity {
     }
 };
 
-describe('Queury.Find', function () 
+describe('Query.Find', function () 
 {
     let called:boolean;
     let mockedManager:IMock<DynamoDbManager>;

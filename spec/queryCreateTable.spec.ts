@@ -1,9 +1,9 @@
 import {assert as assert} from 'chai';
-import { Insert } from '../src/queries/insert/insert';
 import { DynamoDbManager } from '../src/managers/dynamodbManager';
 import { IMock, Mock, It } from 'typemoq';
 import { DBTable } from '../src/dbTable';
 import { DBColumn } from '../src/dbColumn';
+import { CreateTable } from '../src/queries/createTable/createTable';
 
 @DBTable()
 class Entity {
@@ -11,7 +11,7 @@ class Entity {
     id:number = 123;
 };
 
-describe('Query.Insert', function () 
+describe('Query.CreateTable', function () 
 {
     let called:boolean;
     let mockedManager:IMock<DynamoDbManager>;
@@ -24,24 +24,24 @@ describe('Query.Insert', function ()
 
     it('execute()', async ()=>
     {
-        mockedManager.setup(m => m.put(Entity, {id:1}, undefined)).callback(()=>called=true);
+        mockedManager.setup(m => m.createTable(Entity, {onDemand:true})).callback(()=>called=true);
 
-        let put = new Insert(mockedManager.object, {id:1}).into(Entity);
-        await put.execute();
+        let query = new CreateTable(mockedManager.object).for(Entity);
+        await query.execute();
 
         assert.isTrue(called);
     });
 
-    it('where()', async ()=>
+    it('withCapacityOf()', async ()=>
     {
-        mockedManager.setup(m => m.put(Entity, {id:1}, {
-            conditionExpression:'condition', 
-            expressionAttributeNames: {name: 'n'},
-            expressionAttributeValues: {value: 'v'}
+        mockedManager.setup(m => m.createTable(Entity, {
+            onDemand: false, 
+            readCapacityUnits: 2,
+            writeCapacityUnits: 3
         })).callback(()=>called=true);
 
-        let put = new Insert(mockedManager.object, {id:1}).into(Entity);
-        await put.where('condition', {'name':'n'}, {'value':'v'}).execute();
+        let query = new CreateTable(mockedManager.object).for(Entity);
+        await query.withCapacityOf(2, 3).execute();
 
         assert.isTrue(called);
     });
