@@ -5,8 +5,9 @@ import { Reflector } from '../reflector';
 import { ValidationError } from '../errors/validationError';
 import { isNullOrUndefined } from 'util';
 import Const from '../const';
+import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
 
-export class ValidatedDynamoDbManager
+export class ValidatedDynamoDbManager implements IDynamoDbManager
 {
     constructor(private manager:DynamoDbManager)
     {
@@ -45,7 +46,6 @@ export class ValidatedDynamoDbManager
     {
         validateType(type);
         validateKeyConditionExpression(type, params);
-        validateImmutableProperties(type, obj);
 
         await this.manager.update(type, id, obj, params);
     }
@@ -89,10 +89,6 @@ function validateType<T extends object>(type:{new(...args: any[]):T})
     {
         throw new ValidationError(`Undefined ID property. Try adding @DBColumn({id:true}) to one of its property to represent a unique object ID.`);
     }
-    if(Reflector.getHashKeys(instance).length === 0)
-    {
-        throw new ValidationError(`Undefined Hash property. Try adding @DBColumn({hash:true}) to one of its property to represent a partition key for the object.`);
-    }
 }
 
 function validateKeyConditionExpression<T extends object>(type:{new(...args: any[]):T}, param:{keyConditions?:string, conditionExpression?:string, expressionAttributeNames?:object, expressionAttributeValues?:object})
@@ -103,6 +99,10 @@ function validateKeyConditionExpression<T extends object>(type:{new(...args: any
     let hashes = Reflector.getHashKeys(instance).map(hash => hash.includes('#') ? hash.split('#')[1] : hash);
     let ranges = Reflector.getRangeKeys(instance).map(range => range.includes('#') ? range.split('#')[1] : range);
     let columns = Reflector.getColumns(instance).map(column => column.includes('#') ? column.split('#')[1] : column);
+
+    hashes = [...hashes, Const.HashColumn];
+    ranges = [...ranges, Const.RangeColumn];
+    columns = [...columns, Const.HashColumn, Const.RangeColumn, Const.IdColumn];
 
     //conditionExpression
     if('conditionExpression' in param)
@@ -146,7 +146,7 @@ function validateKeyConditionExpression<T extends object>(type:{new(...args: any
         {
             let value = param.expressionAttributeValues[key];
 
-            if(isNullOrUndefined(value) || isNaN(value))
+            if(isNullOrUndefined(value) || (typeof value === 'number' && isNaN(value)))
             {
                 throw new ValidationError(`Invalid value of '${key}'.  Expected a value but found '${value}'`);
             }
@@ -198,35 +198,10 @@ function validateFilterConditionExpression<T extends object>(type:{new(...args: 
         {
             let value = param.expressionAttributeValues[key];
 
-            if(isNullOrUndefined(value) || isNaN(value))
+            if(isNullOrUndefined(value) || (typeof value === 'number' && isNaN(value)))
             {
                 throw new ValidationError(`Invalid value of '${key}'.  Expected a value but found '${value}'`);
             }
-        }
-    }
-}
-
-function validateImmutableProperties<T extends object>(type:{new(...args: any[]):T}, obj:object)
-{
-    let idProperty = Reflector.getIdKey(new type());
-
-    let immutableProperties = [Const.IdColumn.toLowerCase()];
-    
-    //customName#propertyname
-    if(idProperty.includes('#'))
-    {
-        immutableProperties = immutableProperties.concat(idProperty.split('#').map(p => p.toLowerCase()));
-    }
-    else
-    {
-        immutableProperties.push(idProperty);
-    }
-
-    for(let propertyName of Object.keys(obj))
-    {
-        if(immutableProperties.includes(propertyName.toLowerCase()))
-        {
-            throw new ValidationError(`Immutable property '${propertyName}' could not be updated.`);
         }
     }
 }

@@ -10,14 +10,16 @@ import { List } from "./queries/find/list";
 import { Update } from './queries/update/update';
 import { CreateTable } from './queries/createTable/createTable';
 import { DeleteTable } from './queries/deleteTable/deleteTable';
+import { ValidatedDynamoDbManager } from './managers/validatedDynamodbManager';
+import { IDynamoDbManager } from './interfaces/iDynamodbManager';
 
 export class NodeNamo
 {
-    private manager:DynamoDbManager;
+    private manager:IDynamoDbManager
 
     constructor(private client:DocumentClient)
     {
-        this.manager = new DynamoDbManager(this.client)
+        this.manager = new ValidatedDynamoDbManager(new DynamoDbManager(this.client));
     }
 
     insert(obj:object): Insert

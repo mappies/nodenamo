@@ -1,4 +1,4 @@
-import { DynamoDbManager } from "../../managers/dynamodbManager";
+import { IDynamoDbManager } from "../../interfaces/iDynamodbManager";
 import { Execute } from "./execute";
 import { Limit } from './limit';
 import { Using } from "./using";
@@ -11,7 +11,7 @@ export class By
 {
     private keyParams:any;
     
-    constructor(private manager:DynamoDbManager, 
+    constructor(private manager:IDynamoDbManager, 
                 private type:{new(...args: any[])}, 
                 hash:string|number|boolean, rangeValueBeginsWith?:string|number|boolean)
     {
@@ -26,7 +26,7 @@ export class By
         {
             this.keyParams['keyConditions'] +=  ' and begins_with(#range, :range)';
             this.keyParams['expressionAttributeNames']['#range'] = Const.RangeColumn;
-            this.keyParams['expressionAttributeValues'][':range'] = rangeValueBeginsWith;
+            this.keyParams['expressionAttributeValues'][':range'] = String(rangeValueBeginsWith);
         }
     }
 

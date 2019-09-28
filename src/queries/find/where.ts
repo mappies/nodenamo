@@ -1,4 +1,4 @@
-import { DynamoDbManager } from "../../managers/dynamodbManager";
+import { IDynamoDbManager } from "../../interfaces/iDynamodbManager";
 import { Execute } from "./execute";
 import { Limit } from './limit';
 import { Using } from "./using";
@@ -8,7 +8,7 @@ import { Filter } from "./filter";
 
 export class Where
 {
-    constructor(private manager:DynamoDbManager, 
+    constructor(private manager:IDynamoDbManager, 
                 private type:{new(...args: any[])}, 
                 private keyParams:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object})
     {

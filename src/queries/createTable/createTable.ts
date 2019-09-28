@@ -1,9 +1,9 @@
-import { DynamoDbManager } from "../../managers/dynamodbManager";
+import { IDynamoDbManager } from "../../interfaces/iDynamodbManager";
 import { For } from './for';
 
 export class CreateTable
 {
-    constructor(private manager:DynamoDbManager)
+    constructor(private manager:IDynamoDbManager)
     {
         return this;
     }

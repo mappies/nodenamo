@@ -1,9 +1,9 @@
-import { DynamoDbManager } from "../../managers/dynamodbManager";
+import { IDynamoDbManager } from '../../interfaces/iDynamodbManager';
 import { From } from './from';
 
 export class Get
 {
-    constructor(private manager:DynamoDbManager, private id:string|number)
+    constructor(private manager:IDynamoDbManager, private id:string|number)
     {
         return this;
     }

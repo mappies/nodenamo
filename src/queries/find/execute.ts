@@ -1,9 +1,9 @@
-import { DynamoDbManager } from "../../managers/dynamodbManager";
+import { IDynamoDbManager } from "../../interfaces/iDynamodbManager";
 import { DocumentClient } from "aws-sdk/clients/dynamodb";
 
 export class Execute
 {
-    constructor(private manager:DynamoDbManager, 
+    constructor(private manager:IDynamoDbManager, 
                 private type:{new(...args: any[])}, 
                 private keyParams:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
                 private filterParams?:{filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},

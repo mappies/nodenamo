@@ -1,9 +1,9 @@
 import {assert as assert} from 'chai';
-import { DynamoDbManager } from '../src/managers/dynamodbManager';
+import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
-import { DBTable, DBColumn } from '../src';
-import { ValidatedDynamoDbManager } from '../src/managers/validatedDynamodbManager';
-import { ValidationError } from '../src/errors/validationError';
+import { DBTable, DBColumn } from '../../src';
+import { ValidatedDynamoDbManager } from '../../src/managers/validatedDynamodbManager';
+import { ValidationError } from '../../src/errors/validationError';
 
 @DBTable()
 class Entity {
@@ -23,7 +23,7 @@ class Entity {
     realProperty:string = 'something else';
 };
 
-describe('ValidationDynamoDbManager - DeleteTable()', function () 
+describe('ValidationDynamoDbManager - CreateTable()', function () 
 {
     let mockedManager:IMock<DynamoDbManager>;
     let called:boolean;
@@ -32,7 +32,7 @@ describe('ValidationDynamoDbManager - DeleteTable()', function ()
     beforeEach(()=>
     {
         mockedManager = Mock.ofType<DynamoDbManager>();
-        mockedManager.setup(m => m.deleteTable(It.isAny())).callback(()=>called=true);
+        mockedManager.setup(m => m.createTable(It.isAny(), It.isAny())).callback(()=>called=true);
 
         manager = new ValidatedDynamoDbManager(mockedManager.object);
 
@@ -44,7 +44,7 @@ describe('ValidationDynamoDbManager - DeleteTable()', function ()
     {
         it('valid', async ()=>
         {
-            await manager.deleteTable(Entity);
+            await manager.createTable(Entity, {});
 
             assert.isTrue(called);
             assert.isUndefined(error)
@@ -54,7 +54,7 @@ describe('ValidationDynamoDbManager - DeleteTable()', function ()
         {
             try
             {
-                await manager.deleteTable(<any>{});
+                await manager.createTable(<any>{}, {});
             }
             catch(e) { error = e; }
 
@@ -66,7 +66,7 @@ describe('ValidationDynamoDbManager - DeleteTable()', function ()
         {
             try
             {
-                await manager.deleteTable(<any>[]);
+                await manager.createTable(<any>[], {});
             }
             catch(e) { error = e; }
 
@@ -78,7 +78,7 @@ describe('ValidationDynamoDbManager - DeleteTable()', function ()
         {
             try
             {
-                await manager.deleteTable(<any>false);
+                await manager.createTable(<any>false, {});
             }
             catch(e) { error = e; }
 
@@ -90,7 +90,7 @@ describe('ValidationDynamoDbManager - DeleteTable()', function ()
         {
             try
             {
-                await manager.deleteTable(<any>42);
+                await manager.createTable(<any>42, {});
             }
             catch(e) { error = e; }
 
@@ -107,25 +107,7 @@ describe('ValidationDynamoDbManager - DeleteTable()', function ()
             }
             try
             {
-                await manager.deleteTable(Empty);
-            }
-            catch(e) { error = e; }
-
-            assert.isFalse(called);
-            assert.instanceOf(error, ValidationError);
-        });
-
-        it('invalid - no hash property', async ()=>
-        {
-            @DBTable()
-            class Empty
-            {
-                @DBColumn({id:true})
-                id:number;
-            }
-            try
-            {
-                await manager.deleteTable(Empty);
+                await manager.createTable(Empty, {});
             }
             catch(e) { error = e; }
 

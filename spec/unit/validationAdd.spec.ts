@@ -1,9 +1,9 @@
 import {assert as assert} from 'chai';
-import { DynamoDbManager } from '../src/managers/dynamodbManager';
+import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
-import { DBTable, DBColumn } from '../src';
-import { ValidatedDynamoDbManager } from '../src/managers/validatedDynamodbManager';
-import { ValidationError } from '../src/errors/validationError';
+import { DBTable, DBColumn } from '../../src';
+import { ValidatedDynamoDbManager } from '../../src/managers/validatedDynamodbManager';
+import { ValidationError } from '../../src/errors/validationError';
 
 @DBTable()
 class Entity {
@@ -23,7 +23,7 @@ class Entity {
     realProperty:string = 'something else';
 };
 
-describe('ValidationDynamoDbManager - Delete()', function () 
+describe('ValidationDynamoDbManager - Add()', function () 
 {
     let mockedManager:IMock<DynamoDbManager>;
     let called:boolean;
@@ -32,7 +32,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
     beforeEach(()=>
     {
         mockedManager = Mock.ofType<DynamoDbManager>();
-        mockedManager.setup(m => m.delete(It.isAny(), 42, It.isAny())).callback(()=>called=true);
+        mockedManager.setup(m => m.put(It.isAny(), It.isAny(), It.isAny())).callback(()=>called=true);
 
         manager = new ValidatedDynamoDbManager(mockedManager.object);
 
@@ -44,7 +44,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
     {
         it('valid', async ()=>
         {
-            await manager.delete(Entity, 42);
+            await manager.put(Entity, {});
 
             assert.isTrue(called);
             assert.isUndefined(error)
@@ -54,7 +54,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
         {
             try
             {
-                await manager.delete(<any>{}, 42);
+                await manager.put(<any>{}, {});
             }
             catch(e) { error = e; }
 
@@ -66,7 +66,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
         {
             try
             {
-                await manager.delete(<any>[], 42);
+                await manager.put(<any>[], {});
             }
             catch(e) { error = e; }
 
@@ -78,7 +78,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
         {
             try
             {
-                await manager.delete(<any>false, 42);
+                await manager.put(<any>false, {});
             }
             catch(e) { error = e; }
 
@@ -90,7 +90,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
         {
             try
             {
-                await manager.delete(<any>42, 42);
+                await manager.put(<any>42, {});
             }
             catch(e) { error = e; }
 
@@ -107,25 +107,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
             }
             try
             {
-                await manager.delete(Empty, 42);
-            }
-            catch(e) { error = e; }
-
-            assert.isFalse(called);
-            assert.instanceOf(error, ValidationError);
-        });
-
-        it('invalid - no hash property', async ()=>
-        {
-            @DBTable()
-            class Empty
-            {
-                @DBColumn({id:true})
-                id:number;
-            }
-            try
-            {
-                await manager.delete(Empty, 42);
+                await manager.put(Empty, {});
             }
             catch(e) { error = e; }
 
@@ -137,14 +119,14 @@ describe('ValidationDynamoDbManager - Delete()', function ()
     {
         it('valid params - undefined', async () =>
         {
-            await manager.delete(Entity, 42, undefined);
+            await manager.put(Entity, {}, undefined);
 
             assert.isTrue(called);
             assert.isUndefined(error)
         });
         it('valid', async () =>
         {
-            await manager.delete(Entity, 42, {conditionExpression: 'something'});
+            await manager.put(Entity, {}, {conditionExpression: 'something'});
 
             assert.isTrue(called);
             assert.isUndefined(error)
@@ -154,7 +136,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
         {
             try
             {
-                await manager.delete(Entity, 42, {conditionExpression:undefined});
+                await manager.put(Entity, {}, {conditionExpression:undefined});
             }
             catch(e) { error = e; }
 
@@ -167,7 +149,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
     {
         it('valid - undefined param', async () =>
         {
-            await manager.delete(Entity, 42, undefined);
+            await manager.put(Entity, {}, undefined);
 
             assert.isTrue(called);
             assert.isUndefined(error)
@@ -175,7 +157,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
 
         it('valid - hash/range property', async () =>
         {
-            await manager.delete(Entity, 42, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'hashProperty', "#m": 'rangeProperty'}});
+            await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'hashProperty', "#m": 'rangeProperty'}});
             
             assert.isTrue(called);
             assert.isUndefined(error);
@@ -183,7 +165,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
 
         it('valid - using the real property name instead of a custom name', async () =>
         {
-            await manager.delete(Entity, 42, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'realProperty'}});
+            await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'realProperty'}});
 
             assert.isTrue(called);
             assert.isUndefined(error);
@@ -193,7 +175,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
         {
             try
             {
-                await manager.delete(Entity, 42, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'nonexistent'}});
+                await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'nonexistent'}});
             }
             catch(e) { error = e; }
 
@@ -205,7 +187,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
         {
             try
             {
-                await manager.delete(Entity, 42, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'regularProperty'}});
+                await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'regularProperty'}});
             }
             catch(e) { error = e; }
 
@@ -217,7 +199,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
         {
             try
             {
-                await manager.delete(Entity, 42, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'customProperty'}});
+                await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'customProperty'}});
             }
             catch(e) { error = e; }
 
@@ -238,7 +220,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
                 ':f': false,
                 ':a': []
             }
-            await manager.delete(Entity, 42, {conditionExpression: 'condition', expressionAttributeValues: values});
+            await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeValues: values});
         
             assert.isTrue(called);
             assert.isUndefined(error);
@@ -248,7 +230,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
         {
             try
             {
-                await manager.delete(Entity, 42, {conditionExpression: 'condition', expressionAttributeValues: {':v': undefined}});
+                await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeValues: {':v': undefined}});
             }
             catch(e) { error = e; }
 
@@ -260,7 +242,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
         {
             try
             {
-                await manager.delete(Entity, 42, {conditionExpression: 'condition', expressionAttributeValues: {':v': null}});
+                await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeValues: {':v': null}});
             }
             catch(e) { error = e; }
 
@@ -272,7 +254,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
         {
             try
             {
-                await manager.delete(Entity, 42, {conditionExpression: 'condition', expressionAttributeValues: {':v': NaN}});
+                await manager.put(Entity, {}, {conditionExpression: 'condition', expressionAttributeValues: {':v': NaN}});
             }
             catch(e) { error = e; }
 

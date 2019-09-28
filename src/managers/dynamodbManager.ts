@@ -6,8 +6,9 @@ import Const from '../const';
 import { EntityFactory } from '../entityFactory';
 import { NodenamoError } from '../errors/nodenamoError';
 import { DynamoDB } from 'aws-sdk/clients/all';
+import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
 
-export class DynamoDbManager
+export class DynamoDbManager implements IDynamoDbManager
 {
     constructor(private client:DocumentClient)
     {
@@ -31,16 +32,16 @@ export class DynamoDbManager
             additionalParams['ConditionExpression'] =  ` AND (${params.conditionExpression})`;
         }
 
-        if(params && params.expressionAttributeValues)
-        {
-            addColumnValuePrefix(instance, params.expressionAttributeValues);
-            additionalParams['ExpressionAttributeValues'] = params.expressionAttributeValues;
-        }
-
         if(params && params.expressionAttributeNames)
         {
             changeColumnNames(instance, params.expressionAttributeNames)
             additionalParams['ExpressionAttributeNames'] = Object.assign(params.expressionAttributeNames, additionalParams['ExpressionAttributeNames']);
+        }
+
+        if(params && params.expressionAttributeValues)
+        {
+            addColumnValuePrefix(instance, params.expressionAttributeValues, params.expressionAttributeNames);
+            additionalParams['ExpressionAttributeValues'] = params.expressionAttributeValues;
         }
 
         for(let representation of representations)
@@ -68,8 +69,8 @@ export class DynamoDbManager
             Key: {}
         };
 
-        query.Key[Const.HashColumn] = `${dataPrefix}#${id}`;
-        query.Key[Const.RangeColumn] = Const.IdRangeKey;
+        query.Key[Const.HashColumn] = `${dataPrefix}#${Const.DefaultHashValue}`;
+        query.Key[Const.RangeColumn] = `${Const.DefaultRangeValue}#${id}`;
 
         let response =  await this.client.get(query).promise();
         
@@ -88,28 +89,28 @@ export class DynamoDbManager
 
         let additionalParams = {};
 
-        if(keyParams && keyParams.expressionAttributeValues)
-        {
-            addColumnValuePrefix(obj, keyParams.expressionAttributeValues);
-            additionalParams['ExpressionAttributeValues'] = keyParams.expressionAttributeValues;
-        }
-
         if(keyParams && keyParams.expressionAttributeNames)
         {
             changeColumnNames(obj, keyParams.expressionAttributeNames)
             additionalParams['ExpressionAttributeNames'] = keyParams.expressionAttributeNames;
         }
 
-        if(filterParams && filterParams.expressionAttributeValues)
+        if(keyParams && keyParams.expressionAttributeValues)
         {
-            addColumnValuePrefix(obj, filterParams.expressionAttributeValues);
-            additionalParams['ExpressionAttributeValues'] = Object.assign(filterParams.expressionAttributeValues, additionalParams['ExpressionAttributeValues']);
+            addColumnValuePrefix(obj, keyParams.expressionAttributeValues, keyParams.expressionAttributeNames);
+            additionalParams['ExpressionAttributeValues'] = keyParams.expressionAttributeValues;
         }
 
         if(filterParams && filterParams.expressionAttributeNames)
         {
             changeColumnNames(obj, filterParams.expressionAttributeNames)
             additionalParams['ExpressionAttributeNames'] = Object.assign(filterParams.expressionAttributeNames, additionalParams['ExpressionAttributeNames']);
+        }
+
+        if(filterParams && filterParams.expressionAttributeValues)
+        {
+            addColumnValuePrefix(obj, filterParams.expressionAttributeValues, filterParams.expressionAttributeNames);
+            additionalParams['ExpressionAttributeValues'] = Object.assign(filterParams.expressionAttributeValues, additionalParams['ExpressionAttributeValues']);
         }
 
         let query:QueryInput = {
@@ -159,16 +160,16 @@ export class DynamoDbManager
             additionalParams['ConditionExpression'] =  `${params.conditionExpression}`;
         }
 
-        if(params && params.expressionAttributeValues)
-        {
-            addColumnValuePrefix(obj, params.expressionAttributeValues);
-            additionalParams['ExpressionAttributeValues'] = params.expressionAttributeValues;
-        }
-
         if(params && params.expressionAttributeNames)
         {
             changeColumnNames(obj, params.expressionAttributeNames)
             additionalParams['ExpressionAttributeNames'] = params.expressionAttributeNames;
+        }
+
+        if(params && params.expressionAttributeValues)
+        {
+            addColumnValuePrefix(obj, params.expressionAttributeValues, params.expressionAttributeNames);
+            additionalParams['ExpressionAttributeValues'] = params.expressionAttributeValues;
         }
 
         //Calculate new representations
@@ -244,16 +245,16 @@ export class DynamoDbManager
             additionalParams['ConditionExpression'] = params.conditionExpression;
         }
 
-        if(params && params.expressionAttributeValues)
-        {
-            addColumnValuePrefix(obj, params.expressionAttributeValues);
-            additionalParams['ExpressionAttributeValues'] = params.expressionAttributeValues;
-        }
-
         if(params && params.expressionAttributeNames)
         {
             changeColumnNames(obj, params.expressionAttributeNames)
             additionalParams['ExpressionAttributeNames'] = params.expressionAttributeNames;
+        }
+
+        if(params && params.expressionAttributeValues)
+        {
+            addColumnValuePrefix(obj, params.expressionAttributeValues, params.expressionAttributeNames);
+            additionalParams['ExpressionAttributeValues'] = params.expressionAttributeValues;
         }
 
         let rows = await this.getById(id, type);
@@ -283,7 +284,7 @@ export class DynamoDbManager
         let tableName = Reflector.getTableName(obj);
 
         let getAttributeValues = {':objid': <any>id};
-        addColumnValuePrefix(obj, getAttributeValues)
+        addColumnValuePrefix(obj, getAttributeValues,{'#objid': Const.IdColumn})
 
         let query:QueryInput = {
             TableName: tableName,
@@ -292,7 +293,7 @@ export class DynamoDbManager
             ExpressionAttributeValues: getAttributeValues,
             IndexName: Const.IdIndexName
         };
-
+        
         let result:object[] = [];
 
         do
@@ -352,7 +353,7 @@ export class DynamoDbManager
             };
             query['GlobalSecondaryIndexes'][0]['ProvisionedThroughput'] = Object.assign({}, query['ProvisionedThroughput']);
         }
-        
+
         await (dynamoDb || new DynamoDB(this.client['options'])).createTable(query).promise();
     }
 
@@ -367,11 +368,12 @@ export class DynamoDbManager
 }
 
 
-function addColumnValuePrefix(obj:object, expressionAttributeValues:object): void
+function addColumnValuePrefix(obj:object, expressionAttributeValues:object, expressionAttributeNames:object): void
 {
-    let hashes = Reflector.getHashKeys(obj);
+    let hashes = Reflector.getHashKeys(obj).map(k => k.includes('#') ? k.split('#')[1] : k);
     let id = Const.IdColumn;
     let prefix = Reflector.getDataPrefix(obj);
+    let isStringColumn = false;
 
     //When there is no hashes, ID is the hash
     if(hashes.length === 0) hashes.push(Reflector.getIdKey(obj));
@@ -386,36 +388,56 @@ function addColumnValuePrefix(obj:object, expressionAttributeValues:object): voi
         if(columnsWithPrefix.includes(key.replace(/^:/, ''))) //A value key may start with :
         {
             newValue = `${prefix}#${newValue}`;
+            isStringColumn = true;
         }
 
-        (<any>expressionAttributeValues)[key] = newValue;
+        if(expressionAttributeNames && columnsWithPrefix.includes(expressionAttributeNames[key.replace(/^:/,'#')]))
+        {
+            isStringColumn = true;
+        }
+
+        (<any>expressionAttributeValues)[key] = isStringColumn ? String(newValue) : newValue;
     }
 }
 
 function changeColumnNames(obj:object, expressionAttributeNames:object): void
 {
-    let hashes = Reflector.getHashKeys(obj);
-    let ranges = Reflector.getRangeKeys(obj);
+    let hashes = Reflector.getHashKeys(obj).map(k => k.includes('#') ? k.split('#')[1] : k);
+    let ranges = Reflector.getRangeKeys(obj).map(k => k.includes('#') ? k.split('#')[1] : k);
+    let columns = Reflector.getColumns(obj);
     
     //When there is no hashes, ID is the hash
     if(hashes.length === 0) hashes.push(Reflector.getIdKey(obj));
     
     for(let key of Object.keys(expressionAttributeNames))
     {
-        let originalValue = (<any>expressionAttributeNames)[key];
-        let newValue = originalValue;
+        let propertyName = (<any>expressionAttributeNames)[key];
+        let columnName = propertyName;
 
-        if(hashes.includes(originalValue))
+        //Change propertyNames to customNames (customName#propertyName)
+        for(let column of columns)
         {
-            newValue = 'hash';
+            if(!column.includes('#')) continue;
+            
+            let tokens = column.split('#');
+            if(propertyName === tokens[1])
+            {
+                propertyName = tokens[1];
+                columnName = tokens[0];
+                break;
+            }
         }
 
-        if(ranges.includes(originalValue))
+        //Change to hash or range
+        if(hashes.includes(propertyName))
         {
-            newValue = 'range';
+            columnName = 'hash';
+        }
+        else if(ranges.includes(propertyName))
+        {
+            columnName = 'range';
         }
 
-
-        (<any>expressionAttributeNames)[key] = newValue;
+        (<any>expressionAttributeNames)[key] = columnName;
     }
 }

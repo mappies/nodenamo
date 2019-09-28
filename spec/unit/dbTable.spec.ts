@@ -1,6 +1,6 @@
 import {assert as assert} from 'chai';
-import { DBTable } from '../src';
-import { Reflector } from '../src/reflector';
+import { DBTable } from '../../src';
+import { Reflector } from '../../src/reflector';
 
 describe('DbTable', function () 
 {

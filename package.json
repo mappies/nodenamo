@@ -4,7 +4,8 @@
   "description": "Node DynamoDb Helper",
   "main": "index.js",
   "scripts": {
-    "test": "cd spec && mocha --require ts-node/register *.ts"
+    "test": "cd spec/unit && mocha --require ts-node/register *.ts",
+    "acceptance": "cd spec/acceptance && mocha --require ts-node/register *.ts"
   },
   "repository": {
     "type": "git",

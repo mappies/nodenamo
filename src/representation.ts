@@ -11,8 +11,13 @@ export class Representation
         this.data = Object.assign({}, originalData);
 
         this.objId = this.data[Const.IdColumn] = this.addDataPrefix(dataPrefix, this.getPropertyValue(this.data, id));
-        this.hash = this.data[Const.HashColumn] = this.addDataPrefix(dataPrefix, this.getPropertyValue(this.data, hash));
-        this.range = this.data[Const.RangeColumn] = (range === Const.IdRangeKey ? Const.IdRangeKey : this.getPropertyValue(this.data, range));
+        this.hash = this.data[Const.HashColumn] = hash ? this.addDataPrefix(dataPrefix, this.getPropertyValue(this.data, hash)) : this.addDataPrefix(dataPrefix, Const.DefaultHashValue);
+        this.range = this.data[Const.RangeColumn] = (range === Const.IdRangeKey ? Const.IdRangeKey : (range === undefined ? `${Const.DefaultRangeValue}#${this.getPropertyValue(this.data, id)}`: this.getPropertyValue(this.data, range)));
+    
+        if(typeof this.range === 'number')
+        {
+            this.range = this.data[Const.RangeColumn] = String(this.range);
+        }
     }
 
     private getPropertyValue(d:any, properyNameOrNames:string|string[]) : any

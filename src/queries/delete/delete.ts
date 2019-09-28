@@ -1,9 +1,9 @@
-import { DynamoDbManager } from '../../managers/dynamodbManager';
 import { From } from './from';
+import { IDynamoDbManager } from '../../interfaces/iDynamodbManager';
 
 export class Delete 
 {
-    constructor(private manager:DynamoDbManager, private id:string|number)
+    constructor(private manager:IDynamoDbManager, private id:string|number)
     {
         return this;
     }

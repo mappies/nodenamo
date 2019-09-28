@@ -8,11 +8,12 @@ enum Const
     HashRangeKey = "nodenamo:hashrangekey",
     IdKey = "nodenamo:idkey",
     DataPrefix = "nodenamo:dataprefix",
-
     HashColumn = 'hash',
     RangeColumn = 'range',
     IdColumn = 'objid',
-    IdIndexName = 'objid-index'
+    IdIndexName = 'objid-index',
+    DefaultRangeValue = "nodenamo",
+    DefaultHashValue = "nodenamo"
 };
 
 export default Const;

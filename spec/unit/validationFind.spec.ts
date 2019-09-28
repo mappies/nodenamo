@@ -1,9 +1,9 @@
 import {assert as assert} from 'chai';
-import { DynamoDbManager } from '../src/managers/dynamodbManager';
+import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
-import { DBTable, DBColumn } from '../src';
-import { ValidatedDynamoDbManager } from '../src/managers/validatedDynamodbManager';
-import { ValidationError } from '../src/errors/validationError';
+import { DBTable, DBColumn } from '../../src';
+import { ValidatedDynamoDbManager } from '../../src/managers/validatedDynamodbManager';
+import { ValidationError } from '../../src/errors/validationError';
 
 @DBTable()
 class Entity {
@@ -107,24 +107,6 @@ describe('ValidationDynamoDbManager - Find()', function ()
             class Empty
             {
 
-            }
-            try
-            {
-                await manager.find(Empty);
-            }
-            catch(e) { error = e; }
-
-            assert.isFalse(called);
-            assert.instanceOf(error, ValidationError);
-        });
-
-        it('invalid - no hash property', async ()=>
-        {
-            @DBTable()
-            class Empty
-            {
-                @DBColumn({id:true})
-                id:number;
             }
             try
             {

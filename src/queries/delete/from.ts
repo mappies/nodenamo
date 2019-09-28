@@ -1,10 +1,10 @@
-import { DynamoDbManager } from "../../managers/dynamodbManager";
+import { IDynamoDbManager } from "../../interfaces/iDynamodbManager";
 import { Where } from './where';
 import { Execute } from "./execute";
 
 export class From
 {
-    constructor(private manager:DynamoDbManager, private type:{new(...args: any[])}, private id:string|number)
+    constructor(private manager:IDynamoDbManager, private type:{new(...args: any[])}, private id:string|number)
     {
         return this;
     }

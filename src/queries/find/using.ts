@@ -1,4 +1,4 @@
-import { DynamoDbManager } from "../../managers/dynamodbManager";
+import { IDynamoDbManager } from "../../interfaces/iDynamodbManager";
 import { Execute } from "./execute";
 import { Limit } from './limit';
 import { Order } from "./order";
@@ -7,7 +7,7 @@ import { Resume } from "./resume";
 
 export class Using
 {
-    constructor(private manager:DynamoDbManager, 
+    constructor(private manager:IDynamoDbManager, 
                 private type:{new(...args: any[])}, 
                 private keyParams:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
                 private filterParams?:{filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},

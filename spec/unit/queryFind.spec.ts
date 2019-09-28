@@ -1,11 +1,11 @@
 import {assert as assert} from 'chai';
-import { DynamoDbManager } from '../src/managers/dynamodbManager';
+import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { IMock, Mock } from 'typemoq';
-import { DBTable } from '../src/dbTable';
-import { DBColumn } from '../src/dbColumn';
-import { Find } from '../src/queries/find/find';
-import { List } from '../src/queries/find/list';
-import Const from '../src/const';
+import { DBTable } from '../../src/dbTable';
+import { DBColumn } from '../../src/dbColumn';
+import { Find } from '../../src/queries/find/find';
+import { List } from '../../src/queries/find/list';
+import Const from '../../src/const';
 
 @DBTable()
 class Entity {

@@ -1,6 +1,6 @@
 import {IMock, Mock, It} from "typemoq";
 import { assert as assert } from 'chai';
-import { DynamoDbTransaction } from '../src/managers/dynamodbTransaction';
+import { DynamoDbTransaction } from '../../src/managers/dynamodbTransaction';
 import { DocumentClient, TransactWriteItem, ConditionCheck, TransactWriteItemsOutput } from 'aws-sdk/clients/dynamodb';
 import { AWSError } from 'aws-sdk/lib/error';
 import { Request } from 'aws-sdk/lib/request';

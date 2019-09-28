@@ -1,9 +1,9 @@
 import {assert as assert} from 'chai';
-import { Insert } from '../src/queries/insert/insert';
-import { DynamoDbManager } from '../src/managers/dynamodbManager';
+import { Insert } from '../../src/queries/insert/insert';
+import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { IMock, Mock, It } from 'typemoq';
-import { DBTable } from '../src/dbTable';
-import { DBColumn } from '../src/dbColumn';
+import { DBTable } from '../../src/dbTable';
+import { DBColumn } from '../../src/dbColumn';
 
 @DBTable()
 class Entity {

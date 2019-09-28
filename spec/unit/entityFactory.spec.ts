@@ -1,6 +1,6 @@
 import {assert as assert} from 'chai';
-import { DBColumn, DBTable } from '../src';
-import { EntityFactory } from '../src/entityFactory';
+import { DBColumn, DBTable } from '../../src';
+import { EntityFactory } from '../../src/entityFactory';
 
 describe('EntityFactory', function () 
 {

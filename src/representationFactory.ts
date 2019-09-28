@@ -45,10 +45,7 @@ export class RepresentationFactory
             representations.push(new Representation(tableName, dataPrefix, hashRangeKeyPair.hashes, hashRangeKeyPair.ranges, idKey, data));
         }
 
-        if(idKey !== undefined && idKey !== '' && !hashKeys.includes(idKey))
-        {
-            representations.push(new Representation(tableName, dataPrefix, idKey, Const.IdRangeKey, idKey, data));
-        }
+        representations.push(new Representation(tableName, dataPrefix, undefined, undefined, idKey, data));
         
         return representations;
     }

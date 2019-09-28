@@ -1,9 +1,9 @@
-import { DynamoDbManager } from '../../managers/dynamodbManager';
 import { Into } from './into';
+import { IDynamoDbManager } from '../../interfaces/iDynamodbManager';
 
 export class Insert 
 {
-    constructor(private manager:DynamoDbManager, private obj:object)
+    constructor(private manager:IDynamoDbManager, private obj:object)
     {
         return this;
     }

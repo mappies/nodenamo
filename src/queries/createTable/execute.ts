@@ -1,8 +1,8 @@
-import { DynamoDbManager } from "../../managers/dynamodbManager";
+import { IDynamoDbManager } from "../../interfaces/iDynamodbManager";
 
 export class Execute
 {
-    constructor(private manager:DynamoDbManager, private type:{new(...args: any[])}, private params?:{onDemand?:boolean, readCapacityUnits?:number, writeCapacityUnits?:number})
+    constructor(private manager:IDynamoDbManager, private type:{new(...args: any[])}, private params?:{onDemand?:boolean, readCapacityUnits?:number, writeCapacityUnits?:number})
     {
 
     }

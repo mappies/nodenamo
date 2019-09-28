@@ -1,9 +1,9 @@
-import { DynamoDbManager } from '../../managers/dynamodbManager';
+import { IDynamoDbManager } from '../../interfaces/iDynamodbManager';
 import { From } from './from';
 
 export class Update 
 {
-    constructor(private manager:DynamoDbManager, private obj:object)
+    constructor(private manager:IDynamoDbManager, private obj:object)
     {
         return this;
     }

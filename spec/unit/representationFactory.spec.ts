@@ -1,9 +1,9 @@
 import "reflect-metadata";
 import {assert as assert} from 'chai';
-import { DBColumn, DBTable } from "../src";
-import { RepresentationFactory } from '../src/representationFactory';
-import { Representation } from "../src/representation";
-import Const from "../src/const";
+import { DBColumn, DBTable } from "../../src";
+import { RepresentationFactory } from '../../src/representationFactory';
+import { Representation } from "../../src/representation";
+import Const from "../../src/const";
 
 describe('RepresentationFactory', function () 
 {
@@ -23,7 +23,16 @@ describe('RepresentationFactory', function ()
 
         let representations = RepresentationFactory.get(new Entity());
         
-        assert.equal(representations.length, 0);
+        assert.equal(representations.length, 1);
+        assert.equal(representations[0].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[0].range, `${Const.DefaultRangeValue}#undefined`);
+        assert.equal(representations[0].objId, undefined);
+        assert.equal(representations[0].data.hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[0].data.range, `${Const.DefaultRangeValue}#undefined`);
+        assert.equal(representations[0].data.id, 123);
+        assert.equal(representations[0].data.objid, undefined);
+        assert.equal(representations[0].data.name, 'Some One');
+        assert.equal(representations[0].data.createdTimestamp, 'now');
     });
 
     it('get() - id key', function () 
@@ -44,17 +53,18 @@ describe('RepresentationFactory', function ()
         
         assert.equal(representations.length, 2);
         assert.equal(representations[0].hash, 'entity#Some One');
-        assert.equal(representations[0].range, undefined);
+        assert.equal(representations[0].range, 'nodenamo#123');
         assert.equal(representations[0].objId, 'entity#123');
         assert.equal(representations[0].data.hash, 'entity#Some One');
         assert.equal(representations[0].data.id, 123);
         assert.equal(representations[0].data.objid, 'entity#123');
         assert.equal(representations[0].data.name, 'Some One');
         assert.equal(representations[0].data.createdTimestamp, 'now');
-        assert.equal(representations[1].hash, 'entity#123');
-        assert.equal(representations[1].range, Const.IdRangeKey);
+        assert.equal(representations[1].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[1].range, `${Const.DefaultRangeValue}#123`);
         assert.equal(representations[1].objId, 'entity#123');
-        assert.equal(representations[1].data.hash, 'entity#123');
+        assert.equal(representations[1].data.hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[1].data.range, `${Const.DefaultRangeValue}#123`);
         assert.equal(representations[1].data.id, 123);
         assert.equal(representations[1].data.objid, 'entity#123');
         assert.equal(representations[1].data.name, 'Some One');
@@ -79,19 +89,19 @@ describe('RepresentationFactory', function ()
         
         assert.equal(representations.length, 2);
         assert.equal(representations[0].hash, 'entity#Some One');
-        assert.equal(representations[0].range, undefined);
+        assert.equal(representations[0].range, 'nodenamo#123');
         assert.equal(representations[0].objId, 'entity#123');
         assert.equal(representations[0].data.hash, 'entity#Some One');
-        assert.equal(representations[0].data.range, undefined);
+        assert.equal(representations[0].data.range, 'nodenamo#123');
         assert.equal(representations[0].data.newId, 123);
         assert.equal(representations[0].data.objid, 'entity#123');
         assert.equal(representations[0].data.name, 'Some One');
         assert.equal(representations[0].data.createdTimestamp, 'now');
-        assert.equal(representations[1].hash, 'entity#123');
-        assert.equal(representations[1].range, Const.IdRangeKey);
+        assert.equal(representations[1].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[1].range, `${Const.DefaultRangeValue}#123`);
         assert.equal(representations[1].objId, 'entity#123');
-        assert.equal(representations[1].data.hash, 'entity#123');
-        assert.equal(representations[1].data.range, Const.IdRangeKey);
+        assert.equal(representations[1].data.hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[1].data.range, `${Const.DefaultRangeValue}#123`);
         assert.equal(representations[1].data.newId, 123);
         assert.equal(representations[1].data.objid, 'entity#123');
         assert.equal(representations[1].data.name, 'Some One');
@@ -114,16 +124,25 @@ describe('RepresentationFactory', function ()
 
         let representations = RepresentationFactory.get(new Entity());
         
-        assert.equal(representations.length, 1);
+        assert.equal(representations.length, 2);
         assert.isTrue(representations[0] instanceof Representation);
         assert.equal(representations[0].tableName, 'Entity');
         assert.equal(representations[0].hash, 'entity#123');
-        assert.equal(representations[0].range, undefined);
+        assert.equal(representations[0].range, 'nodenamo#123');
         assert.equal(representations[0].objId, 'entity#123');
         assert.equal(representations[0].data.id, '123');
         assert.equal(representations[0].data.objid, 'entity#123');
         assert.equal(representations[0].data.name, 'Some One');
         assert.equal(representations[0].data.createdTimestamp, 'now');
+        assert.isTrue(representations[1] instanceof Representation);
+        assert.equal(representations[1].tableName, 'Entity');
+        assert.equal(representations[1].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[1].range, `${Const.DefaultRangeValue}#123`);
+        assert.equal(representations[1].objId, 'entity#123');
+        assert.equal(representations[1].data.id, '123');
+        assert.equal(representations[1].data.objid, 'entity#123');
+        assert.equal(representations[1].data.name, 'Some One');
+        assert.equal(representations[1].data.createdTimestamp, 'now');
     });
 
     it('get() - hash only', function () 
@@ -142,15 +161,23 @@ describe('RepresentationFactory', function ()
 
         let representations = RepresentationFactory.get(new Entity());
         
-        assert.equal(representations.length, 1);
+        assert.equal(representations.length, 2);
         assert.isTrue(representations[0] instanceof Representation);
         assert.equal(representations[0].tableName, 'Entity');
         assert.equal(representations[0].hash, 'entity#123');
-        assert.equal(representations[0].range, undefined);
+        assert.equal(representations[0].range, 'nodenamo#undefined'); //no id
         assert.equal(representations[0].objId, undefined);
         assert.equal(representations[0].data.id, 123);
         assert.equal(representations[0].data.name, 'Some One');
         assert.equal(representations[0].data.createdTimestamp, 'now');
+        assert.isTrue(representations[1] instanceof Representation);
+        assert.equal(representations[1].tableName, 'Entity');
+        assert.equal(representations[1].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[1].range, `${Const.DefaultRangeValue}#undefined`); //no id
+        assert.equal(representations[1].objId, undefined);
+        assert.equal(representations[1].data.id, 123);
+        assert.equal(representations[1].data.name, 'Some One');
+        assert.equal(representations[1].data.createdTimestamp, 'now');
     });
 
     it('get() - a hash/id and ranges', function () 
@@ -169,7 +196,7 @@ describe('RepresentationFactory', function ()
 
         let representations = RepresentationFactory.get(new Entity());
         
-        assert.equal(representations.length, 2);
+        assert.equal(representations.length, 3);
         assert.isTrue(representations[0] instanceof Representation);
         assert.equal(representations[0].hash, 'entity#123');
         assert.equal(representations[0].range, 'Some One');
@@ -185,11 +212,20 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[1].tableName, 'Entity');
         assert.equal(representations[1].hash, 'entity#123');
         assert.equal(representations[1].range, 'now');
-        assert.equal(representations[0].objId, 'entity#123');
+        assert.equal(representations[1].objId, 'entity#123');
         assert.equal(representations[1].data.id, 123);
-        assert.equal(representations[0].data.objid, 'entity#123');
+        assert.equal(representations[1].data.objid, 'entity#123');
         assert.equal(representations[1].data.newName, 'Some One');
         assert.equal(representations[1].data.createdTimestamp, 'now');
+        assert.isTrue(representations[2] instanceof Representation);
+        assert.equal(representations[2].tableName, 'Entity');
+        assert.equal(representations[2].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[2].range, `${Const.DefaultRangeValue}#123`);
+        assert.equal(representations[2].objId, 'entity#123');
+        assert.equal(representations[2].data.id, 123);
+        assert.equal(representations[2].data.objid, 'entity#123');
+        assert.equal(representations[2].data.newName, 'Some One');
+        assert.equal(representations[2].data.createdTimestamp, 'now');
     });
 
     it('get() - a hash and ranges', function () 
@@ -208,7 +244,7 @@ describe('RepresentationFactory', function ()
 
         let representations = RepresentationFactory.get(new Entity());
         
-        assert.equal(representations.length, 2);
+        assert.equal(representations.length, 3);
         assert.isTrue(representations[0] instanceof Representation);
         assert.equal(representations[0].hash, 'entity#123');
         assert.equal(representations[0].range, 'Some One');
@@ -224,11 +260,20 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[1].tableName, 'Entity');
         assert.equal(representations[1].hash, 'entity#123');
         assert.equal(representations[1].range, 'now');
-        assert.equal(representations[0].objId, undefined);
+        assert.equal(representations[1].objId, undefined);
         assert.equal(representations[1].data.id, 123);
-        assert.equal(representations[0].data.objid, undefined);
+        assert.equal(representations[1].data.objid, undefined);
         assert.equal(representations[1].data.newName, 'Some One');
         assert.equal(representations[1].data.createdTimestamp, 'now');
+        assert.isTrue(representations[2] instanceof Representation);
+        assert.equal(representations[2].tableName, 'Entity');
+        assert.equal(representations[2].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[2].range, `${Const.DefaultRangeValue}#undefined`);
+        assert.equal(representations[2].objId, undefined);
+        assert.equal(representations[2].data.id, 123);
+        assert.equal(representations[2].data.objid, undefined);
+        assert.equal(representations[2].data.newName, 'Some One');
+        assert.equal(representations[2].data.createdTimestamp, 'now');
     });
 
     it('get() - hashes and ranges', function () 
@@ -250,7 +295,7 @@ describe('RepresentationFactory', function ()
 
         let representations = RepresentationFactory.get(new Entity());
         
-        assert.equal(representations.length, 4);
+        assert.equal(representations.length, 5);
         assert.equal(representations[0].hash, 'entity#123');
         assert.equal(representations[0].range, 'Some One');
         assert.equal(representations[1].hash, 'entity#123');
@@ -259,6 +304,8 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[2].range, 'Some One');
         assert.equal(representations[3].hash, 'entity#cat');
         assert.equal(representations[3].range, 'now');
+        assert.equal(representations[4].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[4].range, `${Const.DefaultRangeValue}#undefined`);
     });
     
     it('get() - a hash-range pair', function () 
@@ -274,7 +321,7 @@ describe('RepresentationFactory', function ()
 
         let representations:any = RepresentationFactory.get(new Entity());
         
-        assert.equal(representations.length, 1);
+        assert.equal(representations.length, 2);
         assert.equal(representations[0].hash, 'entity#123');
         assert.equal(representations[0].range, 'Some One');
         assert.equal(representations[0].tableName, 'Entity');
@@ -283,6 +330,14 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[0].data.range, 'Some One');
         assert.equal(representations[0].data.id, 123);
         assert.equal(representations[0].data.newName, 'Some One');
+        assert.equal(representations[1].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[1].range, `${Const.DefaultRangeValue}#undefined`);
+        assert.equal(representations[1].tableName, 'Entity');
+        assert.equal(representations[1].objId, undefined);
+        assert.equal(representations[1].data.hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[1].data.range, `${Const.DefaultRangeValue}#undefined`);
+        assert.equal(representations[1].data.id, 123);
+        assert.equal(representations[1].data.newName, 'Some One');
     });
 
     it('get() - hash-range pairs', function () 
@@ -304,7 +359,7 @@ describe('RepresentationFactory', function ()
 
         let representations = RepresentationFactory.get(new Entity());
         
-        assert.equal(representations.length, 2);
+        assert.equal(representations.length, 3);
         assert.equal(representations[0].hash, 'entity#123');
         assert.equal(representations[0].range, 'Some One');
         assert.equal(representations[0].objId, undefined);
@@ -321,13 +376,21 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[1].data.name, 'Some One');
         assert.equal(representations[1].data.category, 'cat');
         assert.equal(representations[1].data.time, 'now');
+        assert.equal(representations[2].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[2].range, `${Const.DefaultRangeValue}#undefined`);
+        assert.equal(representations[2].objId, undefined);
+        assert.equal(representations[2].data.id, 123);
+        assert.equal(representations[2].data.objid, undefined);
+        assert.equal(representations[2].data.name, 'Some One');
+        assert.equal(representations[2].data.category, 'cat');
+        assert.equal(representations[2].data.time, 'now');
     });
 
     it('get() - a multiple-hashes/multiple-ranges pair', function () 
     {
         @DBTable()
         class Entity {
-            @DBColumn({hash:'key1'})
+            @DBColumn({hash:'key1', id:true})
             id:number = 123;
 
             @DBColumn({range:'key1'})
@@ -342,16 +405,18 @@ describe('RepresentationFactory', function ()
 
         let representations = RepresentationFactory.get(new Entity());
         
-        assert.equal(representations.length, 1);
+        assert.equal(representations.length, 2);
         assert.equal(representations[0].hash, 'entity#123#cat');
         assert.equal(representations[0].range, 'Some One#now');
+        assert.equal(representations[1].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[1].range, `${Const.DefaultRangeValue}#123`);
     });
 
     it('get() - a hash-range pair with regular hashes and ranges', function () 
     {
         @DBTable()
         class Entity {
-            @DBColumn({hash:'key1'})
+            @DBColumn({hash:'key1', id:true})
             id:number = 123;
 
             @DBColumn({range:'key1'})
@@ -366,11 +431,13 @@ describe('RepresentationFactory', function ()
 
         let representations = RepresentationFactory.get(new Entity());
         
-        assert.equal(representations.length, 2);
+        assert.equal(representations.length, 3);
         assert.equal(representations[0].hash, 'entity#cat');
         assert.equal(representations[0].range, 'now');
         assert.equal(representations[1].hash, 'entity#123');
         assert.equal(representations[1].range, 'Some One');
+        assert.equal(representations[2].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[2].range, `${Const.DefaultRangeValue}#123`);
     });
 
     it('get() - data prefix', function () 
@@ -399,11 +466,11 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[0].data.objid, 'pfx#123');
         assert.equal(representations[0].data.name, 'Some One');
         assert.equal(representations[0].data.createdTimestamp, 234);
-        assert.equal(representations[1].hash, 'pfx#123');
-        assert.equal(representations[1].range, Const.IdRangeKey);
+        assert.equal(representations[1].hash, `pfx#${Const.DefaultHashValue}`);
+        assert.equal(representations[1].range, `${Const.DefaultRangeValue}#123`);
         assert.equal(representations[1].objId, 'pfx#123');
-        assert.equal(representations[1].data.hash, 'pfx#123');
-        assert.equal(representations[1].data.range, Const.IdRangeKey);
+        assert.equal(representations[1].data.hash, `pfx#${Const.DefaultHashValue}`);
+        assert.equal(representations[1].data.range, `${Const.DefaultRangeValue}#123`);
         assert.equal(representations[1].data.id, 123);
         assert.equal(representations[1].data.objid, 'pfx#123');
         assert.equal(representations[1].data.name, 'Some One');
