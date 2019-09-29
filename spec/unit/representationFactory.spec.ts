@@ -196,7 +196,7 @@ describe('RepresentationFactory', function ()
 
         let representations = RepresentationFactory.get(new Entity());
         
-        assert.equal(representations.length, 3);
+        assert.equal(representations.length, 4);
         assert.isTrue(representations[0] instanceof Representation);
         assert.equal(representations[0].hash, 'entity#123');
         assert.equal(representations[0].range, 'Some One');
@@ -220,12 +220,21 @@ describe('RepresentationFactory', function ()
         assert.isTrue(representations[2] instanceof Representation);
         assert.equal(representations[2].tableName, 'Entity');
         assert.equal(representations[2].hash, `entity#${Const.DefaultHashValue}`);
-        assert.equal(representations[2].range, `${Const.DefaultRangeValue}#123`);
+        assert.equal(representations[2].range, `Some One#123`);
         assert.equal(representations[2].objId, 'entity#123');
         assert.equal(representations[2].data.id, 123);
         assert.equal(representations[2].data.objid, 'entity#123');
         assert.equal(representations[2].data.newName, 'Some One');
         assert.equal(representations[2].data.createdTimestamp, 'now');
+        assert.isTrue(representations[3] instanceof Representation);
+        assert.equal(representations[3].tableName, 'Entity');
+        assert.equal(representations[3].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[3].range, `now#123`);
+        assert.equal(representations[3].objId, 'entity#123');
+        assert.equal(representations[3].data.id, 123);
+        assert.equal(representations[3].data.objid, 'entity#123');
+        assert.equal(representations[3].data.newName, 'Some One');
+        assert.equal(representations[3].data.createdTimestamp, 'now');
     });
 
     it('get() - a hash and ranges', function () 
@@ -244,7 +253,7 @@ describe('RepresentationFactory', function ()
 
         let representations = RepresentationFactory.get(new Entity());
         
-        assert.equal(representations.length, 3);
+        assert.equal(representations.length, 4);
         assert.isTrue(representations[0] instanceof Representation);
         assert.equal(representations[0].hash, 'entity#123');
         assert.equal(representations[0].range, 'Some One');
@@ -268,12 +277,21 @@ describe('RepresentationFactory', function ()
         assert.isTrue(representations[2] instanceof Representation);
         assert.equal(representations[2].tableName, 'Entity');
         assert.equal(representations[2].hash, `entity#${Const.DefaultHashValue}`);
-        assert.equal(representations[2].range, `${Const.DefaultRangeValue}#undefined`);
+        assert.equal(representations[2].range, `Some One#undefined`);
         assert.equal(representations[2].objId, undefined);
         assert.equal(representations[2].data.id, 123);
         assert.equal(representations[2].data.objid, undefined);
         assert.equal(representations[2].data.newName, 'Some One');
         assert.equal(representations[2].data.createdTimestamp, 'now');
+        assert.isTrue(representations[3] instanceof Representation);
+        assert.equal(representations[3].tableName, 'Entity');
+        assert.equal(representations[3].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[3].range, `now#undefined`);
+        assert.equal(representations[3].objId, undefined);
+        assert.equal(representations[3].data.id, 123);
+        assert.equal(representations[3].data.objid, undefined);
+        assert.equal(representations[3].data.newName, 'Some One');
+        assert.equal(representations[3].data.createdTimestamp, 'now');
     });
 
     it('get() - hashes and ranges', function () 
@@ -295,7 +313,7 @@ describe('RepresentationFactory', function ()
 
         let representations = RepresentationFactory.get(new Entity());
         
-        assert.equal(representations.length, 5);
+        assert.equal(representations.length, 6);
         assert.equal(representations[0].hash, 'entity#123');
         assert.equal(representations[0].range, 'Some One');
         assert.equal(representations[1].hash, 'entity#123');
@@ -305,7 +323,9 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[3].hash, 'entity#cat');
         assert.equal(representations[3].range, 'now');
         assert.equal(representations[4].hash, `entity#${Const.DefaultHashValue}`);
-        assert.equal(representations[4].range, `${Const.DefaultRangeValue}#undefined`);
+        assert.equal(representations[4].range, `Some One#undefined`);
+        assert.equal(representations[5].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[5].range, `now#undefined`);
     });
     
     it('get() - a hash-range pair', function () 
@@ -437,7 +457,7 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[1].hash, 'entity#123');
         assert.equal(representations[1].range, 'Some One');
         assert.equal(representations[2].hash, `entity#${Const.DefaultHashValue}`);
-        assert.equal(representations[2].range, `${Const.DefaultRangeValue}#123`);
+        assert.equal(representations[2].range, `now#123`);
     });
 
     it('get() - data prefix', function () 
@@ -467,10 +487,10 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[0].data.name, 'Some One');
         assert.equal(representations[0].data.createdTimestamp, 234);
         assert.equal(representations[1].hash, `pfx#${Const.DefaultHashValue}`);
-        assert.equal(representations[1].range, `${Const.DefaultRangeValue}#123`);
+        assert.equal(representations[1].range, `234#123`);
         assert.equal(representations[1].objId, 'pfx#123');
         assert.equal(representations[1].data.hash, `pfx#${Const.DefaultHashValue}`);
-        assert.equal(representations[1].data.range, `${Const.DefaultRangeValue}#123`);
+        assert.equal(representations[1].data.range, `234#123`);
         assert.equal(representations[1].data.id, 123);
         assert.equal(representations[1].data.objid, 'pfx#123');
         assert.equal(representations[1].data.name, 'Some One');

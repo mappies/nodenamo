@@ -45,8 +45,18 @@ export class RepresentationFactory
             representations.push(new Representation(tableName, dataPrefix, hashRangeKeyPair.hashes, hashRangeKeyPair.ranges, idKey, data));
         }
 
-        representations.push(new Representation(tableName, dataPrefix, undefined, undefined, idKey, data));
-        
+        if(rangeKeys.length === 0)
+        {
+            representations.push(new Representation(tableName, dataPrefix, undefined, undefined, idKey, data));
+        }
+        else 
+        {
+            for(let rangeKey of rangeKeys)
+            {
+                representations.push(new Representation(tableName, dataPrefix, undefined, rangeKey, idKey, data));
+            }
+        }
+
         return representations;
     }
 };

@@ -51,8 +51,8 @@ describe('Custom-name tests', function ()
         
         assert.equal(users.items.length, 3);
         assert.equal(users.lastEvaluatedKey, undefined);
-        assert.deepEqual(users.items[0], { id: 1, name: 'Some One', account: 1000, created: 2017 });
-        assert.deepEqual(users.items[1], { id: 2, name: 'Some Two', account: 1000, created: 2016 });
+        assert.deepEqual(users.items[0], { id: 2, name: 'Some Two', account: 1000, created: 2016 });
+        assert.deepEqual(users.items[1], { id: 1, name: 'Some One', account: 1000, created: 2017 });
         assert.deepEqual(users.items[2], { id: 3, name: 'Some Three', account: 2000, created: 2018 });
     });
 

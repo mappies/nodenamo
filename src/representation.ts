@@ -19,9 +19,16 @@ export class Representation
         }
         else
         {
-            this.range = this.data[Const.RangeColumn] = this.getPropertyValue(this.data, range)
+            if(hash === undefined)
+            {
+                this.range = this.data[Const.RangeColumn] = `${this.getPropertyValue(this.data, range)}#${this.getPropertyValue(this.data, id)}`;
+            }
+            else
+            {
+                this.range = this.data[Const.RangeColumn] = this.getPropertyValue(this.data, range);
+            }
         }
-        
+
         if(typeof this.range === 'number')
         {
             this.range = this.data[Const.RangeColumn] = String(this.range);
