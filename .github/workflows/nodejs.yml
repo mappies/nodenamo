@@ -3,6 +3,7 @@ name: Node CI
 on: [push]
 
 jobs:
+
   build:
 
     runs-on: ubuntu-latest
@@ -23,3 +24,6 @@ jobs:
         npm test
       env:
         CI: true
+    - name: Acceptance tests
+      run: docker-compose -f spec/acceptance/docker-compose.yml up --force-recreate --exit-code-from node
+      

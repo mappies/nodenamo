@@ -1,0 +1,18 @@
+version: "3.5"
+
+services:
+
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    container_name: nodenamo_dynamodb
+
+  node:
+    image: node:lts-alpine
+    container_name: nodenamo_node
+    environment:
+      DYNAMODB_ENDPOINT: http://dynamodb:8000
+      AWS_ACCESS_KEY_ID: a_non_empty_value
+      AWS_SECRET_ACCESS_KEY: a_non_empty_value
+    volumes:
+      - ../..:/app
+    command:  /bin/sh -c "sleep 1 && cd app && npm run acceptance"

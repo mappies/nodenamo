@@ -33,7 +33,7 @@ describe('Custom-name tests', function ()
     let nodenamo:NodeNamo;
 
     before(async ()=>{
-        nodenamo = new NodeNamo(new DocumentClient({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'us-east-1' }))
+        nodenamo = new NodeNamo(new DocumentClient({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'us-east-1' }));
         await nodenamo.createTable().for(User).execute();
     });
 
