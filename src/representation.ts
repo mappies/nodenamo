@@ -12,8 +12,16 @@ export class Representation
 
         this.objId = this.data[Const.IdColumn] = this.addDataPrefix(dataPrefix, this.getPropertyValue(this.data, id));
         this.hash = this.data[Const.HashColumn] = hash ? this.addDataPrefix(dataPrefix, this.getPropertyValue(this.data, hash)) : this.addDataPrefix(dataPrefix, Const.DefaultHashValue);
-        this.range = this.data[Const.RangeColumn] = (range === Const.IdRangeKey ? Const.IdRangeKey : (range === undefined ? `${Const.DefaultRangeValue}#${this.getPropertyValue(this.data, id)}`: this.getPropertyValue(this.data, range)));
-    
+        
+        if(range === undefined)
+        {
+            this.range = this.data[Const.RangeColumn] = `${Const.DefaultRangeValue}#${this.getPropertyValue(this.data, id)}`
+        }
+        else
+        {
+            this.range = this.data[Const.RangeColumn] = this.getPropertyValue(this.data, range)
+        }
+        
         if(typeof this.range === 'number')
         {
             this.range = this.data[Const.RangeColumn] = String(this.range);
