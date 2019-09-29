@@ -62,19 +62,34 @@ export class DynamoDbManager implements IDynamoDbManager
     {
         let obj:T = new type();
         let tableName = Reflector.getTableName(obj);
-        let dataPrefix = Reflector.getDataPrefix(obj);
 
-        let query = {
+        let attributeValues = {':objid': <any>id};
+        let attributeNames = {'#objid': Const.IdColumn};
+        addColumnValuePrefix(obj, attributeValues, attributeNames)
+
+        let query:QueryInput = {
             TableName: tableName,
-            Key: {}
+            KeyConditionExpression: '#objid = :objid',
+            ExpressionAttributeNames: attributeNames,
+            ExpressionAttributeValues: attributeValues,
+            IndexName: Const.IdIndexName,
+            Limit: 1
         };
 
-        query.Key[Const.HashColumn] = `${dataPrefix}#${Const.DefaultHashValue}`;
-        query.Key[Const.RangeColumn] = `${Const.DefaultRangeValue}#${id}`;
+        do
+        {
+            let response =  await this.client.query(query).promise();
 
-        let response =  await this.client.get(query).promise();
-        
-        return response.Item === undefined ? undefined : EntityFactory.create(type, response.Item);
+            if(response.Items && response.Items.length > 0)
+            {
+                return EntityFactory.create(type, response.Items[0]);
+            }
+
+            query.ExclusiveStartKey = response.LastEvaluatedKey;
+        }
+        while(query.ExclusiveStartKey);
+
+        return undefined;
     }
 
     async find<T extends object>(type:{new(...args: any[]):T}, 

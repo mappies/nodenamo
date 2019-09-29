@@ -118,9 +118,9 @@ describe('DynamoDbManager', function ()
             id:number;
         };
 
-        let getResponse = getMockedGetResponse({Item:<any>{id:42}});
+        let response = getMockedQueryResponse({Items:[<any>{id:42}]});
 
-        mockedClient.setup(q => q.get(It.is(p => !!p.TableName && p.Key.hash === `entity#${Const.DefaultHashValue}` && p.Key.range === `${Const.DefaultRangeValue}#42`))).callback(()=>called=true).returns(()=>getResponse.object);
+        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeValues[':objid'] === 'entity#42' && p.Limit === 1))).callback(()=>called=true).returns(()=>response.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entity = await manager.getOne(Entity, 42);
@@ -138,9 +138,9 @@ describe('DynamoDbManager', function ()
             id:number;
         };
 
-        let getResponse = getMockedGetResponse({});
+        let response = getMockedGetResponse({});
 
-        mockedClient.setup(q => q.get(It.is(p => !!p.TableName && p.Key.hash === `entity#${Const.DefaultHashValue}` && p.Key.range === `${Const.DefaultRangeValue}#42`))).callback(()=>called=true).returns(()=>getResponse.object);
+        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeValues[':objid'] === 'entity#42' && p.Limit === 1))).callback(()=>called=true).returns(()=>response.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entity = await manager.getOne(Entity, 42);
