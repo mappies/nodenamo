@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import Const from "./const";
+import {Const} from "./const";
 
 function appendMetadataAsArray(key:any, value:any, target:object)
 {

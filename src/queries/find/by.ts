@@ -5,7 +5,7 @@ import { Using } from "./using";
 import { Order } from "./order";
 import { Resume } from "./resume";
 import { Filter } from "./filter";
-import Const from "../../const";
+import {Const} from "../../const";
 
 export class By
 {

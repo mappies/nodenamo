@@ -5,7 +5,7 @@ import { DBTable } from '../../src/dbTable';
 import { DBColumn } from '../../src/dbColumn';
 import { Find } from '../../src/queries/find/find';
 import { List } from '../../src/queries/find/list';
-import Const from '../../src/const';
+import {Const} from '../../src/const';
 
 @DBTable()
 class Entity {

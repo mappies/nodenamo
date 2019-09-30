@@ -4,7 +4,7 @@ import { DynamoDbManager } from './dynamodbManager';
 import { Reflector } from '../reflector';
 import { ValidationError } from '../errors/validationError';
 import { isNullOrUndefined } from 'util';
-import Const from '../const';
+import {Const} from '../const';
 import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
 
 export class ValidatedDynamoDbManager implements IDynamoDbManager

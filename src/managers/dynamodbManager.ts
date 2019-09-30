@@ -2,7 +2,7 @@ import { DocumentClient, QueryInput, QueryOutput } from 'aws-sdk/clients/dynamod
 import { DynamoDbTransaction } from './dynamodbTransaction';
 import { RepresentationFactory } from '../representationFactory';
 import { Reflector } from '../reflector';
-import Const from '../const';
+import {Const} from '../const';
 import { EntityFactory } from '../entityFactory';
 import { NodenamoError } from '../errors/nodenamoError';
 import { DynamoDB } from 'aws-sdk/clients/all';

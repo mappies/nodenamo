@@ -1,4 +1,4 @@
-import Const from "./const";
+import {Const} from "./const";
 import { Reflector } from './reflector';
 
 const excludedColumns = [<string>Const.HashColumn, <string>Const.RangeColumn, <string>Const.IdColumn];

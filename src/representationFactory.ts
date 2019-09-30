@@ -1,6 +1,6 @@
 import { Reflector } from "./reflector";
 import { Representation } from "./representation";
-import Const from "./const";
+import {Const} from "./const";
 
 export class RepresentationFactory
 {

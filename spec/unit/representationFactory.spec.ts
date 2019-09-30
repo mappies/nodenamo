@@ -3,7 +3,7 @@ import {assert as assert} from 'chai';
 import { DBColumn, DBTable } from "../../src";
 import { RepresentationFactory } from '../../src/representationFactory';
 import { Representation } from "../../src/representation";
-import Const from "../../src/const";
+import {Const} from "../../src/const";
 
 describe('RepresentationFactory', function () 
 {

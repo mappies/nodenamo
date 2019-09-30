@@ -5,7 +5,7 @@ import { DocumentClient, GetItemOutput, QueryOutput, DeleteItemOutput, CreateTab
 import { DBTable, DBColumn } from '../../src';
 import { DynamoDbTransaction } from '../../src/managers/dynamodbTransaction';
 import { Reflector } from '../../src/reflector';
-import Const from '../../src/const';
+import {Const} from '../../src/const';
 import { AWSError } from 'aws-sdk/lib/error';
 import { Request } from 'aws-sdk/lib/request';
 import { DynamoDB } from 'aws-sdk/clients/all';

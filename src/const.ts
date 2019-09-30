@@ -1,4 +1,4 @@
-enum Const
+export enum Const
 {
     DBTable = "nodenamo:dbtable",
     DBColumn = "nodenamo:dbcolumn",
@@ -14,5 +14,3 @@ enum Const
     DefaultRangeValue = "nodenamo",
     DefaultHashValue = "nodenamo"
 };
-
-export default Const;
