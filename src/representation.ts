@@ -11,11 +11,27 @@ export class Representation
         this.data = Object.assign({}, originalData);
 
         this.objId = this.data[Const.IdColumn] = this.addDataPrefix(dataPrefix, this.getPropertyValue(this.data, id));
-        this.hash = this.data[Const.HashColumn] = hash ? this.addDataPrefix(dataPrefix, this.getPropertyValue(this.data, hash)) : this.addDataPrefix(dataPrefix, Const.DefaultHashValue);
         
+        if(hash === Const.IdUniquenessHash)
+        {
+            this.hash = this.data[Const.HashColumn] =  this.addDataPrefix(dataPrefix,  this.getPropertyValue(this.data, id));
+        }
+        else if(hash)
+        {
+            this.hash = this.data[Const.HashColumn] = this.addDataPrefix(dataPrefix, this.getPropertyValue(this.data, hash))
+        }
+        else
+        {
+            this.hash = this.data[Const.HashColumn] = this.addDataPrefix(dataPrefix, Const.DefaultHashValue);
+        }
+
         if(range === undefined)
         {
             this.range = this.data[Const.RangeColumn] = `${Const.DefaultRangeValue}#${this.getPropertyValue(this.data, id)}`
+        }
+        else if((range === Const.IdUniquenessRange))
+        {
+            this.range = this.data[Const.RangeColumn] = `${Const.DefaultRangeValue}`;
         }
         else
         {

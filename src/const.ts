@@ -12,5 +12,8 @@ export enum Const
     IdColumn = 'objid',
     IdIndexName = 'objid-index',
     DefaultRangeValue = "nodenamo",
-    DefaultHashValue = "nodenamo"
+    DefaultHashValue = "nodenamo",
+    IdUniquenessRange = "idUniquenessRange",
+    IdUniquenessHash = "idUniquenessKey",
+    IdUniquenessPrefix = "nodenamo"
 };

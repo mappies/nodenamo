@@ -24,11 +24,6 @@ export class NodeNamo
 
     insert(obj:object): Insert
     {
-        if(!Reflector.getIdKey(obj))
-        {
-            throw new NodenamoError(`Could not insert an object because it has no ID property. Try adding @DBColumn({id:true}) to one of its property to represent a unique object ID.`)
-        }
-
         return new Insert(this.manager, obj);
     }
 

@@ -45,6 +45,7 @@ export class RepresentationFactory
             representations.push(new Representation(tableName, dataPrefix, hashRangeKeyPair.hashes, hashRangeKeyPair.ranges, idKey, data));
         }
 
+        //For listing
         if(rangeKeys.length === 0)
         {
             representations.push(new Representation(tableName, dataPrefix, undefined, undefined, idKey, data));
@@ -56,6 +57,9 @@ export class RepresentationFactory
                 representations.push(new Representation(tableName, dataPrefix, undefined, rangeKey, idKey, data));
             }
         }
+
+        //For ID uniqueness
+        representations.push(new Representation(tableName, dataPrefix, Const.IdUniquenessHash, Const.IdUniquenessRange, idKey, data));
 
         return representations;
     }
