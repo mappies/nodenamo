@@ -25,6 +25,9 @@ export class RepresentationFactory
 
         let representations:Representation[] = [];
 
+        //For ID uniqueness
+        representations.push(new Representation(tableName, dataPrefix, Const.IdUniquenessHash, Const.IdUniquenessRange, idKey, data));
+
         for(let hashKey of hashKeys)
         {
             if(rangeKeys.length === 0)
@@ -57,9 +60,6 @@ export class RepresentationFactory
                 representations.push(new Representation(tableName, dataPrefix, undefined, rangeKey, idKey, data));
             }
         }
-
-        //For ID uniqueness
-        representations.push(new Representation(tableName, dataPrefix, Const.IdUniquenessHash, Const.IdUniquenessRange, idKey, data));
 
         return representations;
     }
