@@ -75,7 +75,7 @@ describe('DynamoDbManager.Find()', function ()
 
         assert.isTrue(called);
         assert.equal(entities.items.length, 1);
-        assert.deepEqual(entities.items[0], {id:42});
+        assert.equal(entities.items[0].id, 42);
     });
     
     it('find() - id as the hash key', async () =>
@@ -134,7 +134,7 @@ describe('DynamoDbManager.Find()', function ()
 
         assert.isTrue(called);
         assert.equal(entities.items.length, 1);
-        assert.deepEqual(entities.items[0], {id:42});
+        assert.equal(entities.items[0].id, 42);
     });
 
     it('find() - pagination - more pages', async () =>
