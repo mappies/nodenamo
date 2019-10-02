@@ -7,6 +7,7 @@ import { EntityFactory } from '../entityFactory';
 import { NodenamoError } from '../errors/nodenamoError';
 import { DynamoDB } from 'aws-sdk/clients/all';
 import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
+import { VersionError } from '../errors/versionError';
 
 export class DynamoDbManager implements IDynamoDbManager
 {
@@ -163,33 +164,14 @@ export class DynamoDbManager implements IDynamoDbManager
         return {items: Object.values(result), lastEvaluatedKey: response.LastEvaluatedKey}
     }
 
-    async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction)
+    async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction)
     {
         let instance = new type();
         let tableName = Reflector.getTableName(instance);
 
-        //Setup additionalParams
-        let additionalParams = {};
-        if(params && params.conditionExpression)
-        {
-            additionalParams['ConditionExpression'] =  `${params.conditionExpression}`;
-        }
-
-        if(params && params.expressionAttributeNames)
-        {
-            changeColumnNames(obj, params.expressionAttributeNames)
-            additionalParams['ExpressionAttributeNames'] = params.expressionAttributeNames;
-        }
-
-        if(params && params.expressionAttributeValues)
-        {
-            addColumnValuePrefix(obj, params.expressionAttributeValues, params.expressionAttributeNames);
-            additionalParams['ExpressionAttributeValues'] = params.expressionAttributeValues;
-        }
-
         //Calculate new representations
         let rows = await this.getById(id, type); 
-
+        
         if(rows.length === 0)
         {
             throw new Error(`Could not update the object '${id}' because it could not be found.`);
@@ -205,13 +187,51 @@ export class DynamoDbManager implements IDynamoDbManager
 
         //Must assign data to `instance` so it has @DBColumn() and @DBTable() metadata.
         let desiredObject = Object.assign(instance, Object.assign(Object.assign({}, rows[0]), obj));
-        
-        let newRepresentations = RepresentationFactory.get(desiredObject)
 
+        //If versionCheck, use the version from the original object.
+        //Else, RepresentationFactory.get() will increment the version from DB.
+        if(params && params.versionCheck)
+        {
+            let version = Reflector.getVersion(obj);
+            Reflector.setVersion(desiredObject, version);
+        }
+
+        //Create new representations
+        let newRepresentations = RepresentationFactory.get(desiredObject)
         if(newRepresentations.length === 0)
         {
             throw new NodenamoError(`Could not create a data representation for '${JSON.stringify(obj)}'.  Try adding @DBColumn({hash:true}) to one its column.`);
         }
+
+        //Setup additionalParams
+        let additionalParams:any = {};
+        
+        if(params && params.versionCheck)
+        {
+            additionalParams.ConditionExpression = '(#objver < :objver)';
+            additionalParams.ExpressionAttributeNames = {'#objver': Const.VersionColumn};
+            additionalParams.ExpressionAttributeValues = {':objver': newRepresentations[0].data[Const.VersionColumn]};
+        }
+
+        if(params && params.conditionExpression)
+        {
+            additionalParams['ConditionExpression'] = additionalParams['ConditionExpression'] 
+                                                        ? `${additionalParams['ConditionExpression']} and (${params.conditionExpression})`
+                                                        : params.conditionExpression;
+        }
+        
+        if(params && params.expressionAttributeNames)
+        {
+            changeColumnNames(obj, params.expressionAttributeNames)
+            additionalParams['ExpressionAttributeNames'] = Object.assign(params.expressionAttributeNames, additionalParams['ExpressionAttributeNames']);
+        }
+
+        if(params && params.expressionAttributeValues)
+        {
+            addColumnValuePrefix(obj, params.expressionAttributeValues, params.expressionAttributeNames);
+            additionalParams['ExpressionAttributeValues'] = Object.assign(params.expressionAttributeValues, additionalParams['ExpressionAttributeValues']);
+        }
+        
         transaction = transaction || new DynamoDbTransaction(this.client);
 
         //Update/delete rows
@@ -244,7 +264,33 @@ export class DynamoDbManager implements IDynamoDbManager
             transaction.add({Delete: deleteParam});
         }
 
-        await transaction.commit();
+        try
+        {
+            await transaction.commit();
+        }
+        catch(e)
+        {
+            //Check if the failure was caused from a version check.
+            if(params.versionCheck)
+            {
+                let currentObject:T;
+                try
+                {
+                    currentObject = await this.getOne(type, id);
+                }
+                catch(e2)
+                {
+                    throw e;
+                }
+                
+                if(currentObject && Reflector.getVersion(currentObject) >= newRepresentations[0].data[Const.VersionColumn])
+                {
+                    throw new VersionError(`Could not update the object '${id}' because it has been overwritten by the writes of others.`);
+                }
+            }
+
+            throw e;
+        }
     }
 
 

@@ -1,7 +1,7 @@
-import {Const} from "./const";
+import { Const } from './const';
 import { Reflector } from './reflector';
 
-const excludedColumns = [<string>Const.HashColumn, <string>Const.RangeColumn, <string>Const.IdColumn];
+const excludedColumns = [<string>Const.HashColumn, <string>Const.RangeColumn, <string>Const.IdColumn, <string>Const.VersionColumn];
 
 export class EntityFactory
 {
@@ -17,6 +17,12 @@ export class EntityFactory
 
         for(let property of Object.keys(data))
         {
+            if(property === Const.VersionColumn)
+            {
+                Reflector.setVersion(result, data[property]);
+                continue;
+            }
+
             if(excludedColumns.includes(property)) continue;
 
             let descriptor = getPropertyDescriptor(result, property);

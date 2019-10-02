@@ -37,4 +37,18 @@ describe('DbTable', function ()
         
         assert.equal(metadata, 'prefix');
     });
+
+    it('Version', function () 
+    {
+        @DBTable()
+        class Entity {};
+
+        let obj = new Entity();
+
+        assert.equal(Reflector.getVersion(obj), 0);
+
+        Reflector.incrementVersion(obj);
+        
+        assert.equal(Reflector.getVersion(obj), 1);
+    });
 });

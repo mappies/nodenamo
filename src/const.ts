@@ -10,10 +10,12 @@ export enum Const
     HashColumn = 'hash',
     RangeColumn = 'range',
     IdColumn = 'objid',
+    VersionColumn = 'objver',
     IdIndexName = 'objid-index',
     DefaultRangeValue = "nodenamo",
     DefaultHashValue = "nodenamo",
     IdUniquenessRange = "idUniquenessRange",
     IdUniquenessHash = "idUniquenessKey",
-    IdUniquenessPrefix = "nodenamo"
+    IdUniquenessPrefix = "nodenamo",
+    Version = "Version"
 };

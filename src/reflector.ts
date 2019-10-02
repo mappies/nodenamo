@@ -109,4 +109,20 @@ export class Reflector
     {
         Reflect.defineMetadata(Const.DataPrefix, prefix, obj);
     }
+
+    static getVersion(obj:object): number
+    {
+        return Reflect.getMetadata(Const.Version, obj) || 0;
+    }
+
+    static setVersion(obj:object, version:number): void
+    {
+        Reflect.defineMetadata(Const.Version, version, obj);
+    }
+
+    static incrementVersion(obj:object): void
+    {
+        let version = Reflector.getVersion(obj);
+        Reflector.setVersion(obj, version+1);
+    }
 }

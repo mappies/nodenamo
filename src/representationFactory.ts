@@ -13,7 +13,7 @@ export class RepresentationFactory
         let columns = Reflector.getColumns(obj);
         let idKey = Reflector.getIdKey(obj);
         let dataPrefix = Reflector.getDataPrefix(obj);
-
+        let version = Reflector.getVersion(obj) || obj[Const.VersionColumn] || 0;
         let data:any = {};
         for(let column of columns)
         {
@@ -22,6 +22,8 @@ export class RepresentationFactory
             let propertyOriginalName = column.includes('#') ? column.split('#')[1] : column;
             data[propertyName] = obj[propertyOriginalName];
         }
+
+        data[Const.VersionColumn] = version + 1;
 
         let representations:Representation[] = [];
 

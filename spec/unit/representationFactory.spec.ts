@@ -4,6 +4,7 @@ import { DBColumn, DBTable } from "../../src";
 import { RepresentationFactory } from '../../src/representationFactory';
 import { Representation } from "../../src/representation";
 import {Const} from "../../src/const";
+import { Reflector } from "../../src/reflector";
 
 describe('RepresentationFactory', function () 
 {
@@ -34,6 +35,7 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[0].data.objid, undefined);
         assert.equal(representations[0].data.name, 'Some One');
         assert.equal(representations[0].data.createdTimestamp, 'now');
+        assert.equal(representations[0].data[Const.VersionColumn], 1);
 
         assert.equal(representations[1].hash, `entity#${Const.DefaultHashValue}`);
         assert.equal(representations[1].range, `${Const.DefaultRangeValue}#undefined`);
@@ -44,6 +46,7 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[1].data.objid, undefined);
         assert.equal(representations[1].data.name, 'Some One');
         assert.equal(representations[1].data.createdTimestamp, 'now');
+        assert.equal(representations[1].data[Const.VersionColumn], 1);
     });
 
     it('get() - id key', function () 
@@ -622,5 +625,35 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[2].data.objid, 'pfx#123');
         assert.equal(representations[2].data.name, 'Some One');
         assert.equal(representations[2].data.createdTimestamp, 234);
+    });
+
+
+
+    it('get() - version - new obj', function () 
+    {
+        @DBTable()
+        class Entity {};
+
+        let entity = new Entity();
+        let representations = RepresentationFactory.get(new Entity());
+        
+        assert.equal(representations.length, 2);
+        assert.equal(representations[0].data[Const.VersionColumn], 1);
+        assert.equal(representations[1].data[Const.VersionColumn], 1);
+    });
+
+    it('get() - version - existing obj', function () 
+    {
+        @DBTable()
+        class Entity {};
+
+        let entity = new Entity();
+        Reflector.incrementVersion(entity);
+
+        let representations = RepresentationFactory.get(entity);
+        
+        assert.equal(representations.length, 2);
+        assert.equal(representations[0].data[Const.VersionColumn], 2);
+        assert.equal(representations[1].data[Const.VersionColumn], 2);
     });
 });
