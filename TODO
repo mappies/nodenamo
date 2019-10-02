@@ -1,4 +1,3 @@
-@DBTable({version:true})
 array hash
 support # in column value
 do not allow `nodenamo` as a column value

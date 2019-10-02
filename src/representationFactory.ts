@@ -13,7 +13,7 @@ export class RepresentationFactory
         let columns = Reflector.getColumns(obj);
         let idKey = Reflector.getIdKey(obj);
         let dataPrefix = Reflector.getDataPrefix(obj);
-        let version = Reflector.getVersion(obj) || obj[Const.VersionColumn] || 0;
+        let version = Reflector.getObjectVersion(obj) || obj[Const.VersionColumn] || 0;
         let data:any = {};
         for(let column of columns)
         {

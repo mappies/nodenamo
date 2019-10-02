@@ -5,6 +5,8 @@ export enum Const
     HashKey = "nodenamo:hashkey",
     RangeKey = "nodenamo:rangekey",
     HashRangeKey = "nodenamo:hashrangekey",
+    TableVersioning = "nodenamo:versioning",
+    ObjectVersion = "nodenamp:version",
     IdKey = "nodenamo:idkey",
     DataPrefix = "nodenamo:dataprefix",
     HashColumn = 'hash',
@@ -16,6 +18,5 @@ export enum Const
     DefaultHashValue = "nodenamo",
     IdUniquenessRange = "idUniquenessRange",
     IdUniquenessHash = "idUniquenessKey",
-    IdUniquenessPrefix = "nodenamo",
-    Version = "Version"
+    IdUniquenessPrefix = "nodenamo"
 };

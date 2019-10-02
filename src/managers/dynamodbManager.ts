@@ -168,6 +168,8 @@ export class DynamoDbManager implements IDynamoDbManager
     {
         let instance = new type();
         let tableName = Reflector.getTableName(instance);
+        let tableVersioning = Reflector.getTableVersioning(instance);
+        let versioningRequired = tableVersioning || (params && params.versionCheck);
 
         //Calculate new representations
         let rows = await this.getById(id, type); 
@@ -190,10 +192,10 @@ export class DynamoDbManager implements IDynamoDbManager
 
         //If versionCheck, use the version from the original object.
         //Else, RepresentationFactory.get() will increment the version from DB.
-        if(params && params.versionCheck)
+        if(versioningRequired)
         {
-            let version = Reflector.getVersion(obj);
-            Reflector.setVersion(desiredObject, version);
+            let version = Reflector.getObjectVersion(obj);
+            Reflector.setObjectVersion(desiredObject, version);
         }
 
         //Create new representations
@@ -206,7 +208,7 @@ export class DynamoDbManager implements IDynamoDbManager
         //Setup additionalParams
         let additionalParams:any = {};
         
-        if(params && params.versionCheck)
+        if(versioningRequired)
         {
             additionalParams.ConditionExpression = '(#objver < :objver)';
             additionalParams.ExpressionAttributeNames = {'#objver': Const.VersionColumn};
@@ -271,7 +273,7 @@ export class DynamoDbManager implements IDynamoDbManager
         catch(e)
         {
             //Check if the failure was caused from a version check.
-            if(params.versionCheck)
+            if(versioningRequired)
             {
                 let currentObject:T;
                 try
@@ -283,7 +285,7 @@ export class DynamoDbManager implements IDynamoDbManager
                     throw e;
                 }
                 
-                if(currentObject && Reflector.getVersion(currentObject) >= newRepresentations[0].data[Const.VersionColumn])
+                if(currentObject && Reflector.getObjectVersion(currentObject) >= newRepresentations[0].data[Const.VersionColumn])
                 {
                     throw new VersionError(`Could not update the object '${id}' because it has been overwritten by the writes of others.`);
                 }

@@ -40,7 +40,7 @@ describe('DynamoDbManager.Get()', function ()
 
         assert.isTrue(called);
         assert.deepEqual(entity, {id:42});
-        assert.equal(Reflector.getVersion(entity), 1);
+        assert.equal(Reflector.getObjectVersion(entity), 1);
     });
 
     it('get() - not found', async () =>

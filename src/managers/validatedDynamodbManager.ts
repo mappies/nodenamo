@@ -42,10 +42,11 @@ export class ValidatedDynamoDbManager implements IDynamoDbManager
         return await this.manager.find(type, keyParams, filterParams, params);
     }
 
-    async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction)
+    async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction)
     {
         validateType(type);
         validateKeyConditionExpression(type, params);
+        validateVersioning(type, params);
 
         await this.manager.update(type, id, obj, params);
     }
@@ -88,6 +89,18 @@ function validateType<T extends object>(type:{new(...args: any[]):T})
     if(Reflector.getIdKey(instance) === undefined)
     {
         throw new ValidationError(`Undefined ID property. Try adding @DBColumn({id:true}) to one of its property to represent a unique object ID.`);
+    }
+}
+
+function validateVersioning<T extends object>(type:{new(...args: any[]):T}, params: {conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean})
+{
+    if(params === undefined) return;
+
+    let instance = new type();
+    
+    if(Reflector.getTableVersioning(instance) === true && params.versionCheck === false)
+    {
+        throw new ValidationError('versionCeck couldn\'t be set to false because versioning is enabled for this table.');
     }
 }
 

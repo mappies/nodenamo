@@ -50,6 +50,16 @@ export class Reflector
         Reflect.defineMetadata(Const.DBTable, tableName, obj);
     }
 
+    static getTableVersioning(obj:object): boolean
+    {
+        return Reflect.getMetadata(Const.TableVersioning, obj) || false;
+    }
+
+    static setTableVersioning(obj:object, version:boolean): void
+    {
+        Reflect.defineMetadata(Const.TableVersioning, version, obj);
+    }
+
     static getColumns(obj:object): string[]
     {
         return Reflect.getMetadata(Const.DBColumn, obj) || [];
@@ -110,19 +120,19 @@ export class Reflector
         Reflect.defineMetadata(Const.DataPrefix, prefix, obj);
     }
 
-    static getVersion(obj:object): number
+    static getObjectVersion(obj:object): number
     {
-        return Reflect.getMetadata(Const.Version, obj) || 0;
+        return Reflect.getMetadata(Const.ObjectVersion, obj) || 0;
     }
 
-    static setVersion(obj:object, version:number): void
+    static setObjectVersion(obj:object, version:number): void
     {
-        Reflect.defineMetadata(Const.Version, version, obj);
+        Reflect.defineMetadata(Const.ObjectVersion, version, obj);
     }
 
     static incrementVersion(obj:object): void
     {
-        let version = Reflector.getVersion(obj);
-        Reflector.setVersion(obj, version+1);
+        let version = Reflector.getObjectVersion(obj);
+        Reflector.setObjectVersion(obj, version+1);
     }
 }

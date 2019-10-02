@@ -38,17 +38,41 @@ describe('DbTable', function ()
         assert.equal(metadata, 'prefix');
     });
 
-    it('Version', function () 
+    it('Object Version', function () 
     {
         @DBTable()
         class Entity {};
 
         let obj = new Entity();
 
-        assert.equal(Reflector.getVersion(obj), 0);
+        assert.equal(Reflector.getObjectVersion(obj), 0);
 
         Reflector.incrementVersion(obj);
         
-        assert.equal(Reflector.getVersion(obj), 1);
+        assert.equal(Reflector.getObjectVersion(obj), 1);
+    });
+
+    it('Table Version - true', function () 
+    {
+        @DBTable({versioning:true})
+        class Entity {};
+
+        assert.isTrue(Reflector.getTableVersioning(new Entity()));
+    });
+
+    it('Table Version - false', function () 
+    {
+        @DBTable({versioning:false})
+        class Entity {};
+
+        assert.isFalse(Reflector.getTableVersioning(new Entity()));
+    });
+
+    it('Table Version - undefined', function () 
+    {
+        @DBTable()
+        class Entity {};
+
+        assert.isFalse(Reflector.getTableVersioning(new Entity()));
     });
 });

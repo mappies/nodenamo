@@ -32,7 +32,7 @@ describe('ValidationDynamoDbManager - Update()', function ()
     beforeEach(()=>
     {
         mockedManager = Mock.ofType<DynamoDbManager>();
-        mockedManager.setup(m => m.update(Entity, 42, It.isAny(), It.isAny())).callback(()=>called=true);
+        mockedManager.setup(m => m.update(It.isAny(), 42, It.isAny(), It.isAny())).callback(()=>called=true);
 
         manager = new ValidatedDynamoDbManager(mockedManager.object);
 
@@ -256,6 +256,79 @@ describe('ValidationDynamoDbManager - Update()', function ()
             try
             {
                 await manager.update(Entity, 42, {}, {conditionExpression: 'condition', expressionAttributeValues: {':v': NaN}});
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+    });
+
+    describe('versioning',()=>
+    {
+        it('valid - not specified a table versioning', async ()=>
+        {
+            @DBTable({versioning:false})
+            class Entity {
+                @DBColumn({id:true})
+                id:number = 123;
+            }
+            
+            await manager.update(Entity, 42, {});
+
+            assert.isTrue(called);
+        });
+
+        it('valid - table versioning is on', async ()=>
+        {
+            @DBTable({versioning:true})
+            class Entity {
+                @DBColumn({id:true})
+                id:number = 123;
+            }
+            
+            await manager.update(Entity, 42, {});
+
+            assert.isTrue(called);
+        });
+
+        it('valid - table versioning is off', async ()=>
+        {
+            @DBTable({versioning:false})
+            class Entity {
+                @DBColumn({id:true})
+                id:number = 123;
+            }
+            
+            await manager.update(Entity, 42, {});
+
+            assert.isTrue(called);
+        });
+
+        it('valid - table version is off and versionCheck is on', async ()=>
+        {
+            @DBTable({versioning:false})
+            class Entity {
+                @DBColumn({id:true})
+                id:number = 123;
+            }
+            
+            await manager.update(Entity, 42, {}, <any>{versionCheck:true});
+
+            assert.isTrue(called);
+        });
+
+        it('valid - table version is on and versionCheck is off', async ()=>
+        {
+            @DBTable({versioning:true})
+            class Entity {
+                @DBColumn({id:true})
+                id:number = 123;
+            }
+            
+            try
+            {
+                await manager.update(Entity, 42, {}, <any>{versionCheck:false});
             }
             catch(e) { error = e; }
 

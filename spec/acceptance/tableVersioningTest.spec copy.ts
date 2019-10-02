@@ -6,7 +6,7 @@ import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { Reflector } from '../../src/reflector';
 import { VersionError } from '../../src/errors/versionError';
 
-@DBTable({name:'nodenamo_acceptance_versionTest'})
+@DBTable({name:'nodenamo_acceptance_tableVersioningTest', versioning: true})
 class User
 {
     @DBColumn({id:true})
@@ -22,7 +22,7 @@ class User
     }
 }
 
-describe('Version tests', function () 
+describe('Table versioning tests', function () 
 {
     let nodenamo:NodeNamo;
 
@@ -56,7 +56,7 @@ describe('Version tests', function ()
         assert.deepEqual(user, { id: 2, name: 'Some Two' });
     });
 
-    it('Update an item - with a version check', async () =>
+    it('Update an item - version checked by default', async () =>
     {
         let user1 = await nodenamo.get(1).from(User).execute<User>();
         assert.deepEqual(user1, { id: 1, name: 'Some One' });
@@ -67,7 +67,7 @@ describe('Version tests', function ()
         assert.equal(Reflector.getObjectVersion(user2), 1);
 
         user2.name = 'I am first';
-        await nodenamo.update(user2).from(User).withVersionCheck().execute();
+        await nodenamo.update(user2).from(User).execute();
         
         let user3 = await nodenamo.get(1).from(User).execute();
         assert.deepEqual(user3, { id: 1, name: 'I am first' });
@@ -77,7 +77,7 @@ describe('Version tests', function ()
         let error = undefined;
         try
         {
-            await nodenamo.update(user1).from(User).withVersionCheck().execute();
+            await nodenamo.update(user1).from(User).execute();
         }
         catch(e)
         {
@@ -85,31 +85,6 @@ describe('Version tests', function ()
         }
         assert.isDefined(error);
         assert.instanceOf(error, VersionError);
-    });
-
-    it('Update an item - without a version check', async () =>
-    {
-        let user1 = await nodenamo.get(2).from(User).execute<User>();
-        assert.deepEqual(user1, { id: 2, name: 'Some Two' });
-        assert.equal(Reflector.getObjectVersion(user1), 1);
-
-        let user2 = await nodenamo.get(2).from(User).execute<User>();
-        assert.deepEqual(user2, { id: 2, name: 'Some Two' });
-        assert.equal(Reflector.getObjectVersion(user2), 1);
-
-        user2.name = 'I am first';
-        await nodenamo.update(user2).from(User).execute();
-        
-        let user3 = await nodenamo.get(2).from(User).execute();
-        assert.deepEqual(user3, { id: 2, name: 'I am first' });
-        assert.equal(Reflector.getObjectVersion(user3), 2);
-        
-        user1.name = 'Too late';
-        await nodenamo.update(user1).from(User).execute();
-
-        let user4 = await nodenamo.get(2).from(User).execute();
-        assert.deepEqual(user4, { id: 2, name: 'Too late' });
-        assert.equal(Reflector.getObjectVersion(user4), 3); 
     });
 
     after(async ()=>{

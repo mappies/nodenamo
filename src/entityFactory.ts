@@ -19,7 +19,7 @@ export class EntityFactory
         {
             if(property === Const.VersionColumn)
             {
-                Reflector.setVersion(result, data[property]);
+                Reflector.setObjectVersion(result, data[property]);
                 continue;
             }
 
