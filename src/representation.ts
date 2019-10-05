@@ -89,9 +89,9 @@ function createRepresentation(tableName: string, dataPrefix:string = '', hash:an
         result.range = String(result.range);
     }
 
-    result.data[Const.IdColumn] = result.objId = String(result.objId);
-    result.data[Const.HashColumn] = result.hash = String(result.hash);
-    result.data[Const.RangeColumn] = result.range = String(result.range);
+    result.data[Const.IdColumn] = result.objId = result.objId === undefined ? undefined : String(result.objId);
+    result.data[Const.HashColumn] = result.hash = result.hash === undefined ? undefined : String(result.hash);
+    result.data[Const.RangeColumn] = result.range = result.range === undefined ? undefined : String(result.range);
     
     return result;
 }
