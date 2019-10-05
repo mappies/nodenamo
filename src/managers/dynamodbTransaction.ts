@@ -1,6 +1,5 @@
 import { DocumentClient, TransactWriteItem } from "aws-sdk/clients/dynamodb";
 import AggregateError from 'aggregate-error';
-import { AssertionError } from "assert";
 
 const MAX_AWS_TRANSACTION_OPERATIONS = 10;
 
@@ -35,16 +34,26 @@ export class DynamoDbTransaction
 
                 transactionRequest.on('extractError', (response) => {
                     try {
-                        let reasons = JSON.parse(response.httpResponse.body.toString()).CancellationReasons;
+                        let error = JSON.parse(response.httpResponse.body.toString());
 
-                        for(let j = 0; j < reasons.length ; j++)
+                        if(error.CancellationReasons)
                         {
-                            if(reasons[j].Code === 'None') continue;
+                            let reasons = error.CancellationReasons;
 
-                            let e = new Error(`${reasons[j].Code}: ${reasons[j].Message}: ${JSON.stringify(transactions[j])}`);
-                            
-                            errors.push(e);
+                            for(let j = 0; j < reasons.length ; j++)
+                            {
+                                if(reasons[j].Code === 'None') continue;
+
+                                let e = new Error(`${reasons[j].Code}: ${reasons[j].Message}: ${JSON.stringify(transactions[j])}`);
+                                
+                                errors.push(e);
+                            }
                         }
+                        else
+                        {
+                            errors.push(new Error(error.message));
+                        }
+
                     } catch (err) {
                         errors.push(err);
                     }

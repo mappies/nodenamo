@@ -1,5 +1,6 @@
 import { Const } from './const';
 import { Reflector } from './reflector';
+import { Key } from './Key';
 
 const excludedColumns = [<string>Const.HashColumn, <string>Const.RangeColumn, <string>Const.IdColumn, <string>Const.VersionColumn];
 
@@ -53,13 +54,13 @@ function getPropertyDescriptor(obj: any, prop: string) : PropertyDescriptor
 
 function getColumnNameMapping(obj:object): any
 {
-    let columnNames:any = {}; //{customName: propertyName}
+    let columnNames:any = {}; //{targetName: propertyName}
 
     for(let column of Reflector.getColumns(obj))
     {
-        let tokens = column.split('#'); //customName#propertyName
+        let tokens = Key.parse(column); //targetName#propertyName
 
-        columnNames[tokens[0]] = tokens.length === 1 ? tokens[0] : tokens[1];
+        columnNames[tokens.targetName] = tokens.propertyName;
     }
 
     return columnNames;

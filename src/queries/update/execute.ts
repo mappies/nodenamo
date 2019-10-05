@@ -1,5 +1,6 @@
 import { IDynamoDbManager } from '../../interfaces/iDynamodbManager';
 import { Reflector } from "../../reflector";
+import { Key } from '../../Key';
 
 export class Execute
 {
@@ -12,7 +13,7 @@ export class Execute
     {
         let idColumn = Reflector.getIdKey(new this.type());
 
-        idColumn = idColumn.includes('#') ? idColumn.split('#')[1] : idColumn; //customName#propertyName
+        idColumn = Key.parse(idColumn).propertyName; //targetName#propertyName
         
         await this.manager.update(this.type, this.obj[idColumn], this.obj, this.params);
     }

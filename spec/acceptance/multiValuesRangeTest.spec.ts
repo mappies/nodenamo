@@ -4,45 +4,48 @@ import { NodeNamo } from '../../src/nodeNamo';
 import Config from './config';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 
-@DBTable({name:'nodenamo_acceptance_targetNameTest'})
+@DBTable({name:'nodenamo_acceptance_multiValuesRangeTest'})
 class User
 {
-    @DBColumn({id:true,name:'customId'})
+    @DBColumn({id:true})
     id:number;
 
-    @DBColumn({hash:true,name:'customAccount'})
+    @DBColumn({hash:true})
     account:number;
 
-    @DBColumn({name:'targetName'})
+    @DBColumn()
     name:string;
 
-    @DBColumn({range:true,name:'customCreated'})
-    created:number;
+    @DBColumn({range:true})
+    ranges:any[];
 
-    constructor(id:number, name:string, account:number, created:number)
+    constructor(id:number, name:string, account:number, ranges:any[])
     {
         this.id = id;
         this.name = name;
         this.account = account;
-        this.created = created;
+        this.ranges = ranges;
     }
 }
 
-describe('Custom-name tests', function () 
+describe('Multi-values range tests', function () 
 {
     let nodenamo:NodeNamo;
+    let user1 = new User(1, 'Some One', 1000, ['2018#1', false, 'Some One#1']);
+    let user2 = new User(2, 'Some Two', 1000, ['2017#2', true, 'Some Two#2']);
+    let user3 = new User(3, 'Some Three', 2000, ['2016#3', 'true#3', 'Some Three#3']);
 
     before(async ()=>{
-        nodenamo = new NodeNamo(new DocumentClient({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'us-east-1' }));
+        nodenamo = new NodeNamo(new DocumentClient({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'us-east-1' }))
         await nodenamo.createTable().for(User).execute();
     });
 
     it('Add items', async () =>
     {
         await Promise.all([
-            nodenamo.insert(new User(1, 'Some One', 1000, 2017)).into(User).execute(),
-            nodenamo.insert(new User(2, 'Some Two', 1000, 2016)).into(User).execute(),
-            nodenamo.insert(new User(3, 'Some Three', 2000, 2018)).into(User).execute()]);
+            nodenamo.insert(user1).into(User).execute(),
+            nodenamo.insert(user2).into(User).execute(),
+            nodenamo.insert(user3).into(User).execute()]);
     });
 
     it('List all items', async () =>
@@ -51,21 +54,9 @@ describe('Custom-name tests', function ()
         
         assert.equal(users.items.length, 3);
         assert.equal(users.lastEvaluatedKey, undefined);
-        assert.deepEqual(users.items[0], { id: 2, name: 'Some Two', account: 1000, created: 2016 });
-        assert.deepEqual(users.items[1], { id: 1, name: 'Some One', account: 1000, created: 2017 });
-        assert.deepEqual(users.items[2], { id: 3, name: 'Some Three', account: 2000, created: 2018 });
-    });
-
-    it('List items with a filter', async () =>
-    {
-        let users = await nodenamo.list().from(User).filter({
-                            filterExpression:"#name=:name", 
-                            expressionAttributeNames:{'#name':'name'},
-                            expressionAttributeValues:{':name': 'Some Two'}}).execute<User>();
-        
-        assert.equal(users.items.length, 1);
-        assert.equal(users.lastEvaluatedKey, undefined);
-        assert.deepEqual(users.items[0], { id: 2, name: 'Some Two', account: 1000, created: 2016 });
+        assert.deepEqual(users.items[0], user3);
+        assert.deepEqual(users.items[1], user2);
+        assert.deepEqual(users.items[2], user1);
     });
 
     it('List items by a hash', async () =>
@@ -74,8 +65,35 @@ describe('Custom-name tests', function ()
         
         assert.equal(users.items.length, 2);
         assert.equal(users.lastEvaluatedKey, undefined);
-        assert.deepEqual(users.items[0], { id: 2, name: 'Some Two', account: 1000, created: 2016 });
-        assert.deepEqual(users.items[1], { id: 1, name: 'Some One', account: 1000, created: 2017 });
+        assert.deepEqual(users.items[0], user2);
+        assert.deepEqual(users.items[1], user1);
+    });
+
+    it('List items by a hash (multi-values 1)', async () =>
+    {
+        let users = await nodenamo.list().from(User).by(1000, false).execute<User>();
+        
+        assert.equal(users.items.length, 1);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], user1);
+    });
+
+    it('List items by a hash (multi-values 2)', async () =>
+    {
+        let users = await nodenamo.list().from(User).by(1000, 2017).execute<User>();
+        
+        assert.equal(users.items.length, 1);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], user2);
+    });
+    
+    it('List items by a hash (multi-values 3)', async () =>
+    {
+        let users = await nodenamo.list().from(User).by(1000, 'Some T').execute<User>();
+        
+        assert.equal(users.items.length, 1);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], user2);
     });
 
     it('List items by a hash and a filter', async () =>
@@ -87,29 +105,7 @@ describe('Custom-name tests', function ()
         
         assert.equal(users.items.length, 1);
         assert.equal(users.lastEvaluatedKey, undefined);
-        assert.deepEqual(users.items[0], { id: 2, name: 'Some Two', account: 1000, created: 2016 });
-    });
-
-    it('List items by a hash and a range', async () =>
-    {
-        let users = await nodenamo.list().from(User).by(1000, 2017).execute<User>();
-        
-        assert.equal(users.items.length, 1);
-        assert.equal(users.lastEvaluatedKey, undefined);
-        assert.deepEqual(users.items[0], { id: 1, name: 'Some One', account: 1000, created: 2017 });
-    });
-
-    it('List items by a hash, a range, and a filter', async () =>
-    {
-        let users = await nodenamo.list().from(User).by(1000, 2017).filter({
-            filterExpression:"#name=:name", 
-            expressionAttributeNames:{'#name':'name'},
-            expressionAttributeValues:{':name': 'Some One'}
-        }).execute<User>();
-        
-        assert.equal(users.items.length, 1);
-        assert.equal(users.lastEvaluatedKey, undefined);
-        assert.deepEqual(users.items[0], { id: 1, name: 'Some One', account: 1000, created: 2017 });
+        assert.deepEqual(users.items[0], user2);
     });
 
     it('Find items', async () =>
@@ -121,8 +117,8 @@ describe('Custom-name tests', function ()
         
         assert.equal(users.items.length, 2);
         assert.equal(users.lastEvaluatedKey, undefined);
-        assert.deepEqual(users.items[0], { id: 2, name: 'Some Two', account: 1000, created: 2016 });
-        assert.deepEqual(users.items[1], { id: 1, name: 'Some One', account: 1000, created: 2017 });
+        assert.deepEqual(users.items[0], user2);
+        assert.deepEqual(users.items[1], user1);
     });
 
     it('Find items with a filter', async () =>
@@ -139,26 +135,26 @@ describe('Custom-name tests', function ()
         
         assert.equal(users.items.length, 1);
         assert.equal(users.lastEvaluatedKey, undefined);
-        assert.deepEqual(users.items[0], { id: 2, name: 'Some Two', account: 1000, created: 2016 });
+        assert.deepEqual(users.items[0], user2);
     });
 
     it('Get an item', async () =>
     {
         let user = await nodenamo.get(2).from(User).execute();
         
-        assert.deepEqual(user, { id: 2, name: 'Some Two', account: 1000, created: 2016 });
+        assert.deepEqual(user, user2);
     });
 
     it('Update an item', async () =>
     {
         let user = await nodenamo.get(3).from(User).execute<User>();
-        assert.deepEqual(user, { id: 3, name: 'Some Three', account: 2000, created: 2018 });
+        assert.deepEqual(user, user3);
 
         user.name = 'This Three';
         await nodenamo.update(user).from(User).execute();
         
         user = await nodenamo.get(3).from(User).execute();
-        assert.deepEqual(user, { id: 3, name: 'This Three', account: 2000, created: 2018 });
+        assert.deepEqual(user, { id: 3, name: 'This Three', account: 2000, ranges: ['2016#3', 'true#3', 'Some Three#3'] });
     });
 
     it('Delete an item', async () =>

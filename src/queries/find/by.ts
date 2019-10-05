@@ -22,7 +22,7 @@ export class By
             expressionAttributeValues: {':hash': hash}
         }
 
-        if(!!rangeValueBeginsWith)
+        if(rangeValueBeginsWith !== undefined)
         {
             this.keyParams['keyConditions'] +=  ' and begins_with(#range, :range)';
             this.keyParams['expressionAttributeNames']['#range'] = Const.RangeColumn;

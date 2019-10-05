@@ -1,5 +1,4 @@
-array hash
-support # in column value
 do not allow `nodenamo` as a column value
 Acceptance/unit test of a property without DBColumn should not get saved
 Acceptance test by list order
+hash and id on same property

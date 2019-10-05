@@ -8,6 +8,7 @@ import { NodenamoError } from '../errors/nodenamoError';
 import { DynamoDB } from 'aws-sdk/clients/all';
 import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
 import { VersionError } from '../errors/versionError';
+import { Key } from '../Key';
 
 export class DynamoDbManager implements IDynamoDbManager
 {
@@ -433,7 +434,7 @@ export class DynamoDbManager implements IDynamoDbManager
 
 function addColumnValuePrefix(obj:object, expressionAttributeValues:object, expressionAttributeNames:object): void
 {
-    let hashes = Reflector.getHashKeys(obj).map(k => k.includes('#') ? k.split('#')[1] : k);
+    let hashes = Reflector.getHashKeys(obj).map(k => Key.parse(k).propertyName);
     let id = Const.IdColumn;
     let prefix = Reflector.getDataPrefix(obj);
     let isStringColumn = false;
@@ -465,8 +466,8 @@ function addColumnValuePrefix(obj:object, expressionAttributeValues:object, expr
 
 function changeColumnNames(obj:object, expressionAttributeNames:object): void
 {
-    let hashes = Reflector.getHashKeys(obj).map(k => k.includes('#') ? k.split('#')[1] : k);
-    let ranges = Reflector.getRangeKeys(obj).map(k => k.includes('#') ? k.split('#')[1] : k);
+    let hashes = Reflector.getHashKeys(obj).map(k => Key.parse(k).propertyName);
+    let ranges = Reflector.getRangeKeys(obj).map(k => Key.parse(k).propertyName);
     let columns = Reflector.getColumns(obj);
     
     //When there is no hashes, ID is the hash
@@ -477,16 +478,16 @@ function changeColumnNames(obj:object, expressionAttributeNames:object): void
         let propertyName = (<any>expressionAttributeNames)[key];
         let columnName = propertyName;
 
-        //Change propertyNames to customNames (customName#propertyName)
+        //Change propertyNames to targetNames (targetName#propertyName)
         for(let column of columns)
         {
             if(!column.includes('#')) continue;
             
-            let tokens = column.split('#');
-            if(propertyName === tokens[1])
+            let key = Key.parse(column);
+            if(propertyName === key.propertyName)
             {
-                propertyName = tokens[1];
-                columnName = tokens[0];
+                propertyName = key.propertyName;
+                columnName = key.targetName;
                 break;
             }
         }

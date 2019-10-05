@@ -1,82 +1,127 @@
 import {Const} from './const';
+import { Key } from './Key';
+
 export class Representation
 {
-    public data:any;
-    public hash:any;
-    public range:any;
-    public objId:any;
 
-    constructor(public tableName:string, dataPrefix:string = '', hash:any, range:any, id:string, originalData:object)
+    constructor(public tableName?:string, public hash?:any, public range?:any, public objId?:string, public data?:any)
     {
-        this.data = Object.assign({}, originalData);
 
-        this.objId = this.data[Const.IdColumn] = this.addDataPrefix(dataPrefix, this.getPropertyValue(this.data, id));
-        
-        if(hash === Const.IdUniquenessHash)
-        {
-            this.hash = this.data[Const.HashColumn] =  this.addDataPrefix(dataPrefix,  this.getPropertyValue(this.data, id));
-        }
-        else if(hash)
-        {
-            this.hash = this.data[Const.HashColumn] = this.addDataPrefix(dataPrefix, this.getPropertyValue(this.data, hash))
-        }
-        else
-        {
-            this.hash = this.data[Const.HashColumn] = this.addDataPrefix(dataPrefix, Const.DefaultHashValue);
-        }
+    }
+
+    static create(tableName:string, dataPrefix:string = '', hash:any, range:any, id:string, originalData:object): Representation[]
+    {
+        let rangeValues = [];
 
         if(range === undefined)
         {
-            this.range = this.data[Const.RangeColumn] = `${Const.DefaultRangeValue}#${this.getPropertyValue(this.data, id)}`
+            //Do nothing
         }
-        else if((range === Const.IdUniquenessRange))
+        if(Array.isArray(originalData[Key.parse(range).propertyName]))
         {
-            this.range = this.data[Const.RangeColumn] = `${Const.DefaultRangeValue}`;
+            rangeValues = originalData[Key.parse(range).propertyName];
+        }
+        else if(range === Const.IdUniquenessRange)
+        {
+            rangeValues = [Const.IdUniquenessRange];
         }
         else
         {
-            if(hash === undefined)
-            {
-                this.range = this.data[Const.RangeColumn] = `${this.getPropertyValue(this.data, range)}#${this.getPropertyValue(this.data, id)}`;
-            }
-            else
-            {
-                this.range = this.data[Const.RangeColumn] = this.getPropertyValue(this.data, range);
-            }
+            rangeValues = [getPropertyValue(originalData, range)];
         }
 
-        if(typeof this.range === 'number')
+        let result:Representation[] = [];
+
+        for(let rangeValue of rangeValues)
         {
-            this.range = this.data[Const.RangeColumn] = String(this.range);
-        }
-    }
-
-    private getPropertyValue(d:any, properyNameOrNames:string|string[]) : any
-    {
-        if(properyNameOrNames === undefined) return undefined;
-
-        let propertyNames = Array.isArray(properyNameOrNames) ? properyNameOrNames : [properyNameOrNames];
-
-        let propertyValues:any[] = [];
-
-        for(let propertyName of propertyNames)
-        {
-            //A custom column name uses `customName#originalName` format.
-            let value = propertyName.includes('#') ? d[propertyName.split('#')[0]] : d[propertyName];
-            
-            propertyValues.push(value);
+            result.push(createRepresentation(tableName, dataPrefix, hash, rangeValue, id, originalData));
         }
 
-        if(propertyValues.length === 0) return undefined
-        if(propertyValues.length === 1) return propertyValues[0];
-
-        return propertyValues.join('#');
-    }
-
-    private addDataPrefix(prefix:string, value:any):any
-    {
-        if(value === undefined) return undefined;
-
-        return prefix ? `${prefix}#${value}` : value;
+        return result;
     }
 };
+
+
+
+function createRepresentation(tableName: string, dataPrefix:string = '', hash:any, rangeValue:any, id:string, originalData:object): Representation
+{
+    let result = new Representation(tableName);
+
+    result.data = Object.assign({}, originalData);
+
+    result.objId = addDataPrefix(dataPrefix, getPropertyValue(result.data, id));
+    
+    if(hash === Const.IdUniquenessHash)
+    {
+        result.hash = addDataPrefix(dataPrefix,  getPropertyValue(result.data, id));
+    }
+    else if(hash)
+    {
+        result.hash = addDataPrefix(dataPrefix, getPropertyValue(result.data, hash))
+    }
+    else
+    {
+        result.hash = addDataPrefix(dataPrefix, Const.DefaultHashValue);
+    }
+
+    if(rangeValue === undefined)
+    {
+        result.range = `${Const.DefaultRangeValue}#${getPropertyValue(result.data, id)}`
+    }
+    else if((rangeValue === Const.IdUniquenessRange))
+    {
+        result.range = `${Const.DefaultRangeValue}`;
+    }
+    else
+    {
+        if(hash === undefined)
+        {
+            result.range = `${rangeValue}#${getPropertyValue(result.data, id)}`;
+        }
+        else
+        {
+            result.range = rangeValue;
+        }
+    }
+
+    if(typeof result.range === 'number')
+    {
+        result.range = String(result.range);
+    }
+
+    result.data[Const.IdColumn] = result.objId = String(result.objId);
+    result.data[Const.HashColumn] = result.hash = String(result.hash);
+    result.data[Const.RangeColumn] = result.range = String(result.range);
+    
+    return result;
+}
+
+function getPropertyValue(d:any, properyNameOrNames:string|string[]) : any
+{
+    if(properyNameOrNames === undefined) return undefined;
+
+    let propertyNames = Array.isArray(properyNameOrNames) ? properyNameOrNames : [properyNameOrNames];
+
+    let propertyValues:any[] = [];
+
+    for(let propertyName of propertyNames)
+    {
+        //A custom column name uses `targetName#originalName` format.
+        let key = Key.parse(propertyName);
+        let value = d[key.targetName];
+        
+        propertyValues.push(value);
+    }
+
+    if(propertyValues.length === 0) return undefined
+    if(propertyValues.length === 1) return propertyValues[0];
+
+    return propertyValues.join('#');
+}
+
+function addDataPrefix(prefix:string, value:any):any
+{
+    if(value === undefined) return undefined;
+
+    return prefix ? `${prefix}#${value}` : value;
+}

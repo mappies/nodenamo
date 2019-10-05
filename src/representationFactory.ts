@@ -1,6 +1,7 @@
 import { Reflector } from "./reflector";
 import { Representation } from "./representation";
 import {Const} from "./const";
+import { Key } from "./Key";
 
 export class RepresentationFactory
 {
@@ -17,10 +18,9 @@ export class RepresentationFactory
         let data:any = {};
         for(let column of columns)
         {
-            //A custom column name uses `customName#originalName` format.
-            let propertyName = column.includes('#') ? column.split('#')[0] : column;
-            let propertyOriginalName = column.includes('#') ? column.split('#')[1] : column;
-            data[propertyName] = obj[propertyOriginalName];
+            //A custom column name uses `targetName#originalName` format.
+            let key = Key.parse(column);
+            data[key.targetName] = obj[key.propertyName];
         }
 
         data[Const.VersionColumn] = version + 1;
@@ -28,38 +28,38 @@ export class RepresentationFactory
         let representations:Representation[] = [];
 
         //For ID uniqueness
-        representations.push(new Representation(tableName, dataPrefix, Const.IdUniquenessHash, Const.IdUniquenessRange, idKey, data));
+        Array.prototype.push.apply(representations, Representation.create(tableName, dataPrefix, Const.IdUniquenessHash, Const.IdUniquenessRange, idKey, data));
 
         for(let hashKey of hashKeys)
         {
             if(rangeKeys.length === 0)
             {
-                representations.push(new Representation(tableName, dataPrefix, hashKey, undefined, idKey, data));
+                Array.prototype.push.apply(representations, Representation.create(tableName, dataPrefix, hashKey, undefined, idKey, data));
             }
             else
             {
                 for(let rangeKey of rangeKeys)
                 {
-                    representations.push(new Representation(tableName, dataPrefix, hashKey, rangeKey, idKey, data));
+                    Array.prototype.push.apply(representations, Representation.create(tableName, dataPrefix, hashKey, rangeKey, idKey, data));
                 }
             }
         }
 
         for(let hashRangeKeyPair of Object.values(hashRangeKeyPairs))
         {
-            representations.push(new Representation(tableName, dataPrefix, hashRangeKeyPair.hashes, hashRangeKeyPair.ranges, idKey, data));
+            Array.prototype.push.apply(representations, Representation.create(tableName, dataPrefix, hashRangeKeyPair.hashes, hashRangeKeyPair.ranges, idKey, data));
         }
 
         //For listing
         if(rangeKeys.length === 0)
         {
-            representations.push(new Representation(tableName, dataPrefix, undefined, undefined, idKey, data));
+            Array.prototype.push.apply(representations, Representation.create(tableName, dataPrefix, undefined, undefined, idKey, data));
         }
         else 
         {
             for(let rangeKey of rangeKeys)
             {
-                representations.push(new Representation(tableName, dataPrefix, undefined, rangeKey, idKey, data));
+                Array.prototype.push.apply(representations, Representation.create(tableName, dataPrefix, undefined, rangeKey, idKey, data));
             }
         }
 

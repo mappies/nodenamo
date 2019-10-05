@@ -656,4 +656,185 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[0].data[Const.VersionColumn], 2);
         assert.equal(representations[1].data[Const.VersionColumn], 2);
     });
+
+    it('get() - a multi-values range', function () 
+    {
+        @DBTable()
+        class Entity {
+            @DBColumn({id:true})
+            id:number = 123;
+
+            @DBColumn({range:true})
+            values:string[] = ["now", "Some One", "anotherId"];
+        };
+
+        let representations = RepresentationFactory.get(new Entity());
+
+        assert.equal(representations.length, 4);
+        assert.equal(representations[0].hash, 'entity#123');
+        assert.equal(representations[0].range, Const.DefaultRangeValue);
+        assert.equal(representations[1].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[1].range, 'now#123');
+        assert.equal(representations[2].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[2].range, 'Some One#123');
+        assert.equal(representations[3].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[3].range, 'anotherId#123');
+    });
+
+    it('get() - a multi-values range with a hash', function () 
+    {
+        @DBTable()
+        class Entity {
+            @DBColumn({id:true})
+            id:number = 123;
+
+            @DBColumn({hash:true})
+            account:number = 42;
+
+            @DBColumn({range:true})
+            values:string[] = ["now", "Some One", "anotherId"];
+        };
+
+        let representations = RepresentationFactory.get(new Entity());
+
+        assert.equal(representations.length, 7);
+        assert.equal(representations[0].hash, 'entity#123');
+        assert.equal(representations[0].range, Const.DefaultRangeValue);
+
+        assert.equal(representations[1].hash, 'entity#42');
+        assert.equal(representations[1].range, 'now');
+        assert.equal(representations[2].hash, 'entity#42');
+        assert.equal(representations[2].range, 'Some One');
+        assert.equal(representations[3].hash, 'entity#42');
+        assert.equal(representations[3].range, 'anotherId');
+
+        assert.equal(representations[4].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[4].range, 'now#123');
+        assert.equal(representations[5].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[5].range, 'Some One#123');
+        assert.equal(representations[6].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[6].range, 'anotherId#123');
+    });
+
+    it('get() - a multi-values range with hashes', function () 
+    {
+        @DBTable()
+        class Entity {
+            @DBColumn({id:true})
+            id:number = 123;
+
+            @DBColumn({hash:true})
+            account:number = 42;
+
+            @DBColumn({hash:true})
+            organization:string = 'orgsome';
+
+            @DBColumn({range:true})
+            values:string[] = ["now", "Some One", "anotherId"];
+        };
+
+        let representations = RepresentationFactory.get(new Entity());
+
+        assert.equal(representations.length, 10);
+        assert.equal(representations[0].hash, 'entity#123');
+        assert.equal(representations[0].range, Const.DefaultRangeValue);
+
+        assert.equal(representations[1].hash, 'entity#42');
+        assert.equal(representations[1].range, 'now');
+        assert.equal(representations[2].hash, 'entity#42');
+        assert.equal(representations[2].range, 'Some One');
+        assert.equal(representations[3].hash, 'entity#42');
+        assert.equal(representations[3].range, 'anotherId');
+
+        assert.equal(representations[4].hash, 'entity#orgsome');
+        assert.equal(representations[4].range, 'now');
+        assert.equal(representations[5].hash, 'entity#orgsome');
+        assert.equal(representations[5].range, 'Some One');
+        assert.equal(representations[6].hash, 'entity#orgsome');
+        assert.equal(representations[6].range, 'anotherId');
+
+        assert.equal(representations[7].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[7].range, 'now#123');
+        assert.equal(representations[8].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[8].range, 'Some One#123');
+        assert.equal(representations[9].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[9].range, 'anotherId#123');
+    });
+
+    it('get() - a multi-values hash-range pair', function () 
+    {
+        @DBTable()
+        class Entity {
+            @DBColumn({id:true})
+            id:number = 123;
+
+            @DBColumn({hash:'key1'})
+            account:number = 42;
+
+            @DBColumn({hash:true})
+            organization:string = 'orgsome';
+
+            @DBColumn({range:'key1'})
+            values:string[] = ["now", "Some One", "anotherId"];
+        };
+
+        let representations = RepresentationFactory.get(new Entity());
+
+        assert.equal(representations.length, 6);
+        assert.equal(representations[0].hash, 'entity#123');
+        assert.equal(representations[0].range, Const.DefaultRangeValue);
+
+        assert.equal(representations[1].hash, 'entity#orgsome');
+        assert.equal(representations[1].range, 'nodenamo#123');
+
+        assert.equal(representations[2].hash, 'entity#42');
+        assert.equal(representations[2].range, 'now');
+        assert.equal(representations[3].hash, 'entity#42');
+        assert.equal(representations[3].range, 'Some One');
+        assert.equal(representations[4].hash, 'entity#42');
+        assert.equal(representations[4].range, 'anotherId');
+
+        assert.equal(representations[5].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[5].range, 'nodenamo#123');
+    });
+
+    it('get() - a multi-values hash-range pair and a range', function () 
+    {
+        @DBTable()
+        class Entity {
+            @DBColumn({id:true})
+            id:number = 123;
+
+            @DBColumn({hash:'key1'})
+            account:number = 42;
+
+            @DBColumn({hash:true})
+            organization:string = 'orgsome';
+
+            @DBColumn({range:'key1'})
+            values:string[] = ["now", "Some One", "anotherId"];
+
+            @DBColumn({range:true})
+            created:string = "tomorrow";
+        };
+
+        let representations = RepresentationFactory.get(new Entity());
+
+        assert.equal(representations.length, 6);
+        assert.equal(representations[0].hash, 'entity#123');
+        assert.equal(representations[0].range, Const.DefaultRangeValue);
+
+        assert.equal(representations[1].hash, 'entity#orgsome');
+        assert.equal(representations[1].range, 'tomorrow');
+
+        assert.equal(representations[2].hash, 'entity#42');
+        assert.equal(representations[2].range, 'now');
+        assert.equal(representations[3].hash, 'entity#42');
+        assert.equal(representations[3].range, 'Some One');
+        assert.equal(representations[4].hash, 'entity#42');
+        assert.equal(representations[4].range, 'anotherId');
+
+        assert.equal(representations[5].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[5].range, 'tomorrow#123');
+    });
 });

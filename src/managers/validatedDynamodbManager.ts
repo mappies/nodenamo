@@ -6,6 +6,7 @@ import { ValidationError } from '../errors/validationError';
 import { isNullOrUndefined } from 'util';
 import {Const} from '../const';
 import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
+import { Key } from '../Key';
 
 export class ValidatedDynamoDbManager implements IDynamoDbManager
 {
@@ -109,9 +110,9 @@ function validateKeyConditionExpression<T extends object>(type:{new(...args: any
     if(param === undefined) return;
     
     let instance = new type();
-    let hashes = Reflector.getHashKeys(instance).map(hash => hash.includes('#') ? hash.split('#')[1] : hash);
-    let ranges = Reflector.getRangeKeys(instance).map(range => range.includes('#') ? range.split('#')[1] : range);
-    let columns = Reflector.getColumns(instance).map(column => column.includes('#') ? column.split('#')[1] : column);
+    let hashes = Reflector.getHashKeys(instance).map(hash => Key.parse(hash).propertyName);
+    let ranges = Reflector.getRangeKeys(instance).map(range => Key.parse(range).propertyName);
+    let columns = Reflector.getColumns(instance).map(column => Key.parse(column).propertyName);
 
     hashes = [...hashes, Const.HashColumn];
     ranges = [...ranges, Const.RangeColumn];
@@ -172,9 +173,9 @@ function validateFilterConditionExpression<T extends object>(type:{new(...args: 
     if(param === undefined) return;
     
     let instance = new type();
-    let hashes = Reflector.getHashKeys(instance).map(hash => hash.includes('#') ? hash.split('#')[1] : hash);
-    let ranges = Reflector.getRangeKeys(instance).map(range => range.includes('#') ? range.split('#')[1] : range);
-    let columns = Reflector.getColumns(instance).map(column => column.includes('#') ? column.split('#')[1] : column);
+    let hashes = Reflector.getHashKeys(instance).map(hash => Key.parse(hash).propertyName);
+    let ranges = Reflector.getRangeKeys(instance).map(range => Key.parse(range).propertyName);
+    let columns = Reflector.getColumns(instance).map(column => Key.parse(column).propertyName);
 
     //filterExpression
     if(param.filterExpression === undefined || param.filterExpression.trim().length === 0)

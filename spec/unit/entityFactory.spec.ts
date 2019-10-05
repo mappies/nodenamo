@@ -58,7 +58,7 @@ describe('EntityFactory', function ()
     it('create() - with a custom name', function () 
     {
         class Entity {
-            @DBColumn({name:'customName'})
+            @DBColumn({name:'targetName'})
             name:string;
             @DBColumn({name:'customId', id:true})
             id:number;
@@ -73,7 +73,7 @@ describe('EntityFactory', function ()
         };
 
         let entity = EntityFactory.create(Entity, {
-            customName:'hi',
+            targetName:'hi',
             customId:42,
             noChanged:true,
             customHash:'thisisahash',
@@ -82,7 +82,7 @@ describe('EntityFactory', function ()
         
         assert.instanceOf(entity, Entity);
         assert.equal(entity.name, 'hi');
-        assert.equal(entity['customName'], undefined);
+        assert.equal(entity['targetName'], undefined);
         assert.equal(entity.id, 42);
         assert.equal(entity['customId'], undefined);
         assert.equal(entity.hash, 'thisisahash');
