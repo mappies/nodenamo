@@ -47,13 +47,13 @@ describe('DynamoDbTransaction', function ()
 
         let putParams:any[] = [];
 
-        for(let i = 0 ; i <= 11; i++)
+        for(let i = 0 ; i <= 26; i++)
         {
             putParams[i] = createOperation(i);
         }
 
-        mockedClient.setup(c => c.transactWrite({TransactItems: [putParams[0], putParams[1], putParams[2], putParams[3], putParams[4], putParams[5], putParams[6], putParams[7], putParams[8], putParams[9]]})).callback(()=>firstBatchCalled=true).returns(()=>transactionOutput);
-        mockedClient.setup(c => c.transactWrite({TransactItems: [putParams[10], putParams[11]]})).callback(()=>secondBatchCalled=true).returns(()=>transactionOutput);
+        mockedClient.setup(c => c.transactWrite({TransactItems: [putParams[0], putParams[1], putParams[2], putParams[3], putParams[4], putParams[5], putParams[6], putParams[7], putParams[8], putParams[9], putParams[10], putParams[11], putParams[12], putParams[13], putParams[14], putParams[15], putParams[16], putParams[17], putParams[18], putParams[19], putParams[20], putParams[21], putParams[22], putParams[23], putParams[24]]})).callback(()=>firstBatchCalled=true).returns(()=>transactionOutput);
+        mockedClient.setup(c => c.transactWrite({TransactItems: [putParams[25], putParams[26]]})).callback(()=>secondBatchCalled=true).returns(()=>transactionOutput);
         mockedClient.setup(c => c.transactWrite(It.isAny())).callback(()=>otherBatchCalled=true).returns(()=>transactionOutput);
 
         let manager = await new DynamoDbTransaction(mockedClient.object);
