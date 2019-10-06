@@ -117,6 +117,15 @@ describe('Hash-range tests', function ()
         assert.deepEqual(users.items[0], { id: 1, name: 'Some One', account: 1000, created: 2017 });
     });
 
+    it('List items by a hash, a range, and a projection', async () =>
+    {
+        let users = await nodenamo.list("id", "created").from(User).by(1000, 2017).execute<User>();
+        
+        assert.equal(users.items.length, 1);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], { id: 1, name: undefined, account: undefined, created: 2017 });
+    });
+
     it('Find items', async () =>
     {
         let users = await nodenamo.find().from(User).where({
@@ -145,6 +154,23 @@ describe('Hash-range tests', function ()
         assert.equal(users.items.length, 1);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], { id: 2, name: 'Some Two', account: 1000, created: 2016 });
+    });
+
+    it('Find items with a filter and a projection', async () =>
+    {
+        let users = await nodenamo.find("id").from(User).where({
+                                keyConditions:"#account=:account", 
+                                expressionAttributeNames:{'#account':'account'},
+                                expressionAttributeValues:{':account': 1000}
+                            }).filter({
+                                filterExpression:"begins_with(#name,:name)", 
+                                expressionAttributeNames:{'#name':'name'},
+                                expressionAttributeValues:{':name': 'Some T'}
+                            }).execute<User>();
+        
+        assert.equal(users.items.length, 1);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], { id: 2, name: undefined, account: undefined, created: undefined });
     });
 
     it('Get an item', async () =>

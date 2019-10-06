@@ -32,14 +32,14 @@ export class NodeNamo
         return new Get(this.manager, id);
     }
 
-    list(): List
+    list(...projections:string[]): List
     {
-        return new List(this.manager);
+        return new List(this.manager, projections);
     }
 
-    find(): Find
+    find(...projections:string[]): Find
     {
-        return new Find(this.manager);
+        return new Find(this.manager, projections);
     }
 
     update(obj:object): Update

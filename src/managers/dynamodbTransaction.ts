@@ -27,7 +27,7 @@ export class DynamoDbTransaction
             for (let i=0; i < this.operations.length; i += MAX_AWS_TRANSACTION_OPERATIONS) 
             {
                 const transactions = this.operations.slice(i, i + MAX_AWS_TRANSACTION_OPERATIONS);
-                console.log(JSON.stringify(transactions, undefined, 3))
+                
                 let transactionRequest = this.client.transactWrite({ TransactItems: transactions })
 
                 let errors = [];

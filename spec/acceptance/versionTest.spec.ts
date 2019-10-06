@@ -14,11 +14,15 @@ class User
 
     @DBColumn()
     name:string;
+    
+    @DBColumn()
+    age:number;
 
-    constructor(id:number, name:string)
+    constructor(id:number, name:string, age:number)
     {
         this.id = id;
         this.name = name;
+        this.age = age;
     }
 }
 
@@ -34,9 +38,9 @@ describe('Version tests', function ()
     it('Add items', async () =>
     {
         await Promise.all([
-            nodenamo.insert(new User(1, 'Some One')).into(User).execute(),
-            nodenamo.insert(new User(2, 'Some Two')).into(User).execute(),
-            nodenamo.insert(new User(3, 'Some Three')).into(User).execute()]);
+            nodenamo.insert(new User(1, 'Some One', 16)).into(User).execute(),
+            nodenamo.insert(new User(2, 'Some Two', 25)).into(User).execute(),
+            nodenamo.insert(new User(3, 'Some Three', 39)).into(User).execute()]);
     });
 
     it('List all items', async () =>
@@ -45,32 +49,32 @@ describe('Version tests', function ()
         
         assert.equal(users.items.length, 3);
         assert.equal(users.lastEvaluatedKey, undefined);
-        assert.deepEqual(users.items[0], { id: 1, name: 'Some One' });
-        assert.deepEqual(users.items[1], { id: 2, name: 'Some Two' });
+        assert.deepEqual(users.items[0], { id: 1, name: 'Some One', age: 16 });
+        assert.deepEqual(users.items[1], { id: 2, name: 'Some Two', age: 25 });
     });
 
     it('Get an item', async () =>
     {
         let user = await nodenamo.get(2).from(User).execute();
         
-        assert.deepEqual(user, { id: 2, name: 'Some Two' });
+        assert.deepEqual(user, { id: 2, name: 'Some Two', age: 25 });
     });
 
-    it('Update an item - with a version check', async () =>
+    it('Update an item (user1) - with a version check', async () =>
     {
         let user1 = await nodenamo.get(1).from(User).execute<User>();
-        assert.deepEqual(user1, { id: 1, name: 'Some One' });
+        assert.deepEqual(user1, { id: 1, name: 'Some One', age: 16 });
         assert.equal(Reflector.getObjectVersion(user1), 1);
 
         let user2 = await nodenamo.get(1).from(User).execute<User>();
-        assert.deepEqual(user2, { id: 1, name: 'Some One' });
+        assert.deepEqual(user2, { id: 1, name: 'Some One', age: 16 });
         assert.equal(Reflector.getObjectVersion(user2), 1);
 
         user2.name = 'I am first';
         await nodenamo.update(user2).from(User).withVersionCheck().execute();
         
         let user3 = await nodenamo.get(1).from(User).execute();
-        assert.deepEqual(user3, { id: 1, name: 'I am first' });
+        assert.deepEqual(user3, { id: 1, name: 'I am first', age: 16 });
         assert.equal(Reflector.getObjectVersion(user3), 2);
         
         user1.name = 'Too late';
@@ -87,29 +91,60 @@ describe('Version tests', function ()
         assert.instanceOf(error, VersionError);
     });
 
-    it('Update an item - without a version check', async () =>
+    it('Update an item (user2) - without a version check', async () =>
     {
         let user1 = await nodenamo.get(2).from(User).execute<User>();
-        assert.deepEqual(user1, { id: 2, name: 'Some Two' });
+        assert.deepEqual(user1, { id: 2, name: 'Some Two', age: 25 });
         assert.equal(Reflector.getObjectVersion(user1), 1);
 
         let user2 = await nodenamo.get(2).from(User).execute<User>();
-        assert.deepEqual(user2, { id: 2, name: 'Some Two' });
+        assert.deepEqual(user2, { id: 2, name: 'Some Two', age: 25 });
         assert.equal(Reflector.getObjectVersion(user2), 1);
 
         user2.name = 'I am first';
         await nodenamo.update(user2).from(User).execute();
         
         let user3 = await nodenamo.get(2).from(User).execute();
-        assert.deepEqual(user3, { id: 2, name: 'I am first' });
+        assert.deepEqual(user3, { id: 2, name: 'I am first', age: 25 });
         assert.equal(Reflector.getObjectVersion(user3), 2);
         
         user1.name = 'Too late';
         await nodenamo.update(user1).from(User).execute();
 
         let user4 = await nodenamo.get(2).from(User).execute();
-        assert.deepEqual(user4, { id: 2, name: 'Too late' });
+        assert.deepEqual(user4, { id: 2, name: 'Too late', age: 25 });
         assert.equal(Reflector.getObjectVersion(user4), 3); 
+    });
+
+    it('Update an item (user3) - with a version check and a projection', async () =>
+    {
+        let user1 = (await nodenamo.list("id", "name").from(User).execute<User>()).items[2];
+        assert.deepEqual(user1, { id: 3, name: 'Some Three', age: undefined });
+        assert.equal(Reflector.getObjectVersion(user1), 1);
+
+        let user2 = (await nodenamo.list("id", "name").from(User).execute<User>()).items[2];
+        assert.deepEqual(user2, { id: 3, name: 'Some Three', age: undefined });
+        assert.equal(Reflector.getObjectVersion(user2), 1);
+
+        user2.name = 'I am thrid';
+        await nodenamo.update(user2).from(User).withVersionCheck().execute();
+        
+        let user3 = (await nodenamo.list("id", "name").from(User).execute<User>()).items[2];
+        assert.deepEqual(user3, { id: 3, name: 'I am thrid', age: undefined });
+        assert.equal(Reflector.getObjectVersion(user3), 2);
+        
+        user1.name = 'Too late';
+        let error = undefined;
+        try
+        {
+            await nodenamo.update(user1).from(User).withVersionCheck().execute();
+        }
+        catch(e)
+        {
+            error = e;
+        }
+        assert.isDefined(error);
+        assert.instanceOf(error, VersionError);
     });
 
     after(async ()=>{

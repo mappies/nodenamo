@@ -12,7 +12,7 @@ export class ListFrom
 {
     private keyParams:any;
     
-    constructor(private manager:IDynamoDbManager, private type:{new(...args: any[])})
+    constructor(private manager:IDynamoDbManager, private type:{new(...args: any[])}, private params?:{projections?:string[]})
     {
         this.keyParams = 
         {
@@ -24,36 +24,36 @@ export class ListFrom
 
     by(hash:string|number|boolean, rangeValueBeginsWith?:string|number|boolean): By
     {
-        return new By(this.manager, this.type, hash, rangeValueBeginsWith);
+        return new By(this.manager, this.type, hash, rangeValueBeginsWith, this.params);
     }
 
     filter(filterParams:{filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object}): Filter
     {
-        return new Filter(this.manager, this.type, this.keyParams, filterParams);
+        return new Filter(this.manager, this.type, this.keyParams, filterParams, this.params);
     }
 
     limit(limit:number): Limit
     {
-        return new Limit(this.manager, this.type, this.keyParams, undefined, undefined, limit);
+        return new Limit(this.manager, this.type, this.keyParams, undefined, this.params, limit);
     }
 
     using(indexName:string): Using
     {
-        return new Using(this.manager, this.type, this.keyParams, undefined, undefined, indexName);
+        return new Using(this.manager, this.type, this.keyParams, undefined, this.params, indexName);
     }
 
     order(forward:boolean): Order
     {
-        return new Order(this.manager, this.type, this.keyParams, undefined, undefined, forward);
+        return new Order(this.manager, this.type, this.keyParams, undefined, this.params, forward);
     }    
 
     resume(key:string): Resume
     {
-        return new Resume(this.manager, this.type, this.keyParams, undefined, undefined, key);
+        return new Resume(this.manager, this.type, this.keyParams, undefined, this.params, key);
     }
 
     async execute<T extends object>(): Promise<{items:T[], lastEvaluatedKey:string}>
     {
-        return await new Execute(this.manager, this.type, this.keyParams).execute();
+        return await new Execute(this.manager, this.type, this.keyParams, undefined, this.params).execute();
     }
 };

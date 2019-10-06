@@ -3,13 +3,13 @@ import { From } from './from';
 
 export class Find
 {
-    constructor(private manager:IDynamoDbManager)
+    constructor(private manager:IDynamoDbManager, private projections?:string[])
     {
-        return this;
+        
     }
 
     from(type:{new(...args: any[])}): From
     {
-        return new From(this.manager, type);
+        return new From(this.manager, type, this.projections ? {projections:this.projections} : undefined);
     }
 }

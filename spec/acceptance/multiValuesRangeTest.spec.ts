@@ -95,6 +95,15 @@ describe('Multi-values range tests', function ()
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user2);
     });
+    
+    it('List items by a hash (multi-values 3) with a projection', async () =>
+    {
+        let users = await nodenamo.list("name").from(User).by(1000, 'Some T').execute<User>();
+        
+        assert.equal(users.items.length, 1);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], {id: undefined, name: "Some Two", account: undefined, ranges: undefined});
+    });
 
     it('List items by a hash and a filter', async () =>
     {

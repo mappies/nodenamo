@@ -3,13 +3,13 @@ import { ListFrom } from './listFrom';
 
 export class List
 {
-    constructor(private manager:IDynamoDbManager)
+    constructor(private manager:IDynamoDbManager, private projections?:string[])
     {
-        return this;
+        
     }
 
     from(type:{new(...args: any[])}): ListFrom
     {
-        return new ListFrom(this.manager, type);
+        return new ListFrom(this.manager, type, this.projections ? {projections:this.projections} : undefined);
     }
 }

@@ -7,7 +7,7 @@ export class Execute
                 private type:{new(...args: any[])}, 
                 private keyParams:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
                 private filterParams?:{filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
-                private params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key})
+                private params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key,projections?:string[]})
     {
 
     }

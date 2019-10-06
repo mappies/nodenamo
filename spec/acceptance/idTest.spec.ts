@@ -78,6 +78,18 @@ describe('ID tests', function ()
         assert.deepEqual(users.items[0], { id: 2, name: 'Some Two' });
     });
 
+    it('List items with a filter and projections', async () =>
+    {
+        let users = await nodenamo.list("id").from(User).filter({
+                            filterExpression:"#name=:name", 
+                            expressionAttributeNames:{'#name':'name'},
+                            expressionAttributeValues:{':name': 'Some Two'}}).execute<User>();
+        
+        assert.equal(users.items.length, 1);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], { id: 2, name: undefined });
+    });
+
     it('Get an item', async () =>
     {
         let user = await nodenamo.get(2).from(User).execute();

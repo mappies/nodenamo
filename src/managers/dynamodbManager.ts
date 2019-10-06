@@ -97,19 +97,28 @@ export class DynamoDbManager implements IDynamoDbManager
     async find<T extends object>(type:{new(...args: any[]):T}, 
                                  keyParams?:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, 
                                  filterParams?: {filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
-                                 params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key})
+                                 params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key,projections?:string[]})
                                  : Promise<{items:T[], lastEvaluatedKey: DocumentClient.Key}>
     {
         let obj:T = new type();
 
         let tableName = Reflector.getTableName(obj);
 
-        let additionalParams = {};
+        let additionalParams = {
+            ExpressionAttributeNames:undefined,
+            ExpressionAttributeValues:undefined
+         };
+
+        let projectedColumns = undefined
+        if(params && params.projections && params.projections.length > 0)
+        {
+            projectedColumns = prepareProjectedColumnNames(obj, params.projections, additionalParams).join(',');
+        }
 
         if(keyParams && keyParams.expressionAttributeNames)
         {
             changeColumnNames(obj, keyParams.expressionAttributeNames)
-            additionalParams['ExpressionAttributeNames'] = keyParams.expressionAttributeNames;
+            additionalParams['ExpressionAttributeNames'] = Object.assign(keyParams.expressionAttributeNames, additionalParams.ExpressionAttributeNames);
         }
 
         if(keyParams && keyParams.expressionAttributeValues)
@@ -138,6 +147,7 @@ export class DynamoDbManager implements IDynamoDbManager
             Limit: params ? params.limit : undefined,
             ExclusiveStartKey: params ? params.exclusiveStartKey : undefined,
             ScanIndexForward: params && (params.order || 1) >= 0,
+            ProjectionExpression: projectedColumns,            
             ...additionalParams
         };
 
@@ -462,6 +472,47 @@ function addColumnValuePrefix(obj:object, expressionAttributeValues:object, expr
 
         (<any>expressionAttributeValues)[key] = isStringColumn ? String(newValue) : newValue;
     }
+}
+
+function prepareProjectedColumnNames(obj:object, propertyNames:string[], params:{ExpressionAttributeNames:object, ExpressionAttributeValues:object}): string[]
+{
+    let result = [];
+    let table = {};
+    
+    let columns = Reflector.getColumns(obj);
+
+    for(let column of columns)
+    {
+        let key = Key.parse(column);
+        table[key.propertyName] = key.targetName;
+    }
+
+    for(let propertyName of propertyNames)
+    {
+        if(propertyName in table) //Only valid property names are changed
+        {
+            result.push(`#${propertyName}`);
+
+            if(params.ExpressionAttributeNames === undefined) params.ExpressionAttributeNames = {};
+            params.ExpressionAttributeNames[`#${propertyName}`] = table[propertyName];
+        }
+    }
+
+    if(result.length > 0)
+    {
+        //Always return hash/range/id/version columns
+        result.push(`#${Const.HashColumn}`);
+        result.push(`#${Const.RangeColumn}`);
+        result.push(`#${Const.IdColumn}`);
+        result.push(`#${Const.VersionColumn}`);
+
+        params.ExpressionAttributeNames[`#${Const.HashColumn}`] = Const.HashColumn;
+        params.ExpressionAttributeNames[`#${Const.RangeColumn}`] = Const.RangeColumn;
+        params.ExpressionAttributeNames[`#${Const.IdColumn}`] = Const.IdColumn;
+        params.ExpressionAttributeNames[`#${Const.VersionColumn}`] = Const.VersionColumn;
+    }
+
+    return result;
 }
 
 function changeColumnNames(obj:object, expressionAttributeNames:object): void

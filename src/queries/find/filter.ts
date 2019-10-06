@@ -10,33 +10,34 @@ export class Filter
     constructor(private manager:IDynamoDbManager, 
                 private type:{new(...args: any[])}, 
                 private keyParams:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
-                private filterParams:{filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object})
+                private filterParams:{filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
+                private params:{projections?:string[]})
     {
 
     }
 
     limit(limit:number): Limit
     {
-        return new Limit(this.manager, this.type, this.keyParams, this.filterParams, undefined, limit);
+        return new Limit(this.manager, this.type, this.keyParams, this.filterParams, this.params, limit);
     }
     
     using(indexName:string): Using
     {
-        return new Using(this.manager, this.type, this.keyParams, this.filterParams, undefined, indexName);
+        return new Using(this.manager, this.type, this.keyParams, this.filterParams, this.params, indexName);
     }
     
     order(forward:boolean): Order
     {
-        return new Order(this.manager, this.type, this.keyParams, this.filterParams, undefined, forward);
+        return new Order(this.manager, this.type, this.keyParams, this.filterParams, this.params, forward);
     }    
     
     resume(key:string): Resume
     {
-        return new Resume(this.manager, this.type, this.keyParams, this.filterParams, undefined, key);
+        return new Resume(this.manager, this.type, this.keyParams, this.filterParams, this.params, key);
     }
 
     async execute<T extends object>(): Promise<{items:T[], lastEvaluatedKey:string}>
     {
-        return await new Execute(this.manager, this.type, this.keyParams, this.filterParams).execute();
+        return await new Execute(this.manager, this.type, this.keyParams, this.filterParams, this.params).execute();
     }
 }

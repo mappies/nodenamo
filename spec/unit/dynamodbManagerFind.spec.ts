@@ -34,7 +34,13 @@ describe('DynamoDbManager.Find()', function ()
 
         let response = getMockedQueryResponse({Items:<any>[obj]});
 
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.KeyConditionExpression === '#id = :id' && p.ExpressionAttributeNames['#id'] === 'id' && p.ExpressionAttributeValues[':id'] === 42))).callback(()=>called=true).returns(()=>response.object);
+        mockedClient.setup(q => q.query(It.is(p => 
+            !!p.TableName 
+            && p.KeyConditionExpression === '#id = :id' 
+            && p.ExpressionAttributeNames['#id'] === 'id' 
+            && p.ExpressionAttributeValues[':id'] === 42
+            && p.FilterExpression === undefined
+            && p.ProjectionExpression === undefined))).callback(()=>called=true).returns(()=>response.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -309,6 +315,121 @@ describe('DynamoDbManager.Find()', function ()
         assert.isTrue(called);
         assert.equal(entities.items.length, 1);
         assert.deepEqual(entities.items[0], {id:42});
+    });
+
+    it('find() - projections', async () =>
+    {
+        @DBTable()
+        class Entity
+        {
+            @DBColumn()
+            id:number;
+
+            @DBColumn()
+            propertyName1:string;
+
+            @DBColumn({name:"targetName"})
+            propertyName2:string;
+        };
+
+        let response = getMockedQueryResponse({Items:<any>[obj]});
+
+        mockedClient.setup(q => q.query(It.is(p => 
+            !!p.TableName 
+            && p.KeyConditionExpression === 'condition'
+            && p.ExpressionAttributeNames['#newName'] === '42'
+            && p.ExpressionAttributeNames['#propertyName1'] === 'propertyName1'
+            && p.ExpressionAttributeNames['#propertyName2'] === 'targetName'
+            && p.ExpressionAttributeNames[`#${Const.HashColumn}`] === Const.HashColumn
+            && p.ExpressionAttributeNames[`#${Const.RangeColumn}`] === Const.RangeColumn
+            && p.ExpressionAttributeNames[`#${Const.IdColumn}`] === Const.IdColumn
+            && p.ExpressionAttributeNames[`#${Const.VersionColumn}`] === Const.VersionColumn
+            && p.ProjectionExpression === `#propertyName1,#propertyName2,#${Const.HashColumn},#${Const.RangeColumn},#${Const.IdColumn},#${Const.VersionColumn}`))).callback(()=>called=true).returns(()=>response.object);
+
+        let manager = new DynamoDbManager(mockedClient.object);
+        let entities = await manager.find(Entity, 
+                                       {keyConditions:'condition', expressionAttributeNames:{'#newName':'42'}},
+                                       {},
+                                       {projections: ["propertyName1", "propertyName2"]});
+
+        assert.isTrue(called);
+        assert.equal(entities.items.length, 1);
+        assert.deepEqual(entities.items[0], {id:42});
+        assert.equal(Reflector.getObjectVersion(entities.items[0]), 1);
+    });
+
+    it('find() - projections - skipped unrecognized property', async () =>
+    {
+        @DBTable()
+        class Entity
+        {
+            @DBColumn()
+            id:number;
+
+            @DBColumn()
+            propertyName1:string;
+
+            @DBColumn({name:"targetName"})
+            propertyName2:string;
+        };
+
+        let response = getMockedQueryResponse({Items:<any>[obj]});
+
+        mockedClient.setup(q => q.query(It.is(p => 
+            !!p.TableName 
+            && p.KeyConditionExpression === 'condition' 
+            && p.ExpressionAttributeNames['#newName'] === '42'
+            && p.ExpressionAttributeNames['#propertyName1'] === 'propertyName1'
+            && p.ExpressionAttributeNames[`#${Const.HashColumn}`] === Const.HashColumn
+            && p.ExpressionAttributeNames[`#${Const.RangeColumn}`] === Const.RangeColumn
+            && p.ExpressionAttributeNames[`#${Const.IdColumn}`] === Const.IdColumn
+            && p.ExpressionAttributeNames[`#${Const.VersionColumn}`] === Const.VersionColumn
+            && p.ProjectionExpression === `#propertyName1,#${Const.HashColumn},#${Const.RangeColumn},#${Const.IdColumn},#${Const.VersionColumn}`))).callback(()=>called=true).returns(()=>response.object);
+
+        let manager = new DynamoDbManager(mockedClient.object);
+        let entities = await manager.find(Entity, 
+                                       {keyConditions:'condition', expressionAttributeNames:{'#newName':'42'}},
+                                       {},
+                                       {projections: ["invalidName", "propertyName1", "targetName"]});
+
+        assert.isTrue(called);
+        assert.equal(entities.items.length, 1);
+        assert.deepEqual(entities.items[0], {id:42});
+        assert.equal(Reflector.getObjectVersion(entities.items[0]), 1);
+    });
+
+    it('find() - projections - empty array', async () =>
+    {
+        @DBTable()
+        class Entity
+        {
+            @DBColumn()
+            id:number;
+
+            @DBColumn()
+            propertyName1:string;
+
+            @DBColumn({name:"targetName"})
+            propertyName2:string;
+        };
+
+        let response = getMockedQueryResponse({Items:<any>[obj]});
+
+        mockedClient.setup(q => q.query(It.is(p => 
+            !!p.TableName 
+            && p.KeyConditionExpression === 'condition' 
+            && p.ProjectionExpression === undefined))).callback(()=>called=true).returns(()=>response.object);
+
+        let manager = new DynamoDbManager(mockedClient.object);
+        let entities = await manager.find(Entity, 
+                                       {keyConditions:'condition'},
+                                       {},
+                                       {projections: []});
+
+        assert.isTrue(called);
+        assert.equal(entities.items.length, 1);
+        assert.deepEqual(entities.items[0], {id:42});
+        assert.equal(Reflector.getObjectVersion(entities.items[0]), 1);
     });
 });
 
