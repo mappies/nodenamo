@@ -354,7 +354,7 @@ describe('DynamoDbManager.Find()', function ()
 
         assert.isTrue(called);
         assert.equal(entities.items.length, 1);
-        assert.deepEqual(entities.items[0], {id:42});
+        assert.deepEqual(entities.items[0], <any>{id:42});
         assert.equal(Reflector.getObjectVersion(entities.items[0]), 1);
     });
 
@@ -394,7 +394,7 @@ describe('DynamoDbManager.Find()', function ()
 
         assert.isTrue(called);
         assert.equal(entities.items.length, 1);
-        assert.deepEqual(entities.items[0], {id:42});
+        assert.deepEqual(entities.items[0], <any>{id:42});
         assert.equal(Reflector.getObjectVersion(entities.items[0]), 1);
     });
 
@@ -428,7 +428,7 @@ describe('DynamoDbManager.Find()', function ()
 
         assert.isTrue(called);
         assert.equal(entities.items.length, 1);
-        assert.deepEqual(entities.items[0], {id:42});
+        assert.deepEqual(entities.items[0], <any>{id:42});
         assert.equal(Reflector.getObjectVersion(entities.items[0]), 1);
     });
 });
