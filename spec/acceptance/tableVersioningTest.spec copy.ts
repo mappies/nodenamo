@@ -72,7 +72,7 @@ describe('Table versioning tests', function ()
         assert.deepEqual(user, { id: 2, name: 'Some Two', age: 25 });
     });
 
-    it('Update an item (user1) - version checked by default', async () =>
+    it('Update an item (user1) - delta and version checked by default', async () =>
     {
         let user1 = await nodenamo.get(1).from(User).execute<User>();
         assert.deepEqual(user1, { id: 1, name: 'Some One', age: 16 });
@@ -82,8 +82,7 @@ describe('Table versioning tests', function ()
         assert.deepEqual(user2, { id: 1, name: 'Some One', age: 16 });
         assert.equal(Reflector.getObjectVersion(user2), 1);
 
-        user2.name = 'I am first';
-        await nodenamo.update(user2).from(User).execute();
+        await nodenamo.update({id: 1, name: 'I am first'}).from(User).execute();
         
         let user3 = await nodenamo.get(1).from(User).execute();
         assert.deepEqual(user3, { id: 1, name: 'I am first', age: 16 });

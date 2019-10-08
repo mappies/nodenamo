@@ -198,9 +198,22 @@ export class DynamoDbManager implements IDynamoDbManager
             currentRepresentationKeys[getKey(row)] = row;
         }
 
-        //Must assign data to `instance` so it has @DBColumn() and @DBTable() metadata.
-        let desiredObject = Object.assign(instance, Object.assign(Object.assign({}, rows[0]), obj));
+        //To support delta update, all properties with undefined values are removed here.
+        let noUndefinedValuesObject = {};
+        for(let property of Object.keys(obj))
+        {
+            if(obj[property] !== undefined)
+            {
+                noUndefinedValuesObject[property] = obj[property];
+            }
+        }
 
+        //Must assign data to `instance` so it has @DBColumn() and @DBTable() metadata.
+        //EntityFactory is used here to convert an object with custom column names to an object with real property names/
+        //And because of an object created by EntityFactory.create() will not have Const.VersionColumn property, we have to re-add it here as well.
+        let desiredObject = Object.assign(instance, Object.assign(Object.assign({}, EntityFactory.create(type, rows[0])), noUndefinedValuesObject));
+        desiredObject[Const.VersionColumn] = rows[0][Const.VersionColumn];
+         
         //If versionCheck, use the version from the original object.
         //Else, RepresentationFactory.get() will increment the version from DB.
         if(versioningRequired)
@@ -210,7 +223,8 @@ export class DynamoDbManager implements IDynamoDbManager
         }
 
         //Create new representations
-        let newRepresentations = RepresentationFactory.get(desiredObject)
+        let newRepresentations = RepresentationFactory.get(desiredObject);
+
         if(newRepresentations.length === 0)
         {
             throw new NodenamoError(`Could not create a data representation for '${JSON.stringify(obj)}'.  Try adding @DBColumn({hash:true}) to one its column.`);

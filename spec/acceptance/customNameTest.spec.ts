@@ -195,10 +195,33 @@ describe('Custom-name tests', function ()
         assert.deepEqual(user, { id: 3, name: 'Some Three', account: 2000, created: 2018 });
 
         user.name = 'This Three';
+        user['extra'] = 'invalid';
         await nodenamo.update(user).from(User).execute();
         
         user = await nodenamo.get(3).from(User).execute();
         assert.deepEqual(user, { id: 3, name: 'This Three', account: 2000, created: 2018 });
+    });
+
+    it('Update an item - delta - undefined property', async () =>
+    {
+        let user = await nodenamo.get(2).from(User).execute<User>();
+        assert.deepEqual(user, { id: 2, name: 'Some Two', account: 1000, created: 2016 });
+
+        await nodenamo.update({id:2, name:'This Two', account: undefined, created: undefined}).from(User).execute();
+        
+        user = await nodenamo.get(2).from(User).execute();
+        assert.deepEqual(user, { id: 2, name: 'This Two', account: 1000, created: 2016 });
+    });
+
+    it('Update an item - delta - omitted property', async () =>
+    {
+        let user = await nodenamo.get(1).from(User).execute<User>();
+        assert.deepEqual(user, { id: 1, name: 'Some One', account: 1000, created: 2017 });
+
+        await nodenamo.update({id:1, name:'This One'}).from(User).execute();
+        
+        user = await nodenamo.get(1).from(User).execute();
+        assert.deepEqual(user, { id: 1, name: 'This One', account: 1000, created: 2017 });
     });
 
     it('Delete an item', async () =>
