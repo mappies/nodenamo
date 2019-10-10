@@ -15,11 +15,15 @@ class User
 
     @DBColumn()
     description:string
-    constructor(id:number, name:string, description:string)
+
+    secret:string;
+
+    constructor(id:number, name:string, description:string, secret?:string)
     {
         this.id = id;
         this.name = name;
         this.description = description;
+        this.secret = secret;
     }
 }
 
@@ -41,10 +45,14 @@ describe('ID tests', function ()
 
     it('Add items', async () =>
     {
+        user2.secret = 'super secured';
+
         await Promise.all([
             nodenamo.insert(user1).into(User).execute(),
             nodenamo.insert(user2).into(User).execute(),
             nodenamo.insert(user3).into(User).execute()]);
+
+        user2.secret = undefined;
     });
 
     it('List all items', async () =>
@@ -56,6 +64,8 @@ describe('ID tests', function ()
         assert.deepEqual(users.items[0], user1);
         assert.deepEqual(users.items[1], user2);
         assert.deepEqual(users.items[2], user3);
+
+        assert.deepEqual(users.items[1].secret, undefined);
     });
 
     it('List items with paging', async () =>
@@ -69,6 +79,7 @@ describe('ID tests', function ()
 
         assert.equal(page2.items.length, 1);
         assert.deepEqual(page2.items[0], user2);
+        assert.deepEqual(page2.items[0].secret, undefined);
         
         let page3 = await nodenamo.list().from(User).limit(1).resume(page2.lastEvaluatedKey).execute<User>();
         
@@ -86,6 +97,26 @@ describe('ID tests', function ()
         assert.equal(users.items.length, 1);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user2);
+        assert.deepEqual(users.items[0].secret, undefined);
+    });
+
+    it('List items by an undefined', async () =>
+    {
+        let users = await nodenamo.list().from(User).by(undefined).execute<User>();
+        
+        assert.equal(users.items.length, 3);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], user1);
+        assert.deepEqual(users.items[1], user2);
+        assert.deepEqual(users.items[2], user3);
+    });
+
+    it('List items by an invalid value', async () =>
+    {
+        let users = await nodenamo.list().from(User).by('invalid').execute<User>();
+        
+        assert.equal(users.items.length, 0);
+        assert.equal(users.lastEvaluatedKey, undefined);
     });
 
     it('List items with a filter and projections', async () =>
@@ -97,14 +128,15 @@ describe('ID tests', function ()
         
         assert.equal(users.items.length, 1);
         assert.equal(users.lastEvaluatedKey, undefined);
-        assert.deepEqual(users.items[0], {id:2, name:undefined, description:undefined});
+        assert.deepEqual(users.items[0], {id:2, name:undefined, description:undefined, secret:undefined});
     });
 
     it('Get an item', async () =>
     {
-        let user = await nodenamo.get(2).from(User).execute();
+        let user = await nodenamo.get(2).from(User).execute<User>();
         
         assert.deepEqual(user, user2);
+        assert.deepEqual(user.secret, undefined);
     });
 
     it('Update an item', async () =>
@@ -117,7 +149,7 @@ describe('ID tests', function ()
         await nodenamo.update(user3).from(User).execute();
         
         user = await nodenamo.get(3).from(User).execute();
-        assert.deepEqual(user, {id:3, name: 'This Three', description: 'Description 3'});
+        assert.deepEqual(user, {id:3, name: 'This Three', description: 'Description 3', secret: undefined});
     });
 
     it('Update an item - delta - undefined property', async () =>
@@ -128,7 +160,7 @@ describe('ID tests', function ()
         await nodenamo.update({id: 2, name: 'This Two', description: undefined}).from(User).execute();
         
         user = await nodenamo.get(2).from(User).execute();
-        assert.deepEqual(user, {id:2, name: 'This Two', description: 'Description 2'});
+        assert.deepEqual(user, {id:2, name: 'This Two', description: 'Description 2', secret: undefined});
     });
 
     it('Update an item - delta - omitted property', async () =>
@@ -139,7 +171,7 @@ describe('ID tests', function ()
         await nodenamo.update({id: 1, name: 'This One'}).from(User).execute();
         
         user = await nodenamo.get(1).from(User).execute();
-        assert.deepEqual(user, {id:1, name: 'This One', description: 'Description 1'});
+        assert.deepEqual(user, {id:1, name: 'This One', description: 'Description 1', secret: undefined});
     });
 
     it('Delete an item', async () =>

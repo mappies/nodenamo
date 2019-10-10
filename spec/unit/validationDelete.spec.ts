@@ -40,6 +40,57 @@ describe('ValidationDynamoDbManager - Delete()', function ()
         error = undefined;
     });
 
+    describe('id', ()=>
+    {
+        it('invalid - undefined obj id', async () =>
+        {
+            try
+            {
+                await manager.delete(Entity, undefined);
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+
+        it('invalid - null obj id', async () =>
+        {
+            try
+            {
+                await manager.delete(Entity, null);
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+
+        it('invalid - NaN obj id', async () =>
+        {
+            try
+            {
+                await manager.delete(Entity, NaN);
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+
+        it('invalid - complex obj id', async () =>
+        {
+            try
+            {
+                await manager.delete(Entity, <any>[1]);
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+    });
+
     describe('type decoration',()=>
     {
         it('valid', async ()=>

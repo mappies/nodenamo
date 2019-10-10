@@ -222,6 +222,18 @@ describe('ValidationDynamoDbManager - Find()', function ()
             assert.isFalse(called);
             assert.instanceOf(error, ValidationError);
         });
+
+        it('invalid - only range property', async () =>
+        {
+            try
+            {
+                await manager.find(Entity, {keyConditions: 'condition', expressionAttributeNames: {"#m": 'rangeProperty'}});
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
     });
 
     describe('keyParams.expressionAttributeValues', () =>

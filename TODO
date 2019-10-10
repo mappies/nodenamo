@@ -1,5 +1,3 @@
-do not allow `nodenamo` as a column value
-Acceptance/unit test of a property without DBColumn should not get saved
 Acceptance test by list order
 hash and id on same property
-update check id
+multiple hash range pair acceptance tests

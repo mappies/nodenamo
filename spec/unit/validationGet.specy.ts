@@ -40,6 +40,57 @@ describe('ValidationDynamoDbManager - Get()', function ()
         error = undefined;
     });
 
+    describe('id', ()=>
+    {
+        it('invalid - undefined obj id', async () =>
+        {
+            try
+            {
+                await manager.getOne(Entity, undefined);
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+
+        it('invalid - null obj id', async () =>
+        {
+            try
+            {
+                await manager.getOne(Entity, null);
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+
+        it('invalid - NaN obj id', async () =>
+        {
+            try
+            {
+                await manager.getOne(Entity, NaN);
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+
+        it('invalid - complex obj id', async () =>
+        {
+            try
+            {
+                await manager.getOne(Entity, <any>[1]);
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+    });
+
     describe('type decoration',()=>
     {
         it('valid', async ()=>

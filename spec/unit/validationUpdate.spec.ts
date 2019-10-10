@@ -4,6 +4,7 @@ import { Mock, IMock, It } from 'typemoq';
 import { DBTable, DBColumn } from '../../src';
 import { ValidatedDynamoDbManager } from '../../src/managers/validatedDynamodbManager';
 import { ValidationError } from '../../src/errors/validationError';
+import { Const } from '../../src/const';
 
 @DBTable()
 class Entity {
@@ -38,6 +39,99 @@ describe('ValidationDynamoDbManager - Update()', function ()
 
         called = false;
         error = undefined;
+    });
+
+    describe('id', ()=>
+    {
+        it('invalid - undefined obj id', async () =>
+        {
+            try
+            {
+                await manager.update(Entity, undefined, {}, {conditionExpression: 'condition'});
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+
+        it('invalid - null obj id', async () =>
+        {
+            try
+            {
+                await manager.update(Entity, null, {}, {conditionExpression: 'condition'});
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+
+        it('invalid - NaN obj id', async () =>
+        {
+            try
+            {
+                await manager.update(Entity, NaN, {}, {conditionExpression: 'condition'});
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+
+        it('invalid - complex obj id', async () =>
+        {
+            try
+            {
+                await manager.update(Entity, <any>[1], {}, {conditionExpression: 'condition'});
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+    });
+
+    describe('object', ()=>
+    {
+        it('invalid - undefined obj', async () =>
+        {
+            try
+            {
+                await manager.put(Entity, undefined);
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+
+        it('invalid - reserved column values', async () =>
+        {
+            @DBTable()
+            class NoProperties{}
+
+            try
+            {
+                await manager.update(NoProperties, 1, {});
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+
+        it('invalid - reserved column values', async () =>
+        {
+            try
+            {
+                await manager.update(Entity, Const.DefaultHashValue, {id:Const.DefaultHashValue});
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
     });
 
     describe('type decoration',()=>
@@ -195,7 +289,6 @@ describe('ValidationDynamoDbManager - Update()', function ()
             assert.isFalse(called);
             assert.instanceOf(error, ValidationError);
         });
-
         it('invalid - customed name property', async () =>
         {
             try

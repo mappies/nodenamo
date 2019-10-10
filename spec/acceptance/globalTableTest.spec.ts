@@ -74,6 +74,24 @@ describe('Global table tests', function ()
         assert.deepEqual(books.items[1], { id: 2, title: 'Another Book' });
     });
 
+    it('List items by undefined', async () =>
+    {
+        let books = await nodenamo.list().from(Book).by(undefined).execute<Book>();
+        
+        assert.equal(books.items.length, 2);
+        assert.equal(books.lastEvaluatedKey, undefined);
+        assert.deepEqual(books.items[0], { id: 1, title: 'Some Book' });
+        assert.deepEqual(books.items[1], { id: 2, title: 'Another Book' });
+    });
+
+    it('List items by an invalid value', async () =>
+    {
+        let users = await nodenamo.list().from(Book).by('invalid').execute<User>();
+        
+        assert.equal(users.items.length, 0);
+        assert.equal(users.lastEvaluatedKey, undefined);
+    });
+
     it('List users with paging', async () =>
     {
         let page1 = await nodenamo.list().from(User).limit(1).execute<User>();

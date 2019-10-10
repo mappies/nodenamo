@@ -11,10 +11,8 @@ export class Execute
 
     async execute(): Promise<void>
     {
-        let idColumn = Reflector.getIdKey(new this.type());
+        let key = Reflector.getIdKey(new this.type());
 
-        idColumn = Key.parse(idColumn).propertyName; //targetName#propertyName
-        
-        await this.manager.update(this.type, this.obj[idColumn], this.obj, this.params);
+        await this.manager.update(this.type, this.obj[Key.parse(key).propertyName], this.obj, this.params);
     }
 }

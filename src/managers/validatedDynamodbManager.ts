@@ -15,17 +15,20 @@ export class ValidatedDynamoDbManager implements IDynamoDbManager
         
     }
 
-    async put<T extends object>(type:{new(...args: any[]):T}, object:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
+    async put<T extends object>(type:{new(...args: any[]):T}, obj:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
     {
         validateType(type);
+        validateObject(type, obj);
+        validateObjectId(obj ? obj[Key.parse(Reflector.getIdKey(new type())).propertyName] : undefined);
         validateKeyConditionExpression(type, params);
 
-        await this.manager.put(type, object, params);
+        await this.manager.put(type, obj, params);
     }
 
     async getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number): Promise<T>
     {
         validateType(type);
+        validateObjectId(id);
         
         return await this.manager.getOne(type, id);
     }
@@ -46,6 +49,8 @@ export class ValidatedDynamoDbManager implements IDynamoDbManager
     async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction)
     {
         validateType(type);
+        validateObject(type, obj);
+        validateObjectId(id);
         validateKeyConditionExpression(type, params);
         validateVersioning(type, params);
 
@@ -56,6 +61,7 @@ export class ValidatedDynamoDbManager implements IDynamoDbManager
     async delete<T extends object>(type:{new(...args: any[]):T}, id:string|number,  params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
     {
         validateType(type);
+        validateObjectId(id);
         validateKeyConditionExpression(type, params);
 
         await this.manager.delete(type, id, params);
@@ -76,6 +82,19 @@ export class ValidatedDynamoDbManager implements IDynamoDbManager
     }
 }
 
+function validateObjectId(id:string|number)
+{
+    if(id === undefined || id === null || (typeof id === 'number' && isNaN(id)))
+    {
+        throw new ValidationError(`Expected an ID of an object to have a value. Found '${id}'`);
+    }
+
+    if(typeof id !== 'string' && typeof id !== 'number')
+    {
+        throw new ValidationError(`Expected an ID of an object to be either a string or a number. Found '${typeof id}'`)
+    }
+}
+
 function validateType<T extends object>(type:{new(...args: any[]):T})
 {
     if(!(type instanceof Function))
@@ -90,6 +109,25 @@ function validateType<T extends object>(type:{new(...args: any[]):T})
     if(Reflector.getIdKey(instance) === undefined)
     {
         throw new ValidationError(`Undefined ID property. Try adding @DBColumn({id:true}) to one of its property to represent a unique object ID.`);
+    }
+}
+
+function validateObject<T extends object>(type:{new(...args: any[]):T}, obj:object)
+{
+    if(obj === undefined)
+    {
+        throw new ValidationError(`Expected an object but found '${obj}'`);
+    }
+
+    let columns = Reflector.getColumns(new type());
+
+    if(columns.length === 0)
+    {
+        throw new ValidationError('Undefined columns. Try adding @DBColumn() to one or more properties.');
+    }
+    if(columns.some(c => obj[Key.parse(c).propertyName] === Const.DefaultHashValue))
+    {
+        throw new ValidationError(`A column value cannot be one of the reserved keywords: '${Const.DefaultHashValue}'`);
     }
 }
 
@@ -136,6 +174,10 @@ function validateKeyConditionExpression<T extends object>(type:{new(...args: any
         }
     }
 
+
+    let hasHash = false;
+    let hasRange = false;
+
     //expressionAttributeNames
     if(param.expressionAttributeNames)
     {
@@ -146,10 +188,18 @@ function validateKeyConditionExpression<T extends object>(type:{new(...args: any
                 throw new ValidationError(`The property '${columnName}' specified in ExpressionAttributeNames is not a column.`);
             }
 
+            if(!hasHash) hasHash = hashes.includes(columnName);
+            if(!hasRange) hasRange = ranges.includes(columnName);
+
             if(!hashes.includes(columnName) && !ranges.includes(columnName))
             {
                 throw new ValidationError(`The regular property '${columnName}' could not be used. A hash or a range property is expected.`);
             }
+        }
+            
+        if(!hasHash && hasRange)
+        {
+            throw new ValidationError('The operation could not be executed because a range value is given but its hash value is undefined.');
         }
     }
 

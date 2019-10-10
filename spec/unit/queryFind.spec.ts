@@ -264,6 +264,24 @@ describe('Query.Find', function ()
         assert.equal(result.items[0]['id'], 42);
     });
 
+    it('list.from.by() - undefined hash', async ()=>
+    {
+        let listKeyCondition = {
+            keyConditions:'#hash = :hash', 
+            expressionAttributeNames: {'#hash': Const.HashColumn}, 
+            expressionAttributeValues: {':hash': Const.DefaultHashValue}
+        };
+        mockedManager.setup(m => m.find(Entity, listKeyCondition, undefined, undefined)).callback(()=>called=true).returns(async()=>findResult);
+
+        let list = new List(mockedManager.object).from(Entity).by(undefined);
+        let result = await list.execute();
+
+        assert.isTrue(called);
+        assert.equal(result.lastEvaluatedKey, undefined);
+        assert.equal(result.items.length, 1);
+        assert.equal(result.items[0]['id'], 42);
+    });
+
     it('list(projections).from.by.filter.limit.using.order.resume()', async ()=>
     {
         let listKeyCondition = {

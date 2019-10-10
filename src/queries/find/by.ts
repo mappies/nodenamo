@@ -20,7 +20,7 @@ export class By
         {
             keyConditions: '#hash = :hash',
             expressionAttributeNames: {'#hash': Const.HashColumn},
-            expressionAttributeValues: {':hash': hash}
+            expressionAttributeValues: {':hash': hash ? hash : Const.DefaultHashValue}
         }
 
         if(rangeValueBeginsWith !== undefined)

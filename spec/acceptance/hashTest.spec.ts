@@ -103,6 +103,25 @@ describe('Hash tests', function ()
         assert.deepEqual(users.items[1], { id: 2, name: 'Some Two', account: 1000 });
     });
 
+    it('List items by an undefined', async () =>
+    {
+        let users = await nodenamo.list().from(User).by(undefined).execute<User>();
+        
+        assert.equal(users.items.length, 3);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], { id: 1, name: 'Some One', account: 1000 });
+        assert.deepEqual(users.items[1], { id: 2, name: 'Some Two', account: 1000 });
+        assert.deepEqual(users.items[2], { id: 3, name: 'Some Three', account: 2000 });
+    });
+
+    it('List items by an invalid value', async () =>
+    {
+        let users = await nodenamo.list().from(User).by('invalid').execute<User>();
+        
+        assert.equal(users.items.length, 0);
+        assert.equal(users.lastEvaluatedKey, undefined);
+    });
+
     it('List items by a hash and a filter', async () =>
     {
         let users = await nodenamo.list().from(User).by(1000).filter({

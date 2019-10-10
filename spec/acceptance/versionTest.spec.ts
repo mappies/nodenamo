@@ -51,6 +51,7 @@ describe('Version tests', function ()
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], { id: 1, name: 'Some One', age: 16 });
         assert.deepEqual(users.items[1], { id: 2, name: 'Some Two', age: 25 });
+        assert.deepEqual(users.items[2], { id: 3, name: 'Some Three', age: 39 });
     });
 
     it('Get an item', async () =>
