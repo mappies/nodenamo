@@ -9,6 +9,7 @@ import { DynamoDB } from 'aws-sdk/clients/all';
 import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
 import { VersionError } from '../errors/versionError';
 import { Key } from '../Key';
+import AggregateError from 'aggregate-error';
 
 export class DynamoDbManager implements IDynamoDbManager
 {
@@ -57,7 +58,26 @@ export class DynamoDbManager implements IDynamoDbManager
             })
         }
 
-        await transaction.commit();
+        try
+        {
+            await transaction.commit();
+        }
+        catch(e)
+        {
+            if(params === undefined || params.conditionExpression === undefined)
+            {
+                if(e instanceof AggregateError && e.message.includes('ConditionalCheckFailed'))
+                {
+                    let tableName = Reflector.getTableName(instance);
+
+                    throw new AggregateError([
+                        new NodenamoError(`An object with the same ID or hash-range key already exists in '${tableName}' table.`),
+                        e]);
+                }
+            }
+
+            throw e;
+        }
     }
 
     async getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number): Promise<T>

@@ -5,6 +5,7 @@ import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { DBTable, DBColumn } from '../../src';
 import { DynamoDbTransaction } from '../../src/managers/dynamodbTransaction';
 import {Const} from '../../src/const';
+import AggregateError from 'aggregate-error';
 
 @DBTable()
 class Entity {
@@ -93,5 +94,48 @@ describe('DynamoDbManager.Add()', function ()
 
         assert.isTrue(put);
         assert.isTrue(committed);
+    });
+
+    it('put() - failed from an error', async () =>
+    {
+
+        mockedTransaction = Mock.ofType<DynamoDbTransaction>();
+        mockedTransaction.setup(t => t.commit()).throws(new Error('Simulated error'));
+
+        let manager = new DynamoDbManager(mockedClient.object);
+
+        let error = undefined;
+        try
+        {
+            await manager.put(Entity, {}, undefined, mockedTransaction.object);
+        }
+        catch(e)
+        {
+            error = e;
+        }
+
+        assert.isDefined(error);
+        assert.equal(error.message, 'Simulated error');
+    });
+
+    it('put() - failed from a ConditionalCheckFailed', async () =>
+    {
+
+        mockedTransaction = Mock.ofType<DynamoDbTransaction>();
+        mockedTransaction.setup(t => t.commit()).throws(new AggregateError([new Error('Simulated error - ConditionalCheckFailed')]));
+
+        let manager = new DynamoDbManager(mockedClient.object);
+        let error = undefined;
+        try
+        {
+            await manager.put(Entity, {}, undefined, mockedTransaction.object);
+        }
+        catch(e)
+        {
+            error = e;
+        }
+
+        assert.isDefined(error);
+        assert.isTrue(error.message.includes('An object with the same ID or hash-range key already exists in \'Entity\' table'));
     });
 });
