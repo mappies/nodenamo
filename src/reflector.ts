@@ -70,6 +70,39 @@ export class Reflector
         appendMetadataAsArray(Const.DBColumn, column, obj);
     }
 
+    static getAllHashKeys(obj:object): string[]
+    {
+        let result = Reflector.getHashKeys(obj);
+
+        let pairs = Object.values(Reflector.getHashRangeKeyPairs(obj));
+
+        for(let pair of pairs)
+        {
+            result = result.concat(pair.hashes);
+        }
+
+        return result;
+    }
+
+    static getAllRangeKeys(obj:object): string[]
+    {
+        let result = Reflector.getRangeKeys(obj);
+
+        let pairs = Object.values(Reflector.getHashRangeKeyPairs(obj));
+
+        for(let pair of pairs)
+        {
+            result = result.concat(pair.ranges);
+        }
+
+        return result;
+    }
+
+    /**
+     * Get a list of generic hash keys.  A generic hash key is a property with @DBColumn({hash:true})
+     * This method does not return hash keys from a hash-range pair (those with @DBColumn({hash:string})
+     * Use Reflector.getAllHashKeys() to get all hash keys.
+     */
     static getHashKeys(obj:object): string[]
     {
         return Reflect.getMetadata(Const.HashKey, obj) || [];
@@ -80,6 +113,11 @@ export class Reflector
         appendMetadataAsArray(Const.HashKey, key, obj);
     }
 
+    /**
+     * Get a list of generic range keys.  A generic range key is a property with @DBColumn({range:true})
+     * This method does not return range keys from a hash-range pair (those with @DBColumn({range:string})
+     * Use Reflector.getAllRangeKeys() to get all range keys.
+     */
     static getRangeKeys(obj:object): string[]
     {
         return Reflect.getMetadata(Const.RangeKey, obj) || [];

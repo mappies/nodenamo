@@ -1,3 +1,1 @@
-Acceptance test by list order
-hash and id on same property
-multiple hash range pair acceptance tests
+Better error for duplicate id or hash

@@ -52,6 +52,17 @@ describe('Hash tests', function ()
         assert.deepEqual(users.items[2], { id: 3, name: 'Some Three', account: 2000 });
     });
 
+    it('List all items - reverse', async () =>
+    {
+        let users = await nodenamo.list().from(User).order(false).execute<User>();
+        
+        assert.equal(users.items.length, 3);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], { id: 3, name: 'Some Three', account: 2000 });
+        assert.deepEqual(users.items[1], { id: 2, name: 'Some Two', account: 1000 });
+        assert.deepEqual(users.items[2], { id: 1, name: 'Some One', account: 1000 });
+    });
+
     it('List all items with a projection', async () =>
     {
         let users = await nodenamo.list("id", "name").from(User).execute<User>();

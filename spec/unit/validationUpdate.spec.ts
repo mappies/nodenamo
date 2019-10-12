@@ -208,6 +208,24 @@ describe('ValidationDynamoDbManager - Update()', function ()
             assert.isFalse(called);
             assert.instanceOf(error, ValidationError);
         });
+
+        it('invalid - no ID property', async ()=>
+        {
+            @DBTable()
+            class HashedId
+            {
+                @DBColumn({id:true, hash:true})
+                id:number;
+            }
+            try
+            {
+                await manager.update(HashedId, 1, {});
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
     });
 
     describe('conditionExpression', () =>

@@ -458,7 +458,7 @@ export class DynamoDbManager implements IDynamoDbManager
 
 function addColumnValuePrefix(obj:object, expressionAttributeValues:object, expressionAttributeNames:object): void
 {
-    let hashes = Reflector.getHashKeys(obj).map(k => Key.parse(k).propertyName);
+    let hashes = Reflector.getAllHashKeys(obj).map(k => Key.parse(k).propertyName);
     let id = Const.IdColumn;
     let prefix = Reflector.getDataPrefix(obj);
     let isStringColumn = false;
@@ -531,8 +531,8 @@ function prepareProjectedColumnNames(obj:object, propertyNames:string[], params:
 
 function changeColumnNames(obj:object, expressionAttributeNames:object): void
 {
-    let hashes = Reflector.getHashKeys(obj).map(k => Key.parse(k).propertyName);
-    let ranges = Reflector.getRangeKeys(obj).map(k => Key.parse(k).propertyName);
+    let hashes = Reflector.getAllHashKeys(obj).map(k => Key.parse(k).propertyName);
+    let ranges = Reflector.getAllRangeKeys(obj).map(k => Key.parse(k).propertyName);
     let columns = Reflector.getColumns(obj);
     
     //When there is no hashes, ID is the hash

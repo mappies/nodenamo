@@ -64,9 +64,13 @@ describe('DbColumn', function ()
         };
 
         let keys = Reflector.getHashKeys(new Entity());
+        let allHashes = Reflector.getAllHashKeys(new Entity());
+        let allRanges = Reflector.getAllRangeKeys(new Entity());
         
         assert.equal(keys.length, 1);
         assert.equal(keys[0], 'id');
+        assert.deepEqual(allHashes, ['id']);
+        assert.isEmpty(allRanges);
     });
 
     it('With a range key.', function () 
@@ -80,9 +84,13 @@ describe('DbColumn', function ()
         };
 
         let keys = Reflector.getRangeKeys(new Entity());
+        let allHashes = Reflector.getAllHashKeys(new Entity());
+        let allRanges = Reflector.getAllRangeKeys(new Entity());
         
         assert.equal(keys.length, 1);
         assert.equal(keys[0], 'name');
+        assert.isEmpty(allHashes);
+        assert.deepEqual(allRanges, ['name']);
     });
 
     it('With all combinations', function () 
@@ -103,7 +111,9 @@ describe('DbColumn', function ()
         let rangeMetadata = Reflector.getRangeKeys(new Entity());
         let idMetadata = Reflector.getIdKey(new Entity());
         let hashRangePairMetadata = Reflector.getHashRangeKeyPairs(new Entity());
-        
+        let allHashes = Reflector.getAllHashKeys(new Entity());
+        let allRanges = Reflector.getAllRangeKeys(new Entity());
+
         assert.equal(columnMetadata.length, 3);
         assert.equal(columnMetadata[0], 'uniqueId#id');
         assert.equal(columnMetadata[1], 'newName#name');
@@ -115,6 +125,8 @@ describe('DbColumn', function ()
         assert.equal(rangeMetadata[1], 'createdTimestamp');
         assert.isEmpty(hashRangePairMetadata);
         assert.equal(idMetadata, 'uniqueId#id');
+        assert.deepEqual(allHashes, ['uniqueId#id'])
+        assert.deepEqual(allRanges, ['newName#name', 'createdTimestamp'])
     });
 
     it('With primary keys.', function () 
@@ -182,5 +194,43 @@ describe('DbColumn', function ()
         assert.equal(hashRangePairMetadata.key1.ranges.length, 2);
         assert.equal(hashRangePairMetadata.key1.ranges[0], 'time');
         assert.equal(hashRangePairMetadata.key1.ranges[1], 'name');
+    });
+
+    it('With a primary key with multiple hashes and ranges.', function () 
+    {
+        class Entity {
+            @DBColumn({hash:true})
+            justHash:string;
+
+            @DBColumn({hash:'key1'})
+            id:string;
+
+            @DBColumn({hash:'key1'})
+            description:string;
+
+            @DBColumn({range:'key1'})
+            time:string;
+
+            @DBColumn({range:'key1'})
+            name:string;
+
+            @DBColumn({range:true})
+            justRange:string;
+        };
+
+        let hashMetadata = Reflector.getHashKeys(new Entity());
+        let rangeMetadata = Reflector.getRangeKeys(new Entity());
+        let hashRangePairMetadata:any = Reflector.getHashRangeKeyPairs(new Entity());
+        let allHashes = Reflector.getAllHashKeys(new Entity());
+        let allRanges = Reflector.getAllRangeKeys(new Entity());
+
+        assert.deepEqual(hashMetadata, ['justHash']);
+        assert.deepEqual(rangeMetadata, ['justRange']);
+        assert.deepEqual(allHashes, ['justHash', 'id', 'description']);
+        assert.deepEqual(allRanges, ['justRange', 'time', 'name']);
+        assert.isDefined(hashRangePairMetadata);
+        assert.isDefined(hashRangePairMetadata.key1);
+        assert.deepEqual(hashRangePairMetadata.key1.hashes, ['id', 'description']);
+        assert.deepEqual(hashRangePairMetadata.key1.ranges, ['time', 'name']);
     });
 });

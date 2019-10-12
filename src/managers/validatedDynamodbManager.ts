@@ -106,9 +106,16 @@ function validateType<T extends object>(type:{new(...args: any[]):T})
     {
         throw new ValidationError(`Undefined table.  Try adding @DBTable() to the type.`);
     }
-    if(Reflector.getIdKey(instance) === undefined)
+    let idKey = Reflector.getIdKey(instance);
+    if(idKey === undefined)
     {
         throw new ValidationError(`Undefined ID property. Try adding @DBColumn({id:true}) to one of its property to represent a unique object ID.`);
+    }
+    let idKeyPropertyName = Key.parse(idKey).propertyName;
+    let hashKeys = Reflector.getAllHashKeys(instance);
+    if(hashKeys.some(k => Key.parse(k).propertyName === idKeyPropertyName))
+    {
+        throw new ValidationError(`The property '${idKeyPropertyName}' cannot be both ID and Hash columns.`);
     }
 }
 
@@ -148,8 +155,8 @@ function validateKeyConditionExpression<T extends object>(type:{new(...args: any
     if(param === undefined) return;
     
     let instance = new type();
-    let hashes = Reflector.getHashKeys(instance).map(hash => Key.parse(hash).propertyName);
-    let ranges = Reflector.getRangeKeys(instance).map(range => Key.parse(range).propertyName);
+    let hashes = Reflector.getAllHashKeys(instance).map(hash => Key.parse(hash).propertyName);
+    let ranges = Reflector.getAllRangeKeys(instance).map(range => Key.parse(range).propertyName);
     let columns = Reflector.getColumns(instance).map(column => Key.parse(column).propertyName);
 
     hashes = [...hashes, Const.HashColumn];
@@ -223,8 +230,8 @@ function validateFilterConditionExpression<T extends object>(type:{new(...args: 
     if(param === undefined) return;
     
     let instance = new type();
-    let hashes = Reflector.getHashKeys(instance).map(hash => Key.parse(hash).propertyName);
-    let ranges = Reflector.getRangeKeys(instance).map(range => Key.parse(range).propertyName);
+    let hashes = Reflector.getAllHashKeys(instance).map(hash => Key.parse(hash).propertyName);
+    let ranges = Reflector.getAllRangeKeys(instance).map(range => Key.parse(range).propertyName);
     let columns = Reflector.getColumns(instance).map(column => Key.parse(column).propertyName);
 
     //filterExpression

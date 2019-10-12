@@ -68,6 +68,20 @@ describe('ID tests', function ()
         assert.deepEqual(users.items[1].secret, undefined);
     });
 
+    it('List all items - reverse', async () =>
+    {
+        let users = await nodenamo.list().from(User).order(false).execute<User>();
+        
+        assert.equal(users.items.length, 3);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], user3);
+        assert.deepEqual(users.items[1], user2);
+        assert.deepEqual(users.items[2], user1);
+
+        assert.deepEqual(users.items[1].secret, undefined);
+    });
+
+
     it('List items with paging', async () =>
     {
         let page1 = await nodenamo.list().from(User).limit(1).execute<User>();
