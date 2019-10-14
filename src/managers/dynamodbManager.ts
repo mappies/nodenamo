@@ -284,14 +284,32 @@ export class DynamoDbManager implements IDynamoDbManager
         //Update/delete rows
         for(let representation of newRepresentations)
         {
+            //Create an additional param object for each representation.
+            //This is required because newKey extra conditional logic below.
+            let representationAdditionalParam = Object.assign({}, additionalParams);
+
             let representationKey = getKey(representation);
 
+            //Check if the new representation's key does exists.
+            //If it does not exist, it means the item has a new key.
+            //When adding the new representation with a new key, make sure the new hash and range are not already exist.
+            let newKey = !(representationKey in currentRepresentationKeys);
+            
+            if(newKey)
+            {
+                representationAdditionalParam.ConditionExpression = 
+                    (representationAdditionalParam.ConditionExpression ? `(${representationAdditionalParam.ConditionExpression}) AND` : '') 
+                    +
+                    '(attribute_not_exists(#hash) AND attribute_not_exists(#range))'
+
+                    representationAdditionalParam.ExpressionAttributeNames = Object.assign(representationAdditionalParam.ExpressionAttributeNames || {}, {'#hash': Const.HashColumn, '#range': Const.RangeColumn})
+            }
+            
             let putParams = {
                 TableName: tableName,
                 Item: representation.data,
-                ...additionalParams
+                ...representationAdditionalParam
             };
-            
             transaction.add({Put: putParams});
 
             delete currentRepresentationKeys[representationKey];
@@ -333,6 +351,19 @@ export class DynamoDbManager implements IDynamoDbManager
                 if(currentObject && Reflector.getObjectVersion(currentObject) >= newRepresentations[0].data[Const.VersionColumn])
                 {
                     throw new VersionError(`Could not update the object '${id}' because it has been overwritten by the writes of others.`);
+                }
+            }
+
+            //Check ConditionalCheckFailed
+            if(params === undefined || params.conditionExpression === undefined)
+            {
+                if(e instanceof AggregateError && e.message.includes('ConditionalCheckFailed'))
+                {
+                    let tableName = Reflector.getTableName(instance);
+
+                    throw new AggregateError([
+                        new NodenamoError(`An object with the same ID or hash-range key already exists in '${tableName}' table.`),
+                        e]);
                 }
             }
 

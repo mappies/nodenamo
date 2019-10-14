@@ -78,7 +78,7 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[0].data.createdTimestamp, 'now');
 
         assert.equal(representations[1].hash, 'entity#Some One');
-        assert.equal(representations[1].range, 'nodenamo#123');
+        assert.equal(representations[1].range, 'nodenamo');
         assert.equal(representations[1].objId, 'entity#123');
         assert.equal(representations[1].data.hash, 'entity#Some One');
         assert.equal(representations[1].data.id, 123);
@@ -126,10 +126,10 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[0].data.createdTimestamp, 'now');
 
         assert.equal(representations[1].hash, 'entity#Some One');
-        assert.equal(representations[1].range, 'nodenamo#123');
+        assert.equal(representations[1].range, 'nodenamo');
         assert.equal(representations[1].objId, 'entity#123');
         assert.equal(representations[1].data.hash, 'entity#Some One');
-        assert.equal(representations[1].data.range, 'nodenamo#123');
+        assert.equal(representations[1].data.range, 'nodenamo');
         assert.equal(representations[1].data.newId, 123);
         assert.equal(representations[1].data.objid, 'entity#123');
         assert.equal(representations[1].data.name, 'Some One');
@@ -177,7 +177,7 @@ describe('RepresentationFactory', function ()
         assert.isTrue(representations[1] instanceof Representation);
         assert.equal(representations[1].tableName, 'Entity');
         assert.equal(representations[1].hash, 'entity#123');
-        assert.equal(representations[1].range, 'nodenamo#123');
+        assert.equal(representations[1].range, 'nodenamo');
         assert.equal(representations[1].objId, 'entity#123');
         assert.equal(representations[1].data.id, '123');
         assert.equal(representations[1].data.objid, 'entity#123');
@@ -225,7 +225,7 @@ describe('RepresentationFactory', function ()
         assert.isTrue(representations[1] instanceof Representation);
         assert.equal(representations[1].tableName, 'Entity');
         assert.equal(representations[1].hash, 'entity#123');
-        assert.equal(representations[1].range, 'nodenamo#undefined'); //no id
+        assert.equal(representations[1].range, 'nodenamo'); //no id
         assert.equal(representations[1].objId, undefined);
         assert.equal(representations[1].data.id, 123);
         assert.equal(representations[1].data.name, 'Some One');
@@ -785,7 +785,7 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[0].range, Const.DefaultRangeValue);
 
         assert.equal(representations[1].hash, 'entity#orgsome');
-        assert.equal(representations[1].range, 'nodenamo#123');
+        assert.equal(representations[1].range, 'nodenamo');
 
         assert.equal(representations[2].hash, 'entity#42');
         assert.equal(representations[2].range, 'now');

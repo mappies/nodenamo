@@ -33,6 +33,7 @@ describe('ID tests', function ()
     let user1:User;
     let user2:User;
     let user3:User;
+    let user4:User;
 
     before(async ()=>{
         nodenamo = new NodeNamo(new DocumentClient({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'us-east-1' }))
@@ -41,6 +42,7 @@ describe('ID tests', function ()
         user1 = new User(1, 'Some One', 'Description 1');
         user2 = new User(2, 'Some Two', 'Description 2');
         user3 = new User(3, 'Some Three', 'Description 3');
+        user4 = new User(4, 'Some Four', 'Description 4');
     });
 
     it('Add items', async () =>
@@ -50,7 +52,8 @@ describe('ID tests', function ()
         await Promise.all([
             nodenamo.insert(user1).into(User).execute(),
             nodenamo.insert(user2).into(User).execute(),
-            nodenamo.insert(user3).into(User).execute()]);
+            nodenamo.insert(user3).into(User).execute(),
+            nodenamo.insert(user4).into(User).execute()]);
 
         user2.secret = undefined;
     });
@@ -59,11 +62,12 @@ describe('ID tests', function ()
     {
         let users = await nodenamo.list().from(User).execute<User>();
         
-        assert.equal(users.items.length, 3);
+        assert.equal(users.items.length, 4);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user1);
         assert.deepEqual(users.items[1], user2);
         assert.deepEqual(users.items[2], user3);
+        assert.deepEqual(users.items[3], user4);
 
         assert.deepEqual(users.items[1].secret, undefined);
     });
@@ -72,11 +76,12 @@ describe('ID tests', function ()
     {
         let users = await nodenamo.list().from(User).order(false).execute<User>();
         
-        assert.equal(users.items.length, 3);
+        assert.equal(users.items.length, 4);
         assert.equal(users.lastEvaluatedKey, undefined);
-        assert.deepEqual(users.items[0], user3);
-        assert.deepEqual(users.items[1], user2);
-        assert.deepEqual(users.items[2], user1);
+        assert.deepEqual(users.items[0], user4);
+        assert.deepEqual(users.items[1], user3);
+        assert.deepEqual(users.items[2], user2);
+        assert.deepEqual(users.items[3], user1);
 
         assert.deepEqual(users.items[1].secret, undefined);
     });
@@ -99,6 +104,11 @@ describe('ID tests', function ()
         
         assert.equal(page3.items.length, 1);
         assert.deepEqual(page3.items[0], user3);
+        
+        let page4 = await nodenamo.list().from(User).limit(1).resume(page3.lastEvaluatedKey).execute<User>();
+        
+        assert.equal(page4.items.length, 1);
+        assert.deepEqual(page4.items[0], user4);
     });
 
     it('List items with a filter', async () =>
@@ -118,11 +128,12 @@ describe('ID tests', function ()
     {
         let users = await nodenamo.list().from(User).by(undefined).execute<User>();
         
-        assert.equal(users.items.length, 3);
+        assert.equal(users.items.length, 4);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user1);
         assert.deepEqual(users.items[1], user2);
         assert.deepEqual(users.items[2], user3);
+        assert.deepEqual(users.items[3], user4);
     });
 
     it('List items by an invalid value', async () =>
@@ -191,12 +202,12 @@ describe('ID tests', function ()
     it('Delete an item', async () =>
     {
         assert.isDefined(await nodenamo.get(1).from(User).execute());
-        assert.equal((await nodenamo.list().from(User).execute()).items.length, 3);
+        assert.equal((await nodenamo.list().from(User).execute()).items.length, 4);
 
         await nodenamo.delete(1).from(User).execute();
 
         assert.isUndefined(await nodenamo.get(1).from(User).execute());
-        assert.equal((await nodenamo.list().from(User).execute()).items.length, 2);
+        assert.equal((await nodenamo.list().from(User).execute()).items.length, 3);
     });
 
     after(async ()=>{

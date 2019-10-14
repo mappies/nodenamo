@@ -64,11 +64,11 @@ function createRepresentation(tableName: string, dataPrefix:string = '', hash:an
         result.hash = addDataPrefix(dataPrefix, Const.DefaultHashValue);
     }
 
-    if(rangeValue === undefined)
+    if(hash === undefined && rangeValue === undefined)
     {
         result.range = `${Const.DefaultRangeValue}#${getPropertyValue(result.data, id)}`
     }
-    else if((rangeValue === Const.IdUniquenessRange))
+    else if((hash !== undefined && rangeValue === undefined) || (rangeValue === Const.IdUniquenessRange))
     {
         result.range = `${Const.DefaultRangeValue}`;
     }
