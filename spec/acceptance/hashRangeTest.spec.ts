@@ -36,6 +36,7 @@ describe('Hash-range tests', function ()
     let user3:User;
     let user4:User;
     let user5:User;
+    let user6:User;
 
     before(async ()=>{
         nodenamo = new NodeNamo(new DocumentClient({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'us-east-1' }))
@@ -48,6 +49,7 @@ describe('Hash-range tests', function ()
         user3 = new User(3, 'Some Three', 2000, 2018);
         user4 = new User(4, 'Some Four', 2000, 2019);
         user5 = new User(5, 'Some Five', 1000, 2019);
+        user6 = new User(6, 'Some Six', 3000, 2020);
     });
 
     it('Add items', async () =>
@@ -57,33 +59,36 @@ describe('Hash-range tests', function ()
             nodenamo.insert(user2).into(User).execute(),
             nodenamo.insert(user3).into(User).execute(),
             nodenamo.insert(user4).into(User).execute(),
-            nodenamo.insert(user5).into(User).execute()]);
+            nodenamo.insert(user5).into(User).execute(),
+            nodenamo.insert(user6).into(User).execute()]);
     });
 
     it('List all items', async () =>
     {
         let users = await nodenamo.list().from(User).execute<User>();
         
-        assert.equal(users.items.length, 5);
+        assert.equal(users.items.length, 6);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user2);
         assert.deepEqual(users.items[1], user1);
         assert.deepEqual(users.items[2], user3);
         assert.deepEqual(users.items[3], user4);
         assert.deepEqual(users.items[4], user5);
+        assert.deepEqual(users.items[5], user6);
     });
 
     it('List all items - reverse', async () =>
     {
         let users = await nodenamo.list().from(User).order(false).execute<User>();
         
-        assert.equal(users.items.length, 5);
+        assert.equal(users.items.length, 6);
         assert.equal(users.lastEvaluatedKey, undefined);
-        assert.deepEqual(users.items[0], user5);
-        assert.deepEqual(users.items[1], user4);
-        assert.deepEqual(users.items[2], user3);
-        assert.deepEqual(users.items[3], user1);
-        assert.deepEqual(users.items[4], user2);
+        assert.deepEqual(users.items[0], user6);
+        assert.deepEqual(users.items[1], user5);
+        assert.deepEqual(users.items[2], user4);
+        assert.deepEqual(users.items[3], user3);
+        assert.deepEqual(users.items[4], user1);
+        assert.deepEqual(users.items[5], user2);
     });
 
     it('List items with paging', async () =>
@@ -102,6 +107,21 @@ describe('Hash-range tests', function ()
         
         assert.equal(page3.items.length, 1);
         assert.deepEqual(page3.items[0], user3);
+        
+        let page4 = await nodenamo.list().from(User).limit(1).resume(page3.lastEvaluatedKey).execute<User>();
+        
+        assert.equal(page4.items.length, 1);
+        assert.deepEqual(page4.items[0], user4);
+        
+        let page5 = await nodenamo.list().from(User).limit(1).resume(page4.lastEvaluatedKey).execute<User>();
+        
+        assert.equal(page5.items.length, 1);
+        assert.deepEqual(page5.items[0], user5);
+        
+        let page6 = await nodenamo.list().from(User).limit(1).resume(page5.lastEvaluatedKey).execute<User>();
+        
+        assert.equal(page6.items.length, 1);
+        assert.deepEqual(page6.items[0], user6);
     });
 
     it('List items with a filter', async () =>
@@ -120,13 +140,14 @@ describe('Hash-range tests', function ()
     {
         let users = await nodenamo.list().from(User).by(undefined).execute<User>();
         
-        assert.equal(users.items.length, 5);
+        assert.equal(users.items.length, 6);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user2);
         assert.deepEqual(users.items[1], user1);
         assert.deepEqual(users.items[2], user3);
         assert.deepEqual(users.items[3], user4);
         assert.deepEqual(users.items[4], user5);
+        assert.deepEqual(users.items[5], user6);
     });
 
     it('List items by an invalid value', async () =>
@@ -278,7 +299,7 @@ describe('Hash-range tests', function ()
         
         user = await nodenamo.get(4).from(User).execute();
         assert.deepEqual(user, { id: 4, name: 'Some Four', account: 4000, created: 2019 });
-        assert.deepEqual((await nodenamo.list().from(User).execute()).items.length, 5);
+        assert.deepEqual((await nodenamo.list().from(User).execute()).items.length, 6);
     });
 
     it('Update an item - hash/range change - duplicate', async () =>
@@ -307,15 +328,27 @@ describe('Hash-range tests', function ()
         assert.isTrue(error.message.includes('An object with the same ID or hash-range key already exists in \'nodenamo_acceptance_hashRangeTest\' table'));
     });
 
+    it('Update an item - empty string', async () =>
+    {
+        let user = await nodenamo.get(6).from(User).execute<User>();
+        assert.deepEqual(user, user6);
+
+        user.name = '';
+        await nodenamo.update(user).from(User).execute();
+        
+        user = await nodenamo.get(6).from(User).execute();
+        assert.deepEqual(user, { id: 6, name: '', account: 3000, created: 2020 });
+    });
+
     it('Delete an item', async () =>
     {
         assert.isDefined(await nodenamo.get(1).from(User).execute());
-        assert.equal((await nodenamo.list().from(User).execute()).items.length, 5);
+        assert.equal((await nodenamo.list().from(User).execute()).items.length, 6);
 
         await nodenamo.delete(1).from(User).execute();
 
         assert.isUndefined(await nodenamo.get(1).from(User).execute());
-        assert.equal((await nodenamo.list().from(User).execute()).items.length, 4);
+        assert.equal((await nodenamo.list().from(User).execute()).items.length, 5);
     });
 
     after(async ()=>{

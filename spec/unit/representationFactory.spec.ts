@@ -837,4 +837,40 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[5].hash, `entity#${Const.DefaultHashValue}`);
         assert.equal(representations[5].range, 'tomorrow#123');
     });
+
+    it('get() - empty string', function () 
+    {
+        @DBTable()
+        class Entity {
+            @DBColumn({id:true})
+            id:number = 42;
+            
+            @DBColumn()
+            name:string = '';
+        };
+
+        let representations = RepresentationFactory.get(new Entity());
+        
+        assert.equal(representations.length, 2);
+
+        assert.equal(representations[0].hash, 'entity#42');
+        assert.equal(representations[0].range, `${Const.DefaultRangeValue}`);
+        assert.equal(representations[0].objId, 'entity#42');
+        assert.equal(representations[0].data.hash, 'entity#42');
+        assert.equal(representations[0].data.range, Const.DefaultRangeValue);
+        assert.equal(representations[0].data.id, 42);
+        assert.equal(representations[0].data.objid, 'entity#42');
+        assert.equal(representations[0].data.name, Const.EmptyString);
+        assert.equal(representations[0].data[Const.VersionColumn], 1);
+
+        assert.equal(representations[1].hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[1].range, `${Const.DefaultRangeValue}#42`);
+        assert.equal(representations[1].objId, 'entity#42');
+        assert.equal(representations[1].data.hash, `entity#${Const.DefaultHashValue}`);
+        assert.equal(representations[1].data.range, `${Const.DefaultRangeValue}#42`);
+        assert.equal(representations[1].data.id, 42);
+        assert.equal(representations[1].data.objid, 'entity#42');
+        assert.equal(representations[1].data.name, Const.EmptyString);
+        assert.equal(representations[1].data[Const.VersionColumn], 1);
+    });
 });

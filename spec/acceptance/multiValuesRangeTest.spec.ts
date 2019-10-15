@@ -31,32 +31,41 @@ class User
 describe('Multi-values range tests', function () 
 {
     let nodenamo:NodeNamo;
-    let user1 = new User(1, 'Some One', 1000, ['2018#1', false, 'Some One#1']);
-    let user2 = new User(2, 'Some Two', 1000, ['2017#2', true, 'Some Two#2']);
-    let user3 = new User(3, 'Some Three', 2000, ['2016#3', 'true#3', 'Some Three#3']);
+    let user1:User;
+    let user2:User;
+    let user3:User;
+    let user6:User;
 
     before(async ()=>{
         nodenamo = new NodeNamo(new DocumentClient({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'us-east-1' }))
         await nodenamo.createTable().for(User).execute();
     });
 
+    beforeEach(()=>{
+        user1 = new User(1, 'Some One', 1000, ['2018#1', false, 'Some One#1']);
+        user2 = new User(2, 'Some Two', 1000, ['2017#2', true, 'Some Two#2']);
+        user3 = new User(3, 'Some Three', 2000, ['2016#3', 'true#3', 'Some Three#3']);
+        user6 = new User(6, 'Some Six', 3000, ['2020#6', 'true#6', 'Some Six#6']);
+    })
     it('Add items', async () =>
     {
         await Promise.all([
             nodenamo.insert(user1).into(User).execute(),
             nodenamo.insert(user2).into(User).execute(),
-            nodenamo.insert(user3).into(User).execute()]);
+            nodenamo.insert(user3).into(User).execute(),
+            nodenamo.insert(user6).into(User).execute()]);
     });
 
     it('List all items', async () =>
     {
         let users = await nodenamo.list().from(User).execute<User>();
         
-        assert.equal(users.items.length, 3);
+        assert.equal(users.items.length, 4);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user3);
         assert.deepEqual(users.items[1], user2);
         assert.deepEqual(users.items[2], user1);
+        assert.deepEqual(users.items[3], user6);
     });
 
     it('List items by a hash', async () =>
@@ -73,11 +82,12 @@ describe('Multi-values range tests', function ()
     {
         let users = await nodenamo.list().from(User).by(undefined).execute<User>();
         
-        assert.equal(users.items.length, 3);
+        assert.equal(users.items.length, 4);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user3);
         assert.deepEqual(users.items[1], user2);
         assert.deepEqual(users.items[2], user1);
+        assert.deepEqual(users.items[3], user6);
     });
 
     it('List items by an invalid hash', async () =>
@@ -200,7 +210,7 @@ describe('Multi-values range tests', function ()
     it('Update an item - delta - omitted property', async () =>
     {
         let user = await nodenamo.get(1).from(User).execute<User>();
-        assert.deepEqual(user, { id: 1, name: 'Some One', account: 1000, ranges: ['2018#1', false, 'Some One#1'] });
+        assert.deepEqual(user, user1);
 
         await nodenamo.update({id:1, name:'This One'}).from(User).execute();
         
@@ -208,15 +218,26 @@ describe('Multi-values range tests', function ()
         assert.deepEqual(user, { id: 1, name: 'This One', account: 1000, ranges: ['2018#1', false, 'Some One#1'] });
     });
 
+    it('Update an item - delta - empty string', async () =>
+    {
+        let user = await nodenamo.get(6).from(User).execute<User>();
+        assert.deepEqual(user, user6);
+
+        await nodenamo.update({id:6, name:''}).from(User).execute();
+        
+        user = await nodenamo.get(6).from(User).execute();
+        assert.deepEqual(user, { id: 6, name: '', account: 3000, ranges: ['2020#6', 'true#6', 'Some Six#6'] });
+    });
+
     it('Delete an item', async () =>
     {
         assert.isDefined(await nodenamo.get(1).from(User).execute());
-        assert.equal((await nodenamo.list().from(User).execute()).items.length, 3);
+        assert.equal((await nodenamo.list().from(User).execute()).items.length, 4);
 
         await nodenamo.delete(1).from(User).execute();
 
         assert.isUndefined(await nodenamo.get(1).from(User).execute());
-        assert.equal((await nodenamo.list().from(User).execute()).items.length, 2);
+        assert.equal((await nodenamo.list().from(User).execute()).items.length, 3);
     });
 
     after(async ()=>{

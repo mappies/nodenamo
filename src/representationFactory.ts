@@ -20,7 +20,7 @@ export class RepresentationFactory
         {
             //A custom column name uses `targetName#originalName` format.
             let key = Key.parse(column);
-            data[key.targetName] = obj[key.propertyName];
+            data[key.targetName] = obj[key.propertyName] === '' ? Const.EmptyString : obj[key.propertyName];
         }
 
         data[Const.VersionColumn] = version + 1;

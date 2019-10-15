@@ -132,7 +132,10 @@ function validateObject<T extends object>(type:{new(...args: any[]):T}, obj:obje
     {
         throw new ValidationError('Undefined columns. Try adding @DBColumn() to one or more properties.');
     }
-    if(columns.some(c => obj[Key.parse(c).propertyName] === Const.DefaultHashValue))
+    if(columns.some(c => {
+        let value = obj[Key.parse(c).propertyName];
+        return typeof value === 'string' && (<string>value).startsWith('nodenamo')
+    }))
     {
         throw new ValidationError(`A column value cannot be one of the reserved keywords: '${Const.DefaultHashValue}'`);
     }

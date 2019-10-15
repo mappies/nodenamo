@@ -107,4 +107,20 @@ describe('EntityFactory', function ()
         //assert.instanceOf(entity, Entity);
         assert.equal(entity.data, 'valuabledata');
     });
+
+    it('create() - empty string', function () 
+    {
+        @DBTable()
+        class Entity {
+            @DBColumn()
+            data:string;
+        };
+
+        let entity = EntityFactory.create(Entity, {
+            data:'nodenamo:emptystring'
+        });
+        
+        //assert.instanceOf(entity, Entity);
+        assert.equal(entity.data, '');
+    });
 });

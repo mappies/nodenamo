@@ -31,7 +31,13 @@ export class EntityFactory
             if(!descriptor || (descriptor.writable && !descriptor.set))
             {
                 //It is a regular property.
-                result[columnNames[property]] = removePrefixIfAny(data[property], dataPrefix);
+                let propertyName = columnNames[property];
+                result[propertyName] = removePrefixIfAny(data[property], dataPrefix);
+
+                if(result[propertyName] === Const.EmptyString)
+                {
+                    result[propertyName] = '';
+                }
             }
         }
 

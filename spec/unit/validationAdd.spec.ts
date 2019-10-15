@@ -144,6 +144,18 @@ describe('ValidationDynamoDbManager - Add()', function ()
             assert.isFalse(called);
             assert.instanceOf(error, ValidationError);
         });
+
+        it('invalid - reserved column values', async () =>
+        {
+            try
+            {
+                await manager.put(Entity, {id:Const.EmptyString});
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
     });
 
     describe('type decoration',()=>

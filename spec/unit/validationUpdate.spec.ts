@@ -125,7 +125,19 @@ describe('ValidationDynamoDbManager - Update()', function ()
         {
             try
             {
-                await manager.update(Entity, Const.DefaultHashValue, {id:Const.DefaultHashValue});
+                await manager.update(Entity, 1, {id:Const.DefaultHashValue});
+            }
+            catch(e) { error = e; }
+
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+
+        it('invalid - reserved column values', async () =>
+        {
+            try
+            {
+                await manager.update(Entity, 1, {id:Const.EmptyString});
             }
             catch(e) { error = e; }
 

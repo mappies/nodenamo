@@ -18,5 +18,6 @@ export enum Const
     DefaultHashValue = "nodenamo",
     IdUniquenessRange = "idUniquenessRange",
     IdUniquenessHash = "idUniquenessKey",
-    IdUniquenessPrefix = "nodenamo"
+    IdUniquenessPrefix = "nodenamo",
+    EmptyString = "nodenamo:emptystring"
 };

@@ -199,6 +199,18 @@ describe('ID tests', function ()
         assert.deepEqual(user, {id:1, name: 'This One', description: 'Description 1', secret: undefined});
     });
 
+    it('Update an item - delta - empty string property', async () =>
+    {
+        let user = await nodenamo.get(4).from(User).execute<User>();
+        assert.deepEqual(user, user4);
+
+        await nodenamo.update({id: 4, description: ''}).from(User).execute();
+        
+        user = await nodenamo.get(4).from(User).execute();
+        
+        assert.deepEqual(user, {id:4, name: 'Some Four', description: '', secret: undefined});
+    });
+
     it('Delete an item', async () =>
     {
         assert.isDefined(await nodenamo.get(1).from(User).execute());
