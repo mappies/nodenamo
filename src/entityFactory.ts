@@ -6,6 +6,29 @@ const excludedColumns = [<string>Const.HashColumn, <string>Const.RangeColumn, <s
 
 export class EntityFactory
 {
+    static replaceEmptyString(obj:object, propertyName?:string)
+    {
+        if(!propertyName)
+        {
+            for(let key of Object.keys(obj))
+            {
+                obj[key] = EntityFactory.replaceEmptyString(obj, key);
+            }
+
+            return obj;
+        }
+        else if(obj[propertyName] === Const.EmptyString)
+        {
+            return '';
+
+        }
+        else if(typeof obj[propertyName] === 'object' && !Array.isArray(obj[propertyName]))
+        {
+            return this.replaceEmptyString(obj[propertyName]);
+        }
+        return obj[propertyName];
+    }
+
     static create<T extends object>(type:{new(...args: any[]):T}, data:any):T
     {
         let result:T = new type();
@@ -33,13 +56,10 @@ export class EntityFactory
                 //It is a regular property.
                 let propertyName = columnNames[property];
                 result[propertyName] = removePrefixIfAny(data[property], dataPrefix);
-
-                if(result[propertyName] === Const.EmptyString)
-                {
-                    result[propertyName] = '';
-                }
             }
         }
+
+        result = EntityFactory.replaceEmptyString(result);
 
         return result;
     }

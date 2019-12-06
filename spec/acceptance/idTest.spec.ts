@@ -16,14 +16,18 @@ class User
     @DBColumn()
     description:string
 
+    @DBColumn()
+    obj:object;
+
     secret:string;
 
-    constructor(id:number, name:string, description:string, secret?:string)
+    constructor(id:number, name:string, description:string, secret?:string, obj?:object)
     {
         this.id = id;
         this.name = name;
         this.description = description;
         this.secret = secret;
+        this.obj = obj;
     }
 }
 
@@ -48,6 +52,7 @@ describe('ID tests', function ()
     it('Add items', async () =>
     {
         user2.secret = 'super secured';
+        user3.obj = {num:1, bool:true, str:'string', empty:'', array:[], obj:{n:1, e:''}};
 
         await Promise.all([
             nodenamo.insert(user1).into(User).execute(),
@@ -153,7 +158,7 @@ describe('ID tests', function ()
         
         assert.equal(users.items.length, 1);
         assert.equal(users.lastEvaluatedKey, undefined);
-        assert.deepEqual(users.items[0], {id:2, name:undefined, description:undefined, secret:undefined});
+        assert.deepEqual(users.items[0], {id:2, name:undefined, description:undefined, secret:undefined, obj:undefined});
     });
 
     it('Get an item', async () =>
@@ -174,7 +179,7 @@ describe('ID tests', function ()
         await nodenamo.update(user3).from(User).execute();
         
         user = await nodenamo.get(3).from(User).execute();
-        assert.deepEqual(user, {id:3, name: 'This Three', description: 'Description 3', secret: undefined});
+        assert.deepEqual(user, {id:3, name: 'This Three', description: 'Description 3', secret: undefined, obj:{array:[], bool:true, empty:'', num:1, obj:{n:1,e:''}, str:'string'}});
     });
 
     it('Update an item - delta - undefined property', async () =>
@@ -185,7 +190,7 @@ describe('ID tests', function ()
         await nodenamo.update({id: 2, name: 'This Two', description: undefined}).from(User).execute();
         
         user = await nodenamo.get(2).from(User).execute();
-        assert.deepEqual(user, {id:2, name: 'This Two', description: 'Description 2', secret: undefined});
+        assert.deepEqual(user, {id:2, name: 'This Two', description: 'Description 2', secret: undefined, obj:undefined});
     });
 
     it('Update an item - delta - omitted property', async () =>
@@ -196,7 +201,7 @@ describe('ID tests', function ()
         await nodenamo.update({id: 1, name: 'This One'}).from(User).execute();
         
         user = await nodenamo.get(1).from(User).execute();
-        assert.deepEqual(user, {id:1, name: 'This One', description: 'Description 1', secret: undefined});
+        assert.deepEqual(user, {id:1, name: 'This One', description: 'Description 1', secret: undefined, obj:undefined});
     });
 
     it('Update an item - delta - empty string property', async () =>
@@ -208,7 +213,7 @@ describe('ID tests', function ()
         
         user = await nodenamo.get(4).from(User).execute();
         
-        assert.deepEqual(user, {id:4, name: 'Some Four', description: '', secret: undefined});
+        assert.deepEqual(user, {id:4, name: 'Some Four', description: '', secret: undefined, obj:undefined});
     });
 
     it('Delete an item', async () =>

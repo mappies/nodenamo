@@ -1,6 +1,7 @@
 import {assert as assert} from 'chai';
 import { DBColumn, DBTable } from '../../src';
 import { EntityFactory } from '../../src/entityFactory';
+import { Const } from '../../src/const';
 
 describe('EntityFactory', function () 
 {
@@ -114,13 +115,81 @@ describe('EntityFactory', function ()
         class Entity {
             @DBColumn()
             data:string;
+            
+            @DBColumn()
+            obj:object = {
+                level: 1,
+                o1: {
+                    level: 2,
+                    o11: {
+                        level: 3,
+                        O111: {
+                            level: 4,
+                            value: '',
+                            name: 'four',
+                            bool: true,
+                            array: [1,2,3]
+                        },
+                        value: '',
+                        name: 'three'
+                    },
+                    value: '',
+                    name: 'two'
+                },
+                value: '',
+                name: 'one'
+            }
         };
 
         let entity = EntityFactory.create(Entity, {
-            data:'nodenamo:emptystring'
+            data:'nodenamo:emptystring',
+            obj: {
+                level: 1,
+                o1: {
+                    level: 2,
+                    o11: {
+                        level: 3,
+                        O111: {
+                            level: 4,
+                            value: Const.EmptyString,
+                            name: 'four',
+                            bool: true,
+                            array: [1,2,3]
+                        },
+                        value: Const.EmptyString,
+                        name: 'three'
+                    },
+                    value: Const.EmptyString,
+                    name: 'two'
+                },
+                value: Const.EmptyString,
+                name: 'one'
+            }
         });
         
         //assert.instanceOf(entity, Entity);
         assert.equal(entity.data, '');
+        assert.deepEqual(entity.obj, {
+            level: 1,
+            o1: {
+                level: 2,
+                o11: {
+                    level: 3,
+                    O111: {
+                        level: 4,
+                        value: '',
+                        name: 'four',
+                        bool: true,
+                        array: [1,2,3]
+                    },
+                    value: '',
+                    name: 'three'
+                },
+                value: '',
+                name: 'two'
+            },
+            value: '',
+            name: 'one'
+        });
     });
 });

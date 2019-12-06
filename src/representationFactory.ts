@@ -5,6 +5,31 @@ import { Key } from "./Key";
 
 export class RepresentationFactory
 {
+    static replaceEmptyString(obj:object, propertyName?:string)
+    {
+        if(!propertyName)
+        {
+            let copy = Object.assign({}, obj);
+
+            for(let key of Object.keys(copy))
+            {
+                copy[key] = RepresentationFactory.replaceEmptyString(copy, key);
+            }
+
+            return copy;
+        }
+        else if(obj[propertyName] === '')
+        {
+            return Const.EmptyString;
+
+        }
+        else if(typeof obj[propertyName] === 'object' && !Array.isArray(obj[propertyName]))
+        {
+            return this.replaceEmptyString(obj[propertyName]);
+        }
+        return obj[propertyName];
+    }
+
     static get(obj:any): Representation[]
     {
         let tableName = Reflector.getTableName(obj);
@@ -20,8 +45,10 @@ export class RepresentationFactory
         {
             //A custom column name uses `targetName#originalName` format.
             let key = Key.parse(column);
-            data[key.targetName] = obj[key.propertyName] === '' ? Const.EmptyString : obj[key.propertyName];
+            data[key.targetName] = obj[key.propertyName];
         }
+
+        data = this.replaceEmptyString(data);
 
         data[Const.VersionColumn] = version + 1;
 

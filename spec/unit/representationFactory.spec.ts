@@ -847,6 +847,30 @@ describe('RepresentationFactory', function ()
             
             @DBColumn()
             name:string = '';
+
+            @DBColumn()
+            obj:object = {
+                level: 1,
+                o1: {
+                    level: 2,
+                    o11: {
+                        level: 3,
+                        O111: {
+                            level: 4,
+                            value: '',
+                            name: 'four',
+                            bool: true,
+                            array: [1,2,3]
+                        },
+                        value: '',
+                        name: 'three'
+                    },
+                    value: '',
+                    name: 'two'
+                },
+                value: '',
+                name: 'one'
+            }
         };
 
         let representations = RepresentationFactory.get(new Entity());
@@ -861,6 +885,28 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[0].data.id, 42);
         assert.equal(representations[0].data.objid, 'entity#42');
         assert.equal(representations[0].data.name, Const.EmptyString);
+        assert.deepEqual(representations[0].data.obj, {
+            level: 1,
+            o1: {
+                level: 2,
+                o11: {
+                    level: 3,
+                    O111: {
+                        level: 4,
+                        value: Const.EmptyString,
+                        name: 'four',
+                        bool: true,
+                        array: [1,2,3]
+                    },
+                    value: Const.EmptyString,
+                    name: 'three'
+                },
+                value: Const.EmptyString,
+                name: 'two'
+            },
+            value: Const.EmptyString,
+            name: 'one'
+        });
         assert.equal(representations[0].data[Const.VersionColumn], 1);
 
         assert.equal(representations[1].hash, `entity#${Const.DefaultHashValue}`);
@@ -871,6 +917,28 @@ describe('RepresentationFactory', function ()
         assert.equal(representations[1].data.id, 42);
         assert.equal(representations[1].data.objid, 'entity#42');
         assert.equal(representations[1].data.name, Const.EmptyString);
+        assert.deepEqual(representations[0].data.obj, {
+            level: 1,
+            o1: {
+                level: 2,
+                o11: {
+                    level: 3,
+                    O111: {
+                        level: 4,
+                        value: Const.EmptyString,
+                        name: 'four',
+                        bool: true,
+                        array: [1,2,3]
+                    },
+                    value: Const.EmptyString,
+                    name: 'three'
+                },
+                value: Const.EmptyString,
+                name: 'two'
+            },
+            value: Const.EmptyString,
+            name: 'one'
+        });
         assert.equal(representations[1].data[Const.VersionColumn], 1);
     });
 });
