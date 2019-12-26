@@ -336,6 +336,30 @@ describe('ValidationDynamoDbManager - Find()', function ()
             assert.isUndefined(error)
         });
 
+        it('valid - hash property', async () =>
+        {
+            await manager.find(Entity, undefined, {filterExpression: 'condition', expressionAttributeNames:  {'#n': 'hash'}});
+            
+            assert.isTrue(called);
+            assert.isUndefined(error);
+        });
+
+        it('valid - range property', async () =>
+        {
+            await manager.find(Entity, undefined, {filterExpression: 'condition', expressionAttributeNames:  {'#n': 'range'}});
+            
+            assert.isTrue(called);
+            assert.isUndefined(error);
+        });
+
+        it('valid - id property', async () =>
+        {
+            await manager.find(Entity, undefined, {filterExpression: 'condition', expressionAttributeNames:  {'#n': 'objid'}});
+            
+            assert.isTrue(called);
+            assert.isUndefined(error);
+        });
+
         it('valid - non hash/range property', async () =>
         {
             await manager.find(Entity, undefined, {filterExpression: 'condition', expressionAttributeNames:  {'#n': 'regularProperty'}});

@@ -236,6 +236,9 @@ function validateFilterConditionExpression<T extends object>(type:{new(...args: 
     let hashes = Reflector.getAllHashKeys(instance).map(hash => Key.parse(hash).propertyName);
     let ranges = Reflector.getAllRangeKeys(instance).map(range => Key.parse(range).propertyName);
     let columns = Reflector.getColumns(instance).map(column => Key.parse(column).propertyName);
+    
+    //Add hash/rane/id column here because expressionAttributeNames may include one of those from keyConditions expression.
+    columns = [...columns, Const.HashColumn, Const.RangeColumn, Const.IdColumn];
 
     //filterExpression
     if(param.filterExpression === undefined || param.filterExpression.trim().length === 0)
