@@ -371,6 +371,120 @@ export class DynamoDbManager implements IDynamoDbManager
         }
     }
 
+    async apply<T extends object>(type:{new(...args: any[]):T}, id:string|number, params:{updateExpression:{set?:string[], remove?:string[], add?:string[], delete?:string[]}, conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction)
+    {
+        let instance = new type();
+        let tableName = Reflector.getTableName(instance);
+        let tableVersioning = Reflector.getTableVersioning(instance);
+        let versioningRequired = tableVersioning || (params && params.versionCheck);
+
+        //Calculate new representations
+        let rows = await this.getById(id, type); 
+        
+        if(rows.length === 0)
+        {
+            throw new Error(`Could not update the object '${id}' because it could not be found.`);
+        }
+
+        //Setup additionalParams
+        let additionalParams:any = {};
+        
+        if(versioningRequired)
+        {
+            additionalParams.ConditionExpression = '(#objver <= :objver)';
+            additionalParams.ExpressionAttributeNames = {'#objver': Const.VersionColumn};
+            additionalParams.ExpressionAttributeValues = {':objver': rows[0][Const.VersionColumn], ':objverincrementby': 1};   
+            
+            if(!params.updateExpression.add)
+            {
+                params.updateExpression.add = [];
+            }
+
+            params.updateExpression.add.push('#objver :objverincrementby');
+        }
+
+        if(params.conditionExpression)
+        {
+            additionalParams['ConditionExpression'] = additionalParams['ConditionExpression'] 
+                                                        ? `${additionalParams['ConditionExpression']} and (${params.conditionExpression})`
+                                                        : params.conditionExpression;
+        }
+        
+        if(params.expressionAttributeNames)
+        {
+            changeColumnNames(instance, params.expressionAttributeNames)
+            additionalParams['ExpressionAttributeNames'] = Object.assign(params.expressionAttributeNames, additionalParams['ExpressionAttributeNames']);
+        }
+
+        if(params.expressionAttributeValues)
+        {
+            addColumnValuePrefix(instance, params.expressionAttributeValues, params.expressionAttributeNames);
+            additionalParams['ExpressionAttributeValues'] = Object.assign(params.expressionAttributeValues, additionalParams['ExpressionAttributeValues']);
+        }
+        
+        transaction = transaction || new DynamoDbTransaction(this.client);
+
+        let updateExpression = '';
+
+        //Setup updateExpression
+        if(params?.updateExpression?.set?.length > 0)
+        {
+            updateExpression = `SET ${params.updateExpression.set.join(',')} ${updateExpression}`;
+        }
+        if(params?.updateExpression?.remove?.length > 0)
+        {
+            updateExpression = `REMOVE ${params.updateExpression.remove.join(',')} ${updateExpression}`;
+        }
+        if(params?.updateExpression?.add?.length > 0)
+        {
+            updateExpression = `ADD ${params.updateExpression.add.join(',')} ${updateExpression}`;
+        }
+        if(params?.updateExpression?.delete?.length > 0)
+        {
+            updateExpression = `DELETE ${params.updateExpression.delete.join(',')} ${updateExpression}`;
+        }
+
+        for(let row of rows)
+        {
+            transaction.add({Update: {
+                TableName: tableName,
+                Key: {
+                    [Const.HashColumn]: row[Const.HashColumn],
+                    [Const.RangeColumn]: row[Const.RangeColumn] 
+                },
+                UpdateExpression: updateExpression,
+                ...additionalParams
+            }})
+        }
+
+        try
+        {
+            await transaction.commit();
+        }
+        catch(e)
+        {
+            //Check if the failure was caused from a version check.
+            if(versioningRequired)
+            {
+                let currentObject:T;
+                try
+                {
+                    currentObject = await this.getOne(type, id);
+                }
+                catch(e2)
+                {
+                    throw e;
+                }
+                
+                if(currentObject && Reflector.getObjectVersion(currentObject) > rows[0][Const.VersionColumn])
+                {
+                    throw new VersionError(`Could not update the object '${id}' because it has been overwritten by the writes of others.`);
+                }
+            }
+
+            throw e;
+        }
+    }
 
     async delete<T extends object>(type:{new(...args: any[]):T}, id:string|number,  params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
     {
