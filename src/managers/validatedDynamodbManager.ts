@@ -57,6 +57,14 @@ export class ValidatedDynamoDbManager implements IDynamoDbManager
         await this.manager.update(type, id, obj, params);
     }
 
+    async apply<T extends object>(type:{new(...args: any[]):T}, id:string|number, params:{updateExpression:{set?:string[], remove?:string[], add?:string[], delete?:string[]}, conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean})
+    {
+        validateType(type);
+        validateObjectId(id);
+        validateUpdateExpression(type, params);
+        validateVersioning(type, params);
+        await this.manager.apply(type, id, params)
+    }
 
     async delete<T extends object>(type:{new(...args: any[]):T}, id:string|number,  params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
     {
@@ -141,7 +149,7 @@ function validateObject<T extends object>(type:{new(...args: any[]):T}, obj:obje
     }
 }
 
-function validateVersioning<T extends object>(type:{new(...args: any[]):T}, params: {conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean})
+function validateVersioning<T extends object>(type:{new(...args: any[]):T}, params: {versionCheck?:boolean})
 {
     if(params === undefined) return;
 
@@ -264,6 +272,73 @@ function validateFilterConditionExpression<T extends object>(type:{new(...args: 
             if(ranges.includes(columnName))
             {
                 throw new ValidationError(`The hash property '${columnName}' could not be used in a filter expression. Try using it in a keyConditions expression instead.`);
+            }
+        }
+    }
+
+    //expressionAttributeValues
+    if(param.expressionAttributeValues)
+    {
+        for(let key of Object.keys(param.expressionAttributeValues))
+        {
+            let value = param.expressionAttributeValues[key];
+
+            if(isNullOrUndefined(value) || (typeof value === 'number' && isNaN(value)))
+            {
+                throw new ValidationError(`Invalid value of '${key}'.  Expected a value but found '${value}'`);
+            }
+        }
+    }
+}
+
+function validateUpdateExpression<T extends object>(type:{new(...args: any[]):T}, param:{updateExpression:{set?:string[],remove?:string[],add?:string[],delete?:string[]}, conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object})
+{
+    if(param === undefined)
+    {
+        throw new ValidationError('updateExpression is undefined.');
+    }
+    
+    let instance = new type();
+    let hashes = Reflector.getAllHashKeys(instance).map(hash => Key.parse(hash).propertyName);
+    let ranges = Reflector.getAllRangeKeys(instance).map(range => Key.parse(range).propertyName);
+    let columns = Reflector.getColumns(instance).map(column => Key.parse(column).propertyName);
+    
+    //Add hash/rane/id column here because expressionAttributeNames may include one of those from keyConditions expression.
+    columns = [...columns, Const.HashColumn, Const.RangeColumn, Const.IdColumn];
+
+    //updateExpression
+    if( param.updateExpression === undefined 
+        || 
+        (
+            (!param.updateExpression.set || param.updateExpression.set.length === 0)
+             && 
+            (!param.updateExpression.delete || param.updateExpression.delete.length === 0)
+             && 
+            (!param.updateExpression.add || param.updateExpression.add.length === 0)
+             && 
+            (!param.updateExpression.remove || param.updateExpression.remove.length === 0)))
+    {
+        throw new ValidationError(`updateExpression is not specified in ${JSON.stringify(param)}`);
+    }
+
+    //expressionAttributeNames
+    if(param.expressionAttributeNames)
+    {
+        for(let columnName of Object.values(param.expressionAttributeNames))
+        {
+            if(!columns.includes(columnName))
+            {
+                throw new ValidationError(`The property '${columnName}' specified in ExpressionAttributeNames is not a column.`);
+            }
+
+            if(!param.conditionExpression && hashes.includes(columnName))
+            {
+                throw new ValidationError(`The hash property '${columnName}' could not be used in an update expression. Use NodeNamo.update() instead.`);
+            }
+
+            if(!param.conditionExpression && ranges.includes(columnName))
+            {
+                throw new ValidationError(`The hash property '${columnName}' could not be used in an update expression. Use NodeNamo.update() instead.`);
             }
         }
     }
