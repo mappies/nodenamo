@@ -1,8 +1,6 @@
 import { Insert } from './queries/insert/insert';
 import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import { DynamoDbManager } from "./managers/dynamodbManager";
-import { Reflector } from "./reflector";
-import { NodenamoError } from "./errors/nodenamoError";
 import { Get } from "./queries/get/get";
 import { Find } from "./queries/find/find";
 import { Delete } from "./queries/delete/delete";
@@ -12,6 +10,7 @@ import { CreateTable } from './queries/createTable/createTable';
 import { DeleteTable } from './queries/deleteTable/deleteTable';
 import { ValidatedDynamoDbManager } from './managers/validatedDynamodbManager';
 import { IDynamoDbManager } from './interfaces/iDynamodbManager';
+import { On } from './queries/on/on';
 
 export class NodeNamo
 {
@@ -45,6 +44,11 @@ export class NodeNamo
     update(obj:object): Update
     {
         return new Update(this.manager, obj);
+    }
+
+    on(id:string|number): On
+    {
+        return new On(this.manager, id);
     }
 
     delete(id:string|number): Delete
