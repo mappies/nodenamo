@@ -311,6 +311,20 @@ describe('Hash tests', function ()
         assert.deepEqual((await nodenamo.list().from(User).execute()).items.length, 6);
     });
 
+    it('On item', async () =>
+    {
+        let user = await nodenamo.get(6).from(User).execute<User>();
+
+        await nodenamo.on(6)
+                      .from(User)
+                      .set(['#name=:name'], {'#name': 'name'}, {':name': 'Mr. Six'})
+                      .execute();
+        
+        user = await nodenamo.get(6).from(User).execute();
+        
+        assert.deepEqual(user, {id:6, name: 'Mr. Six', account: 6000});
+    });
+
     it('Delete an item', async () =>
     {
         assert.isDefined(await nodenamo.get(1).from(User).execute());

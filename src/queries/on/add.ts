@@ -19,8 +19,8 @@ export class Add
 
         this.params.updateExpression.add = this.params.updateExpression.add.concat(addExpressions);
         
-        this.params.expressionAttributeNames = Object.assign(Object.assign({}, this.params.expressionAttributeNames), expressionAttributeNames);
-        this.params.expressionAttributeValues = Object.assign(Object.assign({}, this.params.expressionAttributeValues), expressionAttributeValues);
+        this.params.expressionAttributeNames = expressionAttributeNames ? Object.assign(Object.assign({}, this.params.expressionAttributeNames), expressionAttributeNames) : this.params.expressionAttributeNames;
+        this.params.expressionAttributeValues = expressionAttributeValues ? Object.assign(Object.assign({}, this.params.expressionAttributeValues), expressionAttributeValues) : this.params.expressionAttributeValues;
 
         return this;
     }

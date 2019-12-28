@@ -216,6 +216,22 @@ describe('ID tests', function ()
         assert.deepEqual(user, {id:4, name: 'Some Four', description: '', secret: undefined, obj:undefined});
     });
 
+    it('On item', async () =>
+    {
+        let user = await nodenamo.get(4).from(User).execute<User>();
+
+        await nodenamo.on(4)
+                      .from(User)
+                      .set(['#desc=:desc'], {'#desc': 'description'}, {':desc': 'That description'})
+                      .add(['#obj :obj'], {'#obj': 'obj'}, {':obj': 42})
+                      .remove(['#name'], {'#name': 'name'})
+                      .execute();
+        
+        user = await nodenamo.get(4).from(User).execute();
+        
+        assert.deepEqual(user, {id:4, name: undefined, description: 'That description', secret: undefined, obj:<any>42});
+    });
+
     it('Delete an item', async () =>
     {
         assert.isDefined(await nodenamo.get(1).from(User).execute());

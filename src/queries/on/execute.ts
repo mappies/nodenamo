@@ -10,7 +10,7 @@ export class Execute
     }
 
     async execute(): Promise<void>
-    {console.log(this.params)
+    {
         await this.manager.apply(this.type, this.id, this.params);
     }
 }

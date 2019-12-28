@@ -340,6 +340,20 @@ describe('Hash-range tests', function ()
         assert.deepEqual(user, { id: 6, name: '', account: 3000, created: 2020 });
     });
 
+    it('On item', async () =>
+    {
+        let user = await nodenamo.get(6).from(User).execute<User>();
+
+        await nodenamo.on(6)
+                      .from(User)
+                      .set(['#name=:name'], {'#name': 'name'}, {':name': 'Mr. Six'})
+                      .execute();
+        
+        user = await nodenamo.get(6).from(User).execute();
+        
+        assert.deepEqual(user, {id:6, name: 'Mr. Six', account: 3000, created: 2020});
+    });
+
     it('Delete an item', async () =>
     {
         assert.isDefined(await nodenamo.get(1).from(User).execute());

@@ -186,6 +186,25 @@ describe('Global table tests', function ()
         assert.deepEqual(book, { id: 2, title: 'Another Book' });
     });
 
+    it('On item', async () =>
+    {
+        await nodenamo.on(2)
+                      .from(User)
+                      .set(['#name=:name'], {'#name': 'name'}, {':name': 'That Two'})
+                      .execute();
+        
+        await nodenamo.on(2)
+                      .from(Book)
+                      .set(['#title=:title'], {'#title': 'title'}, {':title': 'That Book'})
+                      .execute();
+
+        let user = await nodenamo.get(2).from(User).execute<User>();
+        let book = await nodenamo.get(2).from(Book).execute<Book>();
+        
+        assert.deepEqual(user, { id: 2, name: 'That Two' });
+        assert.deepEqual(book, { id: 2, title: 'That Book' });
+    });
+
     it('Delete an item', async () =>
     {
         assert.isDefined(await nodenamo.get(1).from(User).execute());

@@ -19,8 +19,8 @@ export class Remove
 
         this.params.updateExpression.remove = this.params.updateExpression.remove.concat(removeExpressions);
         
-        this.params.expressionAttributeNames = Object.assign(Object.assign({}, this.params.expressionAttributeNames), expressionAttributeNames);
-        this.params.expressionAttributeValues = Object.assign(Object.assign({}, this.params.expressionAttributeValues), expressionAttributeValues);
+        this.params.expressionAttributeNames = expressionAttributeNames ? Object.assign(Object.assign({}, this.params.expressionAttributeNames), expressionAttributeNames) : this.params.expressionAttributeNames;
+        this.params.expressionAttributeValues = expressionAttributeValues ? Object.assign(Object.assign({}, this.params.expressionAttributeValues), expressionAttributeValues) : this.params.expressionAttributeValues;
 
         return this;
     }
