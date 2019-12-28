@@ -324,21 +324,29 @@ function validateUpdateExpression<T extends object>(type:{new(...args: any[]):T}
     //expressionAttributeNames
     if(param.expressionAttributeNames)
     {
-        for(let columnName of Object.values(param.expressionAttributeNames))
+        for(let attributeName of Object.keys(param.expressionAttributeNames))
         {
+            let columnName = param.expressionAttributeNames[attributeName];
+
             if(!columns.includes(columnName))
             {
                 throw new ValidationError(`The property '${columnName}' specified in ExpressionAttributeNames is not a column.`);
             }
 
-            if(!param.conditionExpression && hashes.includes(columnName))
+            if(hashes.includes(columnName))
             {
-                throw new ValidationError(`The hash property '${columnName}' could not be used in an update expression. Use NodeNamo.update() instead.`);
+                if(JSON.stringify(param.updateExpression).includes(attributeName))
+                {
+                    throw new ValidationError(`The hash property '${columnName}' could not be used in an update expression. Use NodeNamo.update() instead.`);
+                }
             }
 
-            if(!param.conditionExpression && ranges.includes(columnName))
+            if(ranges.includes(columnName))
             {
-                throw new ValidationError(`The hash property '${columnName}' could not be used in an update expression. Use NodeNamo.update() instead.`);
+                if(JSON.stringify(param.updateExpression).includes(attributeName))
+                {
+                    throw new ValidationError(`The hash property '${columnName}' could not be used in an update expression. Use NodeNamo.update() instead.`);
+                }
             }
         }
     }

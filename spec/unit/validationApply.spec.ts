@@ -265,11 +265,11 @@ describe('ValidationDynamoDbManager - Apply()', function ()
             assert.instanceOf(error, ValidationError);
         });
 
-        it('invalid - hash/range property if condition is not specified', async () =>
+        it('invalid - hash property used in updateExpression', async () =>
         {
             try
             {
-                await manager.apply(Entity, 42, {updateExpression: {add:['add1']}, expressionAttributeNames: {'#n': 'hashProperty', "#m": 'rangeProperty'}});
+                await manager.apply(Entity, 42, {updateExpression: {add:['#n 1']}, expressionAttributeNames: {'#n': 'hashProperty', "#m": 'rangeProperty'}});
             }
             catch(e) { error = e; }
 
@@ -277,11 +277,24 @@ describe('ValidationDynamoDbManager - Apply()', function ()
             assert.instanceOf(error, ValidationError);
         });
 
-        it('valid - hash/range property if condition is specified', async () =>
+        it('invalid - range property used in updateExpression', async () =>
         {
-            await manager.apply(Entity, 42, {updateExpression: {add:['add1']}, conditionExpression: 'something', expressionAttributeNames: {'#n': 'hashProperty', "#m": 'rangeProperty'}});
+            try
+            {
+                await manager.apply(Entity, 42, {updateExpression: {add:['#m 1']}, expressionAttributeNames: {'#n': 'hashProperty', "#m": 'rangeProperty'}});
+            }
+            catch(e) { error = e; }
 
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
+        });
+
+        it('valid - hash/range property is not used in updateExpression', async () =>
+        {
+            await manager.apply(Entity, 42, {updateExpression: {add:['add1']}, conditionExpression: '#n = #m', expressionAttributeNames: {'#n': 'hashProperty', "#m": 'rangeProperty'}});
+            
             assert.isTrue(called);
+            assert.isUndefined(error);
         });
 
         it('valid - using the real property name instead of a custom name', async () =>
