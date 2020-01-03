@@ -32,7 +32,7 @@ export class DynamoDbManager implements IDynamoDbManager
 
         if(params && params.conditionExpression)
         {
-            additionalParams['ConditionExpression'] =  ` AND (${params.conditionExpression})`;
+            additionalParams['ConditionExpression'] =  `${additionalParams.ConditionExpression} AND (${params.conditionExpression})`;
         }
 
         if(params && params.expressionAttributeNames)

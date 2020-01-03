@@ -58,7 +58,7 @@ describe('ID tests', function ()
             nodenamo.insert(user1).into(User).execute(),
             nodenamo.insert(user2).into(User).execute(),
             nodenamo.insert(user3).into(User).execute(),
-            nodenamo.insert(user4).into(User).execute()]);
+            nodenamo.insert(user4).into(User).where('#hash <> :hash',{'#hash':'hash'},{':hash': 'something'}).execute()]);
 
         user2.secret = undefined;
     });
