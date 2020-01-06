@@ -1,8 +1,9 @@
 import { IDynamoDbManager } from '../../interfaces/iDynamodbManager';
 import { Execute } from "./execute";
-import { Where } from "./where";
+import ITransactionable from '../../interfaces/iTransactionable';
+import { DynamoDbTransaction } from '../../managers/dynamodbTransaction';
 
-export class WithVersionCheck
+export class WithVersionCheck implements ITransactionable
 {
     constructor(private manager:IDynamoDbManager, private type:{new(...args: any[])}, private id:string|number, private params?:{updateExpression:{set?:string[], remove?:string[], add?:string[], delete?:string[]}, conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, versionCheck?:boolean)
     {
@@ -10,8 +11,8 @@ export class WithVersionCheck
         this.params['versionCheck'] = versionCheck;
     }
 
-    async execute(): Promise<void>
+    async execute(transaction?:DynamoDbTransaction): Promise<void>
     {
-        return await new Execute(this.manager, this.type, this.id, this.params).execute();
+        return await new Execute(this.manager, this.type, this.id, this.params, transaction).execute();
     }
 };

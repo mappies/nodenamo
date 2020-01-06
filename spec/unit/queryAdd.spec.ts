@@ -24,7 +24,7 @@ describe('Query.Insert', function ()
 
     it('execute()', async ()=>
     {
-        mockedManager.setup(m => m.put(Entity, {id:1}, undefined)).callback(()=>called=true);
+        mockedManager.setup(m => m.put(Entity, {id:1}, undefined, undefined, true)).callback(()=>called=true);
 
         let put = new Insert(mockedManager.object, {id:1}).into(Entity);
         await put.execute();
@@ -38,7 +38,7 @@ describe('Query.Insert', function ()
             conditionExpression:'condition', 
             expressionAttributeNames: {name: 'n'},
             expressionAttributeValues: {value: 'v'}
-        })).callback(()=>called=true);
+        }, undefined, true)).callback(()=>called=true);
 
         let put = new Insert(mockedManager.object, {id:1}).into(Entity);
         await put.where('condition', {'name':'n'}, {'value':'v'}).execute();

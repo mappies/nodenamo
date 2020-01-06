@@ -24,7 +24,7 @@ describe('Query.Delete', function ()
 
     it('execute()', async ()=>
     {
-        mockedManager.setup(m => m.delete(Entity, 42, undefined)).callback(()=>called=true);
+        mockedManager.setup(m => m.delete(Entity, 42, undefined, undefined, true)).callback(()=>called=true);
 
         let del = new Delete(mockedManager.object, 42).from(Entity)
         await del.execute();
@@ -38,7 +38,7 @@ describe('Query.Delete', function ()
             conditionExpression:'condition', 
             expressionAttributeNames: {name: 'n'},
             expressionAttributeValues: {value: 'v'}
-        })).callback(()=>called=true);
+        }, undefined, true)).callback(()=>called=true);
 
         let del = new Delete(mockedManager.object, 42).from(Entity);
         await del.where({conditionExpression: 'condition', expressionAttributeNames: {'name':'n'}, expressionAttributeValues: {'value':'v'}}).execute();

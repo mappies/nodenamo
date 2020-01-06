@@ -33,7 +33,7 @@ describe('ValidationDynamoDbManager - Add()', function ()
     beforeEach(()=>
     {
         mockedManager = Mock.ofType<DynamoDbManager>();
-        mockedManager.setup(m => m.put(It.isAny(), It.isAny(), It.isAny())).callback(()=>called=true);
+        mockedManager.setup(m => m.put(It.isAny(), It.isAny(), It.isAny(), undefined, true)).callback(()=>called=true);
 
         manager = new ValidatedDynamoDbManager(mockedManager.object);
 

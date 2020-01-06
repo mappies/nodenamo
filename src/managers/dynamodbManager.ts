@@ -13,12 +13,12 @@ import AggregateError from 'aggregate-error';
 
 export class DynamoDbManager implements IDynamoDbManager
 {
-    constructor(private client:DocumentClient)
+    constructor(public client:DocumentClient)
     {
         
     }
 
-    async put<T extends object>(type:{new(...args: any[]):T}, object:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
+    async put<T extends object>(type:{new(...args: any[]):T}, object:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction, autoCommit:boolean = true): Promise<void>
     {
         transaction = transaction || new DynamoDbTransaction(this.client);
 
@@ -58,6 +58,8 @@ export class DynamoDbManager implements IDynamoDbManager
             })
         }
 
+        if(!autoCommit) return;
+        
         try
         {
             await transaction.commit();
@@ -195,7 +197,7 @@ export class DynamoDbManager implements IDynamoDbManager
         return {items: Object.values(result), lastEvaluatedKey: response.LastEvaluatedKey}
     }
 
-    async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction)
+    async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction, autoCommit:boolean = true)
     {
         let instance = new type();
         let tableName = Reflector.getTableName(instance);
@@ -286,7 +288,7 @@ export class DynamoDbManager implements IDynamoDbManager
         {
             //Create an additional param object for each representation.
             //This is required because newKey extra conditional logic below.
-            let representationAdditionalParam = Object.assign({}, additionalParams);
+            let representationAdditionalParam = JSON.parse(JSON.stringify(additionalParams));
 
             let representationKey = getKey(representation);
 
@@ -328,6 +330,8 @@ export class DynamoDbManager implements IDynamoDbManager
             
             transaction.add({Delete: deleteParam});
         }
+
+        if(!autoCommit) return;
 
         try
         {
@@ -371,7 +375,7 @@ export class DynamoDbManager implements IDynamoDbManager
         }
     }
 
-    async apply<T extends object>(type:{new(...args: any[]):T}, id:string|number, params:{updateExpression:{set?:string[], remove?:string[], add?:string[], delete?:string[]}, conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction)
+    async apply<T extends object>(type:{new(...args: any[]):T}, id:string|number, params:{updateExpression:{set?:string[], remove?:string[], add?:string[], delete?:string[]}, conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction, autoCommit:boolean = true)
     {
         let instance = new type();
         let tableName = Reflector.getTableName(instance);
@@ -457,6 +461,8 @@ export class DynamoDbManager implements IDynamoDbManager
             }})
         }
 
+        if(!autoCommit) return;
+
         try
         {
             await transaction.commit();
@@ -486,7 +492,7 @@ export class DynamoDbManager implements IDynamoDbManager
         }
     }
 
-    async delete<T extends object>(type:{new(...args: any[]):T}, id:string|number,  params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
+    async delete<T extends object>(type:{new(...args: any[]):T}, id:string|number,  params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction, autoCommit:boolean = true): Promise<void>
     {
         let obj:T = new type();
         let tableName = Reflector.getTableName(obj);
@@ -513,7 +519,6 @@ export class DynamoDbManager implements IDynamoDbManager
         let rows = await this.getById(id, type);
 
         transaction = transaction || new DynamoDbTransaction(this.client);
-
         
         for(let row of rows)
         {
@@ -527,6 +532,8 @@ export class DynamoDbManager implements IDynamoDbManager
 
             transaction.add({Delete: query});
         }
+
+        if(!autoCommit) return;
 
         await transaction.commit();
     }

@@ -10,19 +10,24 @@ import { Key } from '../Key';
 
 export class ValidatedDynamoDbManager implements IDynamoDbManager
 {
+    get client(): DocumentClient
+    {
+        return this.manager.client;
+    }
+
     constructor(private manager:DynamoDbManager)
     {
         
     }
 
-    async put<T extends object>(type:{new(...args: any[]):T}, obj:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
+    async put<T extends object>(type:{new(...args: any[]):T}, obj:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction, autoCommit:boolean = true): Promise<void>
     {
         validateType(type);
         validateObject(type, obj);
         validateObjectId(obj ? obj[Key.parse(Reflector.getIdKey(new type())).propertyName] : undefined);
         validateKeyConditionExpression(type, params);
 
-        await this.manager.put(type, obj, params);
+        await this.manager.put(type, obj, params, transaction, autoCommit);
     }
 
     async getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number): Promise<T>
@@ -46,7 +51,7 @@ export class ValidatedDynamoDbManager implements IDynamoDbManager
         return await this.manager.find(type, keyParams, filterParams, params);
     }
 
-    async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction)
+    async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction, autoCommit:boolean = true)
     {
         validateType(type);
         validateObject(type, obj);
@@ -54,25 +59,25 @@ export class ValidatedDynamoDbManager implements IDynamoDbManager
         validateKeyConditionExpression(type, params);
         validateVersioning(type, params);
 
-        await this.manager.update(type, id, obj, params);
+        await this.manager.update(type, id, obj, params, transaction, autoCommit);
     }
 
-    async apply<T extends object>(type:{new(...args: any[]):T}, id:string|number, params:{updateExpression:{set?:string[], remove?:string[], add?:string[], delete?:string[]}, conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean})
+    async apply<T extends object>(type:{new(...args: any[]):T}, id:string|number, params:{updateExpression:{set?:string[], remove?:string[], add?:string[], delete?:string[]}, conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction, autoCommit:boolean = true)
     {
         validateType(type);
         validateObjectId(id);
         validateUpdateExpression(type, params);
         validateVersioning(type, params);
-        await this.manager.apply(type, id, params)
+        await this.manager.apply(type, id, params, transaction, autoCommit)
     }
 
-    async delete<T extends object>(type:{new(...args: any[]):T}, id:string|number,  params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction): Promise<void>
+    async delete<T extends object>(type:{new(...args: any[]):T}, id:string|number,  params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction, autoCommit:boolean = true): Promise<void>
     {
         validateType(type);
         validateObjectId(id);
         validateKeyConditionExpression(type, params);
 
-        await this.manager.delete(type, id, params);
+        await this.manager.delete(type, id, params, transaction, autoCommit);
     }
 
     async createTable<T extends object>(type?:{new(...args: any[]):T}, params?:{onDemand?:boolean, readCapacityUnits?:number, writeCapacityUnits?:number}): Promise<void>

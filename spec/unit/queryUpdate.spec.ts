@@ -24,7 +24,7 @@ describe('Query.Update', function ()
 
     it('execute()', async ()=>
     {
-        mockedManager.setup(m => m.update(Entity, 1, {id:1}, undefined)).callback(()=>called=true);
+        mockedManager.setup(m => m.update(Entity, 1, {id:1}, undefined, undefined, true)).callback(()=>called=true);
 
         let update = new Update(mockedManager.object, {id:1}).from(Entity);
         await update.execute();
@@ -34,7 +34,7 @@ describe('Query.Update', function ()
 
     it('withVersionCheck(true)', async ()=>
     {
-        mockedManager.setup(m => m.update(Entity, 1, {id:1}, {versionCheck:true})).callback(()=>called=true);
+        mockedManager.setup(m => m.update(Entity, 1, {id:1}, {versionCheck:true}, undefined, true)).callback(()=>called=true);
 
         let update = new Update(mockedManager.object, {id:1})
             .from(Entity)
@@ -46,7 +46,7 @@ describe('Query.Update', function ()
 
     it('withVersionCheck(false)', async ()=>
     {
-        mockedManager.setup(m => m.update(Entity, 1, {id:1}, {versionCheck:false})).callback(()=>called=true);
+        mockedManager.setup(m => m.update(Entity, 1, {id:1}, {versionCheck:false}, undefined, true)).callback(()=>called=true);
 
         let update = new Update(mockedManager.object, {id:1})
             .from(Entity)
@@ -62,7 +62,7 @@ describe('Query.Update', function ()
             conditionExpression:'condition', 
             expressionAttributeNames: {name: 'n'},
             expressionAttributeValues: {value: 'v'}
-        })).callback(()=>called=true);
+        }, undefined, true)).callback(()=>called=true);
 
         let update = new Update(mockedManager.object, {id:1})
             .from(Entity)
@@ -79,7 +79,7 @@ describe('Query.Update', function ()
             expressionAttributeNames: {name: 'n'},
             expressionAttributeValues: {value: 'v'},
             versionCheck: true
-        })).callback(()=>called=true);
+        }, undefined, true)).callback(()=>called=true);
 
         let update = new Update(mockedManager.object, {id:1})
             .from(Entity)
@@ -97,7 +97,7 @@ describe('Query.Update', function ()
             expressionAttributeNames: {name: 'n'},
             expressionAttributeValues: {value: 'v'},
             versionCheck: false
-        })).callback(()=>called=true);
+        }, undefined, true)).callback(()=>called=true);
 
         let update = new Update(mockedManager.object, {id:1})
             .from(Entity)

@@ -11,6 +11,8 @@ import { DeleteTable } from './queries/deleteTable/deleteTable';
 import { ValidatedDynamoDbManager } from './managers/validatedDynamodbManager';
 import { IDynamoDbManager } from './interfaces/iDynamodbManager';
 import { On } from './queries/on/on';
+import ITransactionable from './interfaces/iTransactionable';
+import { Transaction } from './queries/transaction/on';
 
 export class NodeNamo
 {
@@ -51,6 +53,11 @@ export class NodeNamo
         return new On(this.manager, id);
     }
 
+    transaction(operations:ITransactionable[]): Transaction
+    {
+        return new Transaction(this.manager, operations);
+    }
+    
     delete(id:string|number): Delete
     {
         return new Delete(this.manager, id);

@@ -5,8 +5,10 @@ import { Set } from './set';
 import { Delete } from './delete';
 import { Remove } from './remove';
 import { WithVersionCheck } from './withVersionCheck';
+import ITransactionable from '../../interfaces/iTransactionable';
+import { DynamoDbTransaction } from '../../managers/dynamodbTransaction';
 
-export class Add
+export class Add implements ITransactionable
 {
     constructor(private manager:IDynamoDbManager, private type:{new(...args: any[])}, private id:string|number, private params:{updateExpression:{set?:string[], remove?:string[], add?:string[], delete?:string[]}, conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, addExpressions:string[], expressionAttributeNames?:object, expressionAttributeValues?:object)
     {
@@ -50,8 +52,8 @@ export class Add
         return new Where(this.manager, this.type, this.id, this.params, {conditionExpression, expressionAttributeNames, expressionAttributeValues})
     }
 
-    async execute(): Promise<void>
+    async execute(transaction?:DynamoDbTransaction): Promise<void>
     {
-        return await new Execute(this.manager, this.type, this.id, this.params).execute();
+        return await new Execute(this.manager, this.type, this.id, this.params, transaction).execute();
     }
 };

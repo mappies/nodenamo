@@ -25,7 +25,7 @@ describe('Query.On', function ()
 
     it('set()', async ()=>
     {
-        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {set: ['set1']}, expressionAttributeNames: {n1:'n1'}, expressionAttributeValues: {v1:'v1'}})).callback(()=>called=true);
+        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {set: ['set1']}, expressionAttributeNames: {n1:'n1'}, expressionAttributeValues: {v1:'v1'}}, undefined, true)).callback(()=>called=true);
 
         new On(mockedManager.object, 1).from(Entity).set(['set1'], {n1:'n1'}, {v1:'v1'}).execute();
 
@@ -34,7 +34,7 @@ describe('Query.On', function ()
 
     it('add()', async ()=>
     {
-        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, expressionAttributeNames: {n1:'n1'}, expressionAttributeValues: {v1:'v1'}})).callback(()=>called=true);
+        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, expressionAttributeNames: {n1:'n1'}, expressionAttributeValues: {v1:'v1'}}, undefined, true)).callback(()=>called=true);
 
         new On(mockedManager.object, 1).from(Entity).add(['add1'], {n1:'n1'}, {v1:'v1'}).execute();
 
@@ -43,7 +43,7 @@ describe('Query.On', function ()
 
     it('delete()', async ()=>
     {
-        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {delete: ['delete1']}, expressionAttributeNames: {n1:'n1'}, expressionAttributeValues: {v1:'v1'}})).callback(()=>called=true);
+        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {delete: ['delete1']}, expressionAttributeNames: {n1:'n1'}, expressionAttributeValues: {v1:'v1'}}, undefined, true)).callback(()=>called=true);
 
         new On(mockedManager.object, 1).from(Entity).delete(['delete1'], {n1:'n1'}, {v1:'v1'}).execute();
 
@@ -52,7 +52,7 @@ describe('Query.On', function ()
 
     it('remove()', async ()=>
     {
-        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {remove: ['remove1']}, expressionAttributeNames: {n1:'n1'}, expressionAttributeValues: {v1:'v1'}})).callback(()=>called=true);
+        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {remove: ['remove1']}, expressionAttributeNames: {n1:'n1'}, expressionAttributeValues: {v1:'v1'}}, undefined, true)).callback(()=>called=true);
 
         new On(mockedManager.object, 1).from(Entity).remove(['remove1'], {n1:'n1'}, {v1:'v1'}).execute();
 
@@ -85,7 +85,7 @@ describe('Query.On', function ()
                                                         sv2:'sv2',
                                                         rv2:'rv2',
                                                         dv2:'dv2'
-                                                    }})).callback(()=>called=true);
+                                                    }}, undefined, true)).callback(()=>called=true);
 
         new On(mockedManager.object, 1).from(Entity)
                                        .add(['add1'], {an1:'an1'}, {av1:'av1'})
@@ -102,7 +102,7 @@ describe('Query.On', function ()
 
     it('withVersionCheck()', async ()=>
     {
-        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, expressionAttributeNames: {n1:'n1'}, expressionAttributeValues: {v1:'v1'}, versionCheck: true})).callback(()=>called=true);
+        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, expressionAttributeNames: {n1:'n1'}, expressionAttributeValues: {v1:'v1'}, versionCheck: true}, undefined, true)).callback(()=>called=true);
 
         new On(mockedManager.object, 1).from(Entity).add(['add1'], {n1:'n1'}, {v1:'v1'}).withVersionCheck(true).execute();
 
@@ -111,7 +111,7 @@ describe('Query.On', function ()
 
     it('where()', async ()=>
     {
-        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, conditionExpression: 'condition', expressionAttributeNames: {n1:'n1', n2:'n2'}, expressionAttributeValues: {v1:'v1', v2:'v2'}})).callback(()=>called=true);
+        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, conditionExpression: 'condition', expressionAttributeNames: {n1:'n1', n2:'n2'}, expressionAttributeValues: {v1:'v1', v2:'v2'}}, undefined, true)).callback(()=>called=true);
 
         new On(mockedManager.object, 1).from(Entity).add(['add1'], {n1:'n1'}, {v1:'v1'}).where('condition', {n2:'n2'}, {v2:'v2'}).execute();
 
@@ -120,7 +120,7 @@ describe('Query.On', function ()
 
     it('where() - with a version check (true)', async ()=>
     {
-        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, conditionExpression: 'condition', expressionAttributeNames: {n1:'n1', n2:'n2'}, expressionAttributeValues: {v1:'v1', v2:'v2'}, versionCheck: true})).callback(()=>called=true);
+        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, conditionExpression: 'condition', expressionAttributeNames: {n1:'n1', n2:'n2'}, expressionAttributeValues: {v1:'v1', v2:'v2'}, versionCheck: true}, undefined, true)).callback(()=>called=true);
 
         new On(mockedManager.object, 1).from(Entity).add(['add1'], {n1:'n1'}, {v1:'v1'}).where('condition', {n2:'n2'}, {v2:'v2'}).withVersionCheck(true).execute();
 
@@ -129,7 +129,7 @@ describe('Query.On', function ()
 
     it('where() - with a version check (false)', async ()=>
     {
-        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, conditionExpression: 'condition', expressionAttributeNames: {n1:'n1', n2:'n2'}, expressionAttributeValues: {v1:'v1', v2:'v2'}, versionCheck: false})).callback(()=>called=true);
+        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, conditionExpression: 'condition', expressionAttributeNames: {n1:'n1', n2:'n2'}, expressionAttributeValues: {v1:'v1', v2:'v2'}, versionCheck: false}, undefined, true)).callback(()=>called=true);
 
         new On(mockedManager.object, 1).from(Entity).add(['add1'], {n1:'n1'}, {v1:'v1'}).where('condition', {n2:'n2'}, {v2:'v2'}).withVersionCheck(false).execute();
 
