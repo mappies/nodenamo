@@ -1,7 +1,7 @@
 {
   "name": "nodenamo",
-  "version": "0.11.0",
-  "description": "Node DynamoDb Helper",
+  "version": "1.0.0",
+  "description": "A powerful ORM for DynamoDb",
   "main": "dist/index.js",
   "typings": "dist/index",
   "files": [
@@ -24,15 +24,15 @@
   "homepage": "https://github.com/mappies/nodenamo#readme",
   "dependencies": {
     "aggregate-error": "^3.0.1",
-    "aws-sdk": "^2.596.0",
+    "aws-sdk": "^2.597.0",
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
     "@types/chai": "^4.2.7",
     "@types/mocha": "^5.2.7",
-    "@types/node": "^13.1.1",
+    "@types/node": "^13.1.4",
     "chai": "^4.2.0",
-    "mocha": "^6.2.2",
+    "mocha": "^7.0.0",
     "ts-node": "^8.5.4",
     "typemoq": "^2.1.0",
     "typescript": "^3.7.4"
