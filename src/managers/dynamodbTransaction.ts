@@ -1,7 +1,7 @@
 import { DocumentClient, TransactWriteItem } from "aws-sdk/clients/dynamodb";
 import AggregateError from 'aggregate-error';
 
-const MAX_AWS_TRANSACTION_OPERATIONS = 25;
+const MAX_AWS_TRANSACTION_OPERATIONS = Number(process.env.MAX_AWS_TRANSACTION_OPERATIONS) || 25;
 
 export class DynamoDbTransaction
 {
