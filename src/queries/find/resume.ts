@@ -17,11 +17,11 @@ export class Resume
     {
         let realParams:any = Object.assign({}, params);
 
-        if(this.startKey)
+        if(startKey)
         {
             try
             {
-                realParams.exclusiveStartKey = JSON.parse(Buffer.from(this.startKey, 'base64').toString());
+                realParams.exclusiveStartKey = JSON.parse(Buffer.from(startKey, 'base64').toString());
             }
             catch(e){}
         }
