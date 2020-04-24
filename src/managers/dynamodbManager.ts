@@ -15,7 +15,7 @@ export class DynamoDbManager implements IDynamoDbManager
 {
     constructor(public client:DocumentClient)
     {
-        
+
     }
 
     async put<T extends object>(type:{new(...args: any[]):T}, object:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction, autoCommit:boolean = true): Promise<void>
@@ -59,7 +59,7 @@ export class DynamoDbManager implements IDynamoDbManager
         }
 
         if(!autoCommit) return;
-        
+
         try
         {
             await transaction.commit();
@@ -116,10 +116,10 @@ export class DynamoDbManager implements IDynamoDbManager
         return undefined;
     }
 
-    async find<T extends object>(type:{new(...args: any[]):T}, 
-                                 keyParams?:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, 
+    async find<T extends object>(type:{new(...args: any[]):T},
+                                 keyParams?:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
                                  filterParams?: {filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
-                                 params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key,projections?:string[]})
+                                 params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key,projections?:string[], stronglyConsistent?:boolean})
                                  : Promise<{items:T[], lastEvaluatedKey: DocumentClient.Key}>
     {
         let obj:T = new type();
@@ -169,7 +169,8 @@ export class DynamoDbManager implements IDynamoDbManager
             Limit: params ? params.limit : undefined,
             ExclusiveStartKey: params ? params.exclusiveStartKey : undefined,
             ScanIndexForward: params && (params.order || 1) >= 0,
-            ProjectionExpression: projectedColumns,            
+            ConsistentRead: params? params.stronglyConsistent : undefined,
+            ProjectionExpression: projectedColumns,
             ...additionalParams
         };
 
@@ -186,7 +187,7 @@ export class DynamoDbManager implements IDynamoDbManager
                 if(<any>item[Const.IdColumn] in result) continue;
 
                 result[<any>item[Const.IdColumn]] = EntityFactory.create(type, item);
-                
+
                 if(!!params && !!params.limit && ++itemCount >= params.limit) break;
             }
 
@@ -205,8 +206,8 @@ export class DynamoDbManager implements IDynamoDbManager
         let versioningRequired = tableVersioning || (params && params.versionCheck);
 
         //Calculate new representations
-        let rows = await this.getById(id, type); 
-        
+        let rows = await this.getById(id, type);
+
         if(rows.length === 0)
         {
             throw new Error(`Could not update the object '${id}' because it could not be found.`);
@@ -235,7 +236,7 @@ export class DynamoDbManager implements IDynamoDbManager
         //And because of an object created by EntityFactory.create() will not have Const.VersionColumn property, we have to re-add it here as well.
         let desiredObject = Object.assign(instance, Object.assign(Object.assign({}, EntityFactory.create(type, rows[0])), noUndefinedValuesObject));
         desiredObject[Const.VersionColumn] = rows[0][Const.VersionColumn];
-         
+
         //If versionCheck, use the version from the original object.
         //Else, RepresentationFactory.get() will increment the version from DB.
         if(versioningRequired)
@@ -254,7 +255,7 @@ export class DynamoDbManager implements IDynamoDbManager
 
         //Setup additionalParams
         let additionalParams:any = {};
-        
+
         if(versioningRequired)
         {
             additionalParams.ConditionExpression = '(#objver < :objver)';
@@ -264,11 +265,11 @@ export class DynamoDbManager implements IDynamoDbManager
 
         if(params && params.conditionExpression)
         {
-            additionalParams['ConditionExpression'] = additionalParams['ConditionExpression'] 
+            additionalParams['ConditionExpression'] = additionalParams['ConditionExpression']
                                                         ? `${additionalParams['ConditionExpression']} and (${params.conditionExpression})`
                                                         : params.conditionExpression;
         }
-        
+
         if(params && params.expressionAttributeNames)
         {
             changeColumnNames(obj, params.expressionAttributeNames)
@@ -280,7 +281,7 @@ export class DynamoDbManager implements IDynamoDbManager
             addColumnValuePrefix(obj, params.expressionAttributeValues, params.expressionAttributeNames);
             additionalParams['ExpressionAttributeValues'] = Object.assign(params.expressionAttributeValues, additionalParams['ExpressionAttributeValues']);
         }
-        
+
         transaction = transaction || new DynamoDbTransaction(this.client);
 
         //Update/delete rows
@@ -296,17 +297,17 @@ export class DynamoDbManager implements IDynamoDbManager
             //If it does not exist, it means the item has a new key.
             //When adding the new representation with a new key, make sure the new hash and range are not already exist.
             let newKey = !(representationKey in currentRepresentationKeys);
-            
+
             if(newKey)
             {
-                representationAdditionalParam.ConditionExpression = 
-                    (representationAdditionalParam.ConditionExpression ? `(${representationAdditionalParam.ConditionExpression}) AND` : '') 
+                representationAdditionalParam.ConditionExpression =
+                    (representationAdditionalParam.ConditionExpression ? `(${representationAdditionalParam.ConditionExpression}) AND` : '')
                     +
                     '(attribute_not_exists(#hash) AND attribute_not_exists(#range))'
 
                     representationAdditionalParam.ExpressionAttributeNames = Object.assign(representationAdditionalParam.ExpressionAttributeNames || {}, {'#hash': Const.HashColumn, '#range': Const.RangeColumn})
             }
-            
+
             let putParams = {
                 TableName: tableName,
                 Item: representation.data,
@@ -327,7 +328,7 @@ export class DynamoDbManager implements IDynamoDbManager
 
             deleteParam.Key[Const.HashColumn] = entry[Const.HashColumn];
             deleteParam.Key[Const.RangeColumn] = entry[Const.RangeColumn];
-            
+
             transaction.add({Delete: deleteParam});
         }
 
@@ -351,7 +352,7 @@ export class DynamoDbManager implements IDynamoDbManager
                 {
                     throw e;
                 }
-                
+
                 if(currentObject && Reflector.getObjectVersion(currentObject) >= newRepresentations[0].data[Const.VersionColumn])
                 {
                     throw new VersionError(`Could not update the object '${id}' because it has been overwritten by the writes of others.`);
@@ -383,8 +384,8 @@ export class DynamoDbManager implements IDynamoDbManager
         let versioningRequired = tableVersioning || (params && params.versionCheck);
 
         //Calculate new representations
-        let rows = await this.getById(id, type); 
-        
+        let rows = await this.getById(id, type);
+
         if(rows.length === 0)
         {
             throw new Error(`Could not update the object '${id}' because it could not be found.`);
@@ -392,13 +393,13 @@ export class DynamoDbManager implements IDynamoDbManager
 
         //Setup additionalParams
         let additionalParams:any = {};
-        
+
         if(versioningRequired)
         {
             additionalParams.ConditionExpression = '(#objver <= :objver)';
             additionalParams.ExpressionAttributeNames = {'#objver': Const.VersionColumn};
-            additionalParams.ExpressionAttributeValues = {':objver': rows[0][Const.VersionColumn], ':objverincrementby': 1};   
-            
+            additionalParams.ExpressionAttributeValues = {':objver': rows[0][Const.VersionColumn], ':objverincrementby': 1};
+
             if(!params.updateExpression.add)
             {
                 params.updateExpression.add = [];
@@ -409,11 +410,11 @@ export class DynamoDbManager implements IDynamoDbManager
 
         if(params.conditionExpression)
         {
-            additionalParams['ConditionExpression'] = additionalParams['ConditionExpression'] 
+            additionalParams['ConditionExpression'] = additionalParams['ConditionExpression']
                                                         ? `${additionalParams['ConditionExpression']} and (${params.conditionExpression})`
                                                         : params.conditionExpression;
         }
-        
+
         if(params.expressionAttributeNames)
         {
             changeColumnNames(instance, params.expressionAttributeNames)
@@ -425,7 +426,7 @@ export class DynamoDbManager implements IDynamoDbManager
             addColumnValuePrefix(instance, params.expressionAttributeValues, params.expressionAttributeNames);
             additionalParams['ExpressionAttributeValues'] = Object.assign(params.expressionAttributeValues, additionalParams['ExpressionAttributeValues']);
         }
-        
+
         transaction = transaction || new DynamoDbTransaction(this.client);
 
         let updateExpression = '';
@@ -454,7 +455,7 @@ export class DynamoDbManager implements IDynamoDbManager
                 TableName: tableName,
                 Key: {
                     [Const.HashColumn]: row[Const.HashColumn],
-                    [Const.RangeColumn]: row[Const.RangeColumn] 
+                    [Const.RangeColumn]: row[Const.RangeColumn]
                 },
                 UpdateExpression: updateExpression,
                 ...additionalParams
@@ -481,7 +482,7 @@ export class DynamoDbManager implements IDynamoDbManager
                 {
                     throw e;
                 }
-                
+
                 if(currentObject && Reflector.getObjectVersion(currentObject) > rows[0][Const.VersionColumn])
                 {
                     throw new VersionError(`Could not update the object '${id}' because it has been overwritten by the writes of others.`);
@@ -519,7 +520,7 @@ export class DynamoDbManager implements IDynamoDbManager
         let rows = await this.getById(id, type);
 
         transaction = transaction || new DynamoDbTransaction(this.client);
-        
+
         for(let row of rows)
         {
             let query = {
@@ -553,7 +554,7 @@ export class DynamoDbManager implements IDynamoDbManager
             ExpressionAttributeValues: getAttributeValues,
             IndexName: Const.IdIndexName
         };
-        
+
         let result:object[] = [];
 
         do
@@ -575,7 +576,7 @@ export class DynamoDbManager implements IDynamoDbManager
     async createTable<T extends object>(type?:{new(...args: any[]):T}, params?:{onDemand?:boolean, readCapacityUnits?:number, writeCapacityUnits?:number}, dynamoDb?:DynamoDB): Promise<void>
     {
         let query = {
-            AttributeDefinitions: [ 
+            AttributeDefinitions: [
                 { AttributeName: 'objid', AttributeType: 'S' },
                 { AttributeName: 'hash', AttributeType: 'S' },
                 { AttributeName: 'range', AttributeType: 'S' }
@@ -585,9 +586,9 @@ export class DynamoDbManager implements IDynamoDbManager
                 { AttributeName: 'range', KeyType: 'RANGE' }
             ],
             GlobalSecondaryIndexes: [
-                { 
-                    IndexName: 'objid-index', 
-                    KeySchema: [ 
+                {
+                    IndexName: 'objid-index',
+                    KeySchema: [
                         { AttributeName: "objid", KeyType: "HASH" }
                     ],
                     Projection: {
@@ -664,7 +665,7 @@ function prepareProjectedColumnNames(obj:object, propertyNames:string[], params:
 {
     let result = [];
     let table = {};
-    
+
     let columns = Reflector.getColumns(obj);
 
     for(let column of columns)
@@ -706,10 +707,10 @@ function changeColumnNames(obj:object, expressionAttributeNames:object): void
     let hashes = Reflector.getAllHashKeys(obj).map(k => Key.parse(k).propertyName);
     let ranges = Reflector.getAllRangeKeys(obj).map(k => Key.parse(k).propertyName);
     let columns = Reflector.getColumns(obj);
-    
+
     //When there is no hashes, ID is the hash
     if(hashes.length === 0) hashes.push(Reflector.getIdKey(obj));
-    
+
     for(let key of Object.keys(expressionAttributeNames))
     {
         let propertyName = (<any>expressionAttributeNames)[key];
@@ -719,7 +720,7 @@ function changeColumnNames(obj:object, expressionAttributeNames:object): void
         for(let column of columns)
         {
             if(!column.includes('#')) continue;
-            
+
             let key = Key.parse(column);
             if(propertyName === key.propertyName)
             {

@@ -21,7 +21,7 @@ class Entity {
     }
 };
 
-describe('Query.Find', function () 
+describe('Query.Find', function ()
 {
     let called:boolean;
     let mockedManager:IMock<DynamoDbManager>;
@@ -34,13 +34,13 @@ describe('Query.Find', function ()
         called = false;
         mockedManager = Mock.ofType<DynamoDbManager>();
         keyCondition = {
-            keyConditions:'kcondition', 
-            expressionAttributeNames: {'#id': 'id'}, 
+            keyConditions:'kcondition',
+            expressionAttributeNames: {'#id': 'id'},
             expressionAttributeValues: {':id': 42}
         };
         filterCondition = {
-            filterExpression:'fcondition', 
-            expressionAttributeNames: {'#name': 'name'}, 
+            filterExpression:'fcondition',
+            expressionAttributeNames: {'#name': 'name'},
             expressionAttributeValues: {':name': 'Some One'}
         };
         findResult = { items: [new Entity(42)]}
@@ -231,8 +231,8 @@ describe('Query.Find', function ()
     it('list.from.by() - hash', async ()=>
     {
         let listKeyCondition = {
-            keyConditions:'#hash = :hash', 
-            expressionAttributeNames: {'#hash': Const.HashColumn}, 
+            keyConditions:'#hash = :hash',
+            expressionAttributeNames: {'#hash': Const.HashColumn},
             expressionAttributeValues: {':hash': 'h1'}
         };
         mockedManager.setup(m => m.find(Entity, listKeyCondition, undefined, undefined)).callback(()=>called=true).returns(async()=>findResult);
@@ -249,8 +249,8 @@ describe('Query.Find', function ()
     it('list.from.by() - hash and range', async ()=>
     {
         let listKeyCondition = {
-            keyConditions:'#hash = :hash and begins_with(#range, :range)', 
-            expressionAttributeNames: {'#hash': Const.HashColumn, '#range': Const.RangeColumn}, 
+            keyConditions:'#hash = :hash and begins_with(#range, :range)',
+            expressionAttributeNames: {'#hash': Const.HashColumn, '#range': Const.RangeColumn},
             expressionAttributeValues: {':hash': 'h1', ':range': 'r1'}
         };
         mockedManager.setup(m => m.find(Entity, listKeyCondition, undefined, undefined)).callback(()=>called=true).returns(async()=>findResult);
@@ -267,8 +267,8 @@ describe('Query.Find', function ()
     it('list.from.by() - undefined hash', async ()=>
     {
         let listKeyCondition = {
-            keyConditions:'#hash = :hash', 
-            expressionAttributeNames: {'#hash': Const.HashColumn}, 
+            keyConditions:'#hash = :hash',
+            expressionAttributeNames: {'#hash': Const.HashColumn},
             expressionAttributeValues: {':hash': Const.DefaultHashValue}
         };
         mockedManager.setup(m => m.find(Entity, listKeyCondition, undefined, undefined)).callback(()=>called=true).returns(async()=>findResult);
@@ -285,14 +285,30 @@ describe('Query.Find', function ()
     it('list(projections).from.by.filter.limit.using.order.resume()', async ()=>
     {
         let listKeyCondition = {
-            keyConditions:'#hash = :hash and begins_with(#range, :range)', 
-            expressionAttributeNames: {'#hash': Const.HashColumn, '#range': Const.RangeColumn}, 
+            keyConditions:'#hash = :hash and begins_with(#range, :range)',
+            expressionAttributeNames: {'#hash': Const.HashColumn, '#range': Const.RangeColumn},
             expressionAttributeValues: {':hash': 'h1', ':range': 'r1'}
         };
 
         mockedManager.setup(m => m.find(Entity, listKeyCondition, filterCondition, {limit: 1, indexName:'index-name', order: 1, exclusiveStartKey: {key:1}, projections: ["p1", "p2"]})).callback(()=>called=true).returns(async()=>findResult);
 
         let list = new List(mockedManager.object, ["p1", "p2"]).from(Entity).by('h1', 'r1').filter(filterCondition).limit(1).using('index-name').order(true).resume('eyJrZXkiOjF9');
+        await list.execute();
+
+        assert.isTrue(called);
+    });
+
+    it('list(projections).from.by.filter.limit.using.order.resume.stronglyConsistent()', async ()=>
+    {
+        let listKeyCondition = {
+            keyConditions:'#hash = :hash and begins_with(#range, :range)',
+            expressionAttributeNames: {'#hash': Const.HashColumn, '#range': Const.RangeColumn},
+            expressionAttributeValues: {':hash': 'h1', ':range': 'r1'}
+        };
+
+        mockedManager.setup(m => m.find(Entity, listKeyCondition, filterCondition, {limit: 1, indexName:'index-name', order: 1, exclusiveStartKey: {key:1}, projections: ["p1", "p2"], stronglyConsistent: true})).callback(()=>called=true).returns(async()=>findResult);
+
+        let list = new List(mockedManager.object, ["p1", "p2"]).from(Entity).by('h1', 'r1').filter(filterCondition).limit(1).using('index-name').order(true).resume('eyJrZXkiOjF9').stronglyConsistent();
         await list.execute();
 
         assert.isTrue(called);

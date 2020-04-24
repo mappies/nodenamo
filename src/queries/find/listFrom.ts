@@ -7,14 +7,15 @@ import { Order } from './order';
 import { Resume } from "./resume";
 import { Execute } from "./execute";
 import {Const} from "../../const";
+import { StronglyConsistent } from "./stronglyConsistent";
 
 export class ListFrom
 {
     private keyParams:any;
-    
+
     constructor(private manager:IDynamoDbManager, private type:{new(...args: any[])}, private params?:{projections?:string[]})
     {
-        this.keyParams = 
+        this.keyParams =
         {
             keyConditions: '#hash = :hash',
             expressionAttributeNames: {'#hash': Const.HashColumn},
@@ -45,11 +46,17 @@ export class ListFrom
     order(forward:boolean): Order
     {
         return new Order(this.manager, this.type, this.keyParams, undefined, this.params, forward);
-    }    
+    }
 
     resume(key:string): Resume
     {
         return new Resume(this.manager, this.type, this.keyParams, undefined, this.params, key);
+    }
+
+
+    stronglyConsistent(strongRead:boolean = true)
+    {
+        return new StronglyConsistent(this.manager, this.type, this.keyParams, undefined, this.params, strongRead);
     }
 
     async execute<T extends object>(): Promise<{items:T[], lastEvaluatedKey:string}>
