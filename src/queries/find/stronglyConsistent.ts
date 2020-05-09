@@ -1,9 +1,10 @@
 import { IDynamoDbManager } from "../../interfaces/iDynamodbManager";
+import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import { Execute } from "./execute";
 import { Using } from "./using";
 import { Order } from "./order";
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import { Resume } from "./resume";
+import { Limit } from "./limit";
 
 export class StronglyConsistent
 {
@@ -16,6 +17,11 @@ export class StronglyConsistent
     {
         this.params = this.params || {};
         this.params.stronglyConsistent = this.stronglyConsistent;
+    }
+
+    limit(limit:number): Limit
+    {
+        return new Limit(this.manager, this.type, this.keyParams, this.filterParams, this.params, limit);
     }
 
     using(indexName:string): Using

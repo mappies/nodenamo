@@ -12,7 +12,7 @@ export class Using
                 private type:{new(...args: any[])},
                 private keyParams:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
                 private filterParams?:{filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
-                private params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key,projections?:string[]},
+                private params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key,projections?:string[], stronglyConsistent?:boolean},
                 private indexName?:string)
     {
         this.params = this.params || {};
@@ -34,7 +34,7 @@ export class Using
         return new Resume(this.manager, this.type, this.keyParams, this.filterParams, this.params, key);
     }
 
-    stronglyConsistent(strongRead:boolean = true)
+    stronglyConsistent(strongRead:boolean = true) : StronglyConsistent
     {
         return new StronglyConsistent(this.manager, this.type, this.keyParams, this.filterParams, this.params, strongRead);
     }

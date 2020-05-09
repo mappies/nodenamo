@@ -57,7 +57,7 @@ export class By
         return new Resume(this.manager, this.type, this.keyParams, undefined, this.params, key);
     }
 
-    stronglyConsistent(strongRead:boolean = true)
+    stronglyConsistent(strongRead:boolean = true) : StronglyConsistent
     {
         return new StronglyConsistent(this.manager, this.type, this.keyParams, undefined, this.params, strongRead);
     }

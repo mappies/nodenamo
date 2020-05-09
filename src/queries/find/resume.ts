@@ -44,7 +44,7 @@ export class Resume
         return new Using(this.manager, this.type, this.keyParams, this.filterParams, this.params, indexName);
     }
 
-    stronglyConsistent(strongRead:boolean = true)
+    stronglyConsistent(strongRead:boolean = true) : StronglyConsistent
     {
         return new StronglyConsistent(this.manager, this.type, this.keyParams, this.filterParams, this.params, strongRead);
     }

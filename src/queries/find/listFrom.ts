@@ -54,7 +54,7 @@ export class ListFrom
     }
 
 
-    stronglyConsistent(strongRead:boolean = true)
+    stronglyConsistent(strongRead:boolean = true) : StronglyConsistent
     {
         return new StronglyConsistent(this.manager, this.type, this.keyParams, undefined, this.params, strongRead);
     }
