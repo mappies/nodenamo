@@ -176,6 +176,7 @@ export class DynamoDbManager implements IDynamoDbManager
         let result:{} = {};
         let response:QueryOutput;
         let itemCount = 0;
+        let lastItem;
 
         do
         {
@@ -185,6 +186,8 @@ export class DynamoDbManager implements IDynamoDbManager
             {
                 if(<any>item[Const.IdColumn] in result) continue;
 
+                lastItem = item;
+
                 result[<any>item[Const.IdColumn]] = EntityFactory.create(type, item);
                 
                 if(!!params && !!params.limit && ++itemCount >= params.limit) break;
@@ -193,6 +196,11 @@ export class DynamoDbManager implements IDynamoDbManager
             query.ExclusiveStartKey = response.LastEvaluatedKey;
         }
         while(response.LastEvaluatedKey && itemCount < params.limit)
+
+        if(response.LastEvaluatedKey && lastItem)
+        {
+            response.LastEvaluatedKey[Const.RangeColumn] = lastItem[Const.RangeColumn];
+        }
 
         return {items: Object.values(result), lastEvaluatedKey: response.LastEvaluatedKey}
     }
