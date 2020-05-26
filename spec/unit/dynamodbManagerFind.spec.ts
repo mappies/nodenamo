@@ -154,8 +154,8 @@ describe('DynamoDbManager.Find()', function ()
 
         let page1called = false;
         let page2called = false;
-        let response1 = getMockedQueryResponse({LastEvaluatedKey: <any> {range:'lek1'}, Items:<any>[{id:42, range: '42_range', objid:42}]});
-        let response2 = getMockedQueryResponse({LastEvaluatedKey: <any> {range:'lek2'}, Items:<any>[{id:99, range: '99_range', objid:99}]});
+        let response1 = getMockedQueryResponse({LastEvaluatedKey: <any> {range:'lek1'}, Items:<any>[{id:42, hash: '42_hash', range: '42_range', objid:42}]});
+        let response2 = getMockedQueryResponse({LastEvaluatedKey: <any> {range:'lek2'}, Items:<any>[{id:99, hash: '99_hash', range: '99_range', objid:99}]});
 
         mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
                                                     && p.FilterExpression === 'fcondition'
@@ -173,7 +173,7 @@ describe('DynamoDbManager.Find()', function ()
         
         assert.isTrue(page1called);
         assert.isTrue(page2called);
-        assert.deepEqual(entities.lastEvaluatedKey, {range:'99_range'});
+        assert.deepEqual(entities.lastEvaluatedKey, {hash: '99_hash', range:'99_range'});
         assert.equal(entities.items.length, 2);
         assert.deepEqual(entities.items[0], {id:42});
         assert.deepEqual(entities.items[1], {id:99});
@@ -190,8 +190,8 @@ describe('DynamoDbManager.Find()', function ()
 
         let page1called = false;
         let page2called = false;
-        let response1 = getMockedQueryResponse({LastEvaluatedKey: <any>{range:'lek1'}, Items:<any>[{id:42, objid:42}]});
-        let response2 = getMockedQueryResponse({Items:<any>[{id:99, objid:99}]});
+        let response1 = getMockedQueryResponse({LastEvaluatedKey: <any>{hash: 'lek1h', range:'lek1r'}, Items:<any>[{id:42, hash: '42_hash', range: '42_range', objid:42}]});
+        let response2 = getMockedQueryResponse({Items:<any>[{id:99, hash:'99_hash', range: '99_range', objid:99}]});
 
         mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
                                                     && p.FilterExpression === 'fcondition'
@@ -199,7 +199,8 @@ describe('DynamoDbManager.Find()', function ()
 
         mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
                                                     && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey?.range === 'lek1'))).callback(()=>page2called=true).returns(()=>response2.object);
+                                                    && p.ExclusiveStartKey?.hash === 'lek1h'
+                                                    && p.ExclusiveStartKey?.range === 'lek1r'))).callback(()=>page2called=true).returns(()=>response2.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -209,7 +210,7 @@ describe('DynamoDbManager.Find()', function ()
         
         assert.isTrue(page1called);
         assert.isTrue(page2called);
-        assert.equal(entities.lastEvaluatedKey, undefined);
+        assert.isUndefined(entities.lastEvaluatedKey);
         assert.equal(entities.items.length, 2);
         assert.deepEqual(entities.items[0], {id:42});
         assert.deepEqual(entities.items[1], {id:99});
@@ -224,11 +225,11 @@ describe('DynamoDbManager.Find()', function ()
             id:number;
         };
 
-        let response1 = getMockedQueryResponse({LastEvaluatedKey: <any> {range: 'lek1'}, 
+        let response1 = getMockedQueryResponse({LastEvaluatedKey: <any> {hash: 'lek1h', range: 'lek1r'}, 
                                                 Items:<any>[
-                                                    {id:42, range: '42_range', objid:42},
-                                                    {id:43, range: '43_range', objid:43}
-                                                    ,{id:99, range: '99_range', objid:99}
+                                                    {id:42, hash: '42_hash', range: '42_range', objid:42},
+                                                    {id:43, hash: '43_hash', range: '43_range', objid:43}
+                                                    ,{id:99, hash: '99_hash', range: '99_range', objid:99}
                                                 ]});
 
         mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
@@ -241,7 +242,39 @@ describe('DynamoDbManager.Find()', function ()
                                        {filterExpression:'fcondition'},
                                        {limit:2});
         
-        assert.deepEqual(entities.lastEvaluatedKey, <any>{range:'43_range'});
+        assert.deepEqual(entities.lastEvaluatedKey, <any>{hash: '43_hash', range:'43_range'});
+        assert.equal(entities.items.length, 2);
+        assert.deepEqual(entities.items[0], {id:42});
+        assert.deepEqual(entities.items[1], {id:43});
+    });
+
+    it('find() - not skipping fetched items - last page', async () =>
+    {
+        @DBTable()
+        class Entity
+        {
+            @DBColumn()
+            id:number;
+        };
+
+        let response1 = getMockedQueryResponse({LastEvaluatedKey: undefined, 
+                                                Items:<any>[
+                                                    {id:42, hash: '42_hash', range: '42_range', objid:42},
+                                                    {id:43, hash: '43_hash', range: '43_range', objid:43}
+                                                    ,{id:99, hash: '99_hash', range: '99_range', objid:99}
+                                                ]});
+
+        mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
+                                                    && p.FilterExpression === 'fcondition'
+                                                    && p.ExclusiveStartKey === undefined))).returns(()=>response1.object);
+
+        let manager = new DynamoDbManager(mockedClient.object);
+        let entities = await manager.find(Entity, 
+                                       {keyConditions:'kcondition'},
+                                       {filterExpression:'fcondition'},
+                                       {limit:2});
+        
+        assert.deepEqual(entities.lastEvaluatedKey, <any>{hash:'43_hash', range:'43_range'});
         assert.equal(entities.items.length, 2);
         assert.deepEqual(entities.items[0], {id:42});
         assert.deepEqual(entities.items[1], {id:43});

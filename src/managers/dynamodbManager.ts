@@ -182,15 +182,26 @@ export class DynamoDbManager implements IDynamoDbManager
         {
             response =  await this.client.query(query).promise();
 
+            let processedItemCount = 0;
+
             for(let item of response.Items)
             {
+                processedItemCount++;
                 if(<any>item[Const.IdColumn] in result) continue;
 
                 lastItem = item;
 
                 result[<any>item[Const.IdColumn]] = EntityFactory.create(type, item);
                 
-                if(!!params && !!params.limit && ++itemCount >= params.limit) break;
+                if(!!params && !!params.limit && ++itemCount >= params.limit) 
+                {
+                    if(processedItemCount !== response.Items.length)
+                    {
+                        //Initiate lastEvaluationKey to an object so that it will be later set at the end of this method.
+                        response.LastEvaluatedKey = {}
+                    }
+                    break;
+                }
             }
 
             query.ExclusiveStartKey = response.LastEvaluatedKey;
@@ -199,7 +210,10 @@ export class DynamoDbManager implements IDynamoDbManager
 
         if(response.LastEvaluatedKey && lastItem)
         {
-            response.LastEvaluatedKey[Const.RangeColumn] = lastItem[Const.RangeColumn];
+            response.LastEvaluatedKey = {
+                [Const.HashColumn]: lastItem[Const.HashColumn],
+                [Const.RangeColumn]: lastItem[Const.RangeColumn]
+            };
         }
 
         return {items: Object.values(result), lastEvaluatedKey: response.LastEvaluatedKey}
