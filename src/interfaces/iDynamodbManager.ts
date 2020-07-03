@@ -8,7 +8,7 @@ export interface IDynamoDbManager
 
     put<T extends object>(type:{new(...args: any[]):T}, object:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction, autoCommit?:boolean): Promise<void>;
 
-    getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number, stronglyConsistent?:boolean): Promise<T>;
+    getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number, params?:{stronglyConsistent?:boolean}): Promise<T>;
 
     find<T extends object>(type:{new(...args: any[]):T},
                                  keyParams?:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},

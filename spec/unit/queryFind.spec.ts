@@ -308,9 +308,10 @@ describe('Query.Find', function ()
 
         mockedManager.setup(m => m.find(Entity, listKeyCondition, filterCondition, {limit: 1, indexName:'index-name', order: 1, exclusiveStartKey: {key:1}, projections: ["p1", "p2"], stronglyConsistent: true})).callback(()=>called=true).returns(async()=>findResult);
 
-        let list = new List(mockedManager.object, ["p1", "p2"]).from(Entity).by('h1', 'r1').filter(filterCondition).limit(1).using('index-name').order(true).resume('eyJrZXkiOjF9').stronglyConsistent();
+        let list = new List(mockedManager.object, ["p1", "p2"]).from(Entity).by('h1', 'r1').filter(filterCondition).limit(1).using('index-name').order(true).resume('eyJrZXkiOjF9').stronglyConsistent(true);
         await list.execute();
 
         assert.isTrue(called);
     });
+
 });

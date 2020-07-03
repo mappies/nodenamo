@@ -37,9 +37,9 @@ export class Filter
         return new Resume(this.manager, this.type, this.keyParams, this.filterParams, this.params, key);
     }
 
-    stronglyConsistent(strongRead:boolean = true) : StronglyConsistent
+    stronglyConsistent(stronglyConsistent:boolean) : StronglyConsistent
     {
-        return new StronglyConsistent(this.manager, this.type, this.keyParams, this.filterParams, this.params, strongRead);
+        return new StronglyConsistent(this.manager, this.type, this.keyParams, this.filterParams, this.params, stronglyConsistent);
     }
 
     async execute<T extends object>(): Promise<{items:T[], lastEvaluatedKey:string}>

@@ -82,28 +82,28 @@ export class DynamoDbManager implements IDynamoDbManager
         }
     }
 
-    async getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number, stronglyConsistent?:boolean): Promise<T>
+    async getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number, params?:{stronglyConsistent?:boolean}): Promise<T>
     {
         let obj:T = new type();
         let tableName = Reflector.getTableName(obj);
-        let dataPrefix = Reflector.getDataPrefix(obj);
-        let attributeValues = {':range': <any>Const.RangeKey};
-        let attributeNames = {'#hash': Const.IdColumn};
+        let attributeValues = {
+            ':hash': <any>id,
+            ':range': <any>Const.DefaultRangeValue
+        };
+        let attributeNames = {
+            '#hash': Const.HashColumn,
+            '#range': Const.RangeColumn
+        };
         addColumnValuePrefix(obj, attributeValues, attributeNames)
 
         let query:QueryInput = {
             TableName: tableName,
-            KeyConditionExpression: '#hash=:hash and #range>:range',
+            KeyConditionExpression: '#hash=:hash and #range=:range',
             ExpressionAttributeNames: attributeNames,
             ExpressionAttributeValues: attributeValues,
-            ConsistentRead: stronglyConsistent,
+            ConsistentRead: params?.stronglyConsistent,
             Limit: 1
         };
-
-        // let q : QueryInput = {
-        //     TableName: tableName,
-        //     KeyConditionExpression
-        // }
 
         do
         {

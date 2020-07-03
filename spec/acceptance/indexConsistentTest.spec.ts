@@ -1,0 +1,70 @@
+import {assert as assert} from 'chai';
+import { DBTable, DBColumn } from '../../src';
+import { NodeNamo } from '../../src/nodeNamo';
+import Config from './config';
+import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { Const } from '../../src/const';
+
+@DBTable({name:'nodenamo_acceptance_indexConsistentTest'})
+class User
+{
+    @DBColumn({id:true})
+    id:number;
+
+    @DBColumn({hash:true})
+    name:string;
+
+    @DBColumn()
+    organizationId:string;
+
+    constructor(id:number, name:string, organizationId:string)
+    {
+        this.id = id;
+        this.name = name;
+        this.organizationId = organizationId;
+    }
+}
+
+describe('IndexConsistentTest', function ()
+{
+    let nodenamo:NodeNamo;
+    let user1:User;
+    let user2:User;
+    let user3:User;
+
+    before(async ()=>{
+        nodenamo = new NodeNamo(new DocumentClient({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'us-east-1' }))
+        await nodenamo.createTable().for(User).execute();
+
+        user1 = new User(1, 'Some One', 'o1');
+        user2 = new User(2, 'Some Two', 'o2');
+        user3 = new User(3, 'Some Three', 'o1');
+    });
+
+    /* This test proves DynamoDB's container throws the expected real-world
+       error when trying a strongly consistent read of a GSI */
+    it('using() with stronglyConsistent() causes failure', async () => {
+        let error: Error;
+        try {
+            await nodenamo.find().from(User).where({
+                keyConditions: "#hash=:hash",
+                expressionAttributeNames: {
+                    '#hash': 'hash'
+                },
+                expressionAttributeValues: {
+                    ':hash': "1"
+                }
+            }).using(Const.IdIndexName).stronglyConsistent(true).execute()
+        } catch (e) {
+            error = e;
+        }
+        assert.isDefined(error);
+        console.log(JSON.stringify(error, null, 4));
+        assert.equal(error.name, "ValidationException");
+        assert.equal(error.message, "Consistent read cannot be true when querying a GSI")
+    });
+
+    after(async ()=>{
+        await nodenamo.deleteTable().for(User).execute();
+    });
+});

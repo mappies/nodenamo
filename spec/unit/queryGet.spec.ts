@@ -11,11 +11,11 @@ class Entity {
     id:number = 42;
 };
 
-describe('Query.Get', function () 
+describe('Query.Get', function ()
 {
     let called:boolean;
     let mockedManager:IMock<DynamoDbManager>;
-    
+
     beforeEach(()=>
     {
         called = false;
@@ -24,11 +24,22 @@ describe('Query.Get', function ()
 
     it('execute()', async ()=>
     {
-        mockedManager.setup(m => m.getOne(Entity, 42)).callback(()=>called=true);
+        mockedManager.setup(m => m.getOne(Entity, 42, undefined)).callback(()=>called=true);
 
         let get = new Get(mockedManager.object, 42).from(Entity);
         await get.execute();
 
         assert.isTrue(called);
     });
+
+    it('stronglyConsistent().execute()', async ()=>
+    {
+        mockedManager.setup(m => m.getOne(Entity, 42, {stronglyConsistent: true})).callback(()=>called=true);
+
+        let get = new Get(mockedManager.object, 42).from(Entity);
+        await get.stronglyConsistent(true).execute();
+
+        assert.isTrue(called);
+    });
+    
 });

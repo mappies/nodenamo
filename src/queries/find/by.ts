@@ -57,9 +57,9 @@ export class By
         return new Resume(this.manager, this.type, this.keyParams, undefined, this.params, key);
     }
 
-    stronglyConsistent(strongRead:boolean = true) : StronglyConsistent
+    stronglyConsistent(stronglyConsistent:boolean) : StronglyConsistent
     {
-        return new StronglyConsistent(this.manager, this.type, this.keyParams, undefined, this.params, strongRead);
+        return new StronglyConsistent(this.manager, this.type, this.keyParams, undefined, this.params, stronglyConsistent);
     }
 
     async execute<T extends object>(): Promise<{items:T[], lastEvaluatedKey:string}>
