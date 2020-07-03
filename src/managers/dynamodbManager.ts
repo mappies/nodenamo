@@ -82,7 +82,7 @@ export class DynamoDbManager implements IDynamoDbManager
         }
     }
 
-    async getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number): Promise<T>
+    async getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number, stronglyConsistent?:boolean): Promise<T>
     {
         let obj:T = new type();
         let tableName = Reflector.getTableName(obj);
