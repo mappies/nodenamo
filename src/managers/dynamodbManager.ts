@@ -86,19 +86,24 @@ export class DynamoDbManager implements IDynamoDbManager
     {
         let obj:T = new type();
         let tableName = Reflector.getTableName(obj);
-
-        let attributeValues = {':objid': <any>id};
-        let attributeNames = {'#objid': Const.IdColumn};
+        let dataPrefix = Reflector.getDataPrefix(obj);
+        let attributeValues = {':range': Const.RangeKey};
+        let attributeNames = {'#hash': Const.IdColumn};
         addColumnValuePrefix(obj, attributeValues, attributeNames)
 
         let query:QueryInput = {
             TableName: tableName,
-            KeyConditionExpression: '#objid = :objid',
+            KeyConditionExpression: '#hash=:hash and #range>:range',
             ExpressionAttributeNames: attributeNames,
             ExpressionAttributeValues: attributeValues,
-            IndexName: Const.IdIndexName,
+            ConsistentRead: stronglyConsistent,
             Limit: 1
         };
+
+        let q : QueryInput = {
+            TableName: tableName,
+            KeyConditionExpression
+        }
 
         do
         {
