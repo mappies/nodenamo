@@ -87,7 +87,7 @@ export class DynamoDbManager implements IDynamoDbManager
         let obj:T = new type();
         let tableName = Reflector.getTableName(obj);
         let dataPrefix = Reflector.getDataPrefix(obj);
-        let attributeValues = {':range': Const.RangeKey};
+        let attributeValues = {':range': <any>Const.RangeKey};
         let attributeNames = {'#hash': Const.IdColumn};
         addColumnValuePrefix(obj, attributeValues, attributeNames)
 
@@ -100,10 +100,10 @@ export class DynamoDbManager implements IDynamoDbManager
             Limit: 1
         };
 
-        let q : QueryInput = {
-            TableName: tableName,
-            KeyConditionExpression
-        }
+        // let q : QueryInput = {
+        //     TableName: tableName,
+        //     KeyConditionExpression
+        // }
 
         do
         {
@@ -182,23 +182,45 @@ export class DynamoDbManager implements IDynamoDbManager
         let result:{} = {};
         let response:QueryOutput;
         let itemCount = 0;
+        let lastItem;
 
         do
         {
             response =  await this.client.query(query).promise();
 
+            let processedItemCount = 0;
+
             for(let item of response.Items)
             {
+                processedItemCount++;
                 if(<any>item[Const.IdColumn] in result) continue;
+
+                lastItem = item;
 
                 result[<any>item[Const.IdColumn]] = EntityFactory.create(type, item);
 
-                if(!!params && !!params.limit && ++itemCount >= params.limit) break;
+                if(!!params && !!params.limit && ++itemCount >= params.limit)
+                {
+                    if(processedItemCount !== response.Items.length)
+                    {
+                        //Initiate lastEvaluationKey to an object so that it will be later set at the end of this method.
+                        response.LastEvaluatedKey = {}
+                    }
+                    break;
+                }
             }
 
             query.ExclusiveStartKey = response.LastEvaluatedKey;
         }
         while(response.LastEvaluatedKey && itemCount < params.limit)
+
+        if(response.LastEvaluatedKey && lastItem)
+        {
+            response.LastEvaluatedKey = {
+                [Const.HashColumn]: lastItem[Const.HashColumn],
+                [Const.RangeColumn]: lastItem[Const.RangeColumn]
+            };
+        }
 
         return {items: Object.values(result), lastEvaluatedKey: response.LastEvaluatedKey}
     }
