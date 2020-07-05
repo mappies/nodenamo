@@ -28,7 +28,7 @@ class User
     }
 }
 
-describe('Hash-range tests', function () 
+describe('Hash-range tests', function ()
 {
     let nodenamo:NodeNamo;
     let user1:User;
@@ -66,7 +66,21 @@ describe('Hash-range tests', function ()
     it('List all items', async () =>
     {
         let users = await nodenamo.list().from(User).execute<User>();
-        
+
+        assert.equal(users.items.length, 6);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], user2);
+        assert.deepEqual(users.items[1], user1);
+        assert.deepEqual(users.items[2], user3);
+        assert.deepEqual(users.items[3], user4);
+        assert.deepEqual(users.items[4], user5);
+        assert.deepEqual(users.items[5], user6);
+    });
+
+    it('List all items strongly', async () =>
+    {
+        let users = await nodenamo.list().from(User).stronglyConsistent(true).execute<User>();
+
         assert.equal(users.items.length, 6);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user2);
@@ -80,7 +94,7 @@ describe('Hash-range tests', function ()
     it('List all items - reverse', async () =>
     {
         let users = await nodenamo.list().from(User).order(false).execute<User>();
-        
+
         assert.equal(users.items.length, 6);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user6);
@@ -94,7 +108,7 @@ describe('Hash-range tests', function ()
     it('List items with paging', async () =>
     {
         let page1 = await nodenamo.list().from(User).limit(1).execute<User>();
-        
+
         assert.equal(page1.items.length, 1);
         assert.deepEqual(page1.items[0], user2);
 
@@ -102,24 +116,24 @@ describe('Hash-range tests', function ()
 
         assert.equal(page2.items.length, 1);
         assert.deepEqual(page2.items[0], user1);
-        
+
         let page3 = await nodenamo.list().from(User).limit(1).resume(page2.lastEvaluatedKey).execute<User>();
-        
+
         assert.equal(page3.items.length, 1);
         assert.deepEqual(page3.items[0], user3);
-        
+
         let page4 = await nodenamo.list().from(User).limit(1).resume(page3.lastEvaluatedKey).execute<User>();
-        
+
         assert.equal(page4.items.length, 1);
         assert.deepEqual(page4.items[0], user4);
-        
+
         let page5 = await nodenamo.list().from(User).limit(1).resume(page4.lastEvaluatedKey).execute<User>();
-        
+
         assert.equal(page5.items.length, 1);
         assert.deepEqual(page5.items[0], user5);
-        
+
         let page6 = await nodenamo.list().from(User).limit(1).resume(page5.lastEvaluatedKey).execute<User>();
-        
+
         assert.equal(page6.items.length, 1);
         assert.deepEqual(page6.items[0], user6);
     });
@@ -127,10 +141,23 @@ describe('Hash-range tests', function ()
     it('List items with a filter', async () =>
     {
         let users = await nodenamo.list().from(User).filter({
-                            filterExpression:"#name=:name", 
+                            filterExpression:"#name=:name",
                             expressionAttributeNames:{'#name':'name'},
                             expressionAttributeValues:{':name': 'Some Two'}}).execute<User>();
-        
+
+        assert.equal(users.items.length, 1);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], user2);
+    });
+
+    it('List items with a filter strongly', async () =>
+    {
+        let users = await nodenamo.list().from(User).filter({
+                            filterExpression:"#name=:name",
+                            expressionAttributeNames:{'#name':'name'},
+                            expressionAttributeValues:{':name': 'Some Two'}})
+                            .stronglyConsistent(true).execute<User>();
+
         assert.equal(users.items.length, 1);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user2);
@@ -139,7 +166,7 @@ describe('Hash-range tests', function ()
     it('List items by undefined', async () =>
     {
         let users = await nodenamo.list().from(User).by(undefined).execute<User>();
-        
+
         assert.equal(users.items.length, 6);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user2);
@@ -153,7 +180,7 @@ describe('Hash-range tests', function ()
     it('List items by an invalid value', async () =>
     {
         let users = await nodenamo.list().from(User).by('invalid').execute<User>();
-        
+
         assert.equal(users.items.length, 0);
         assert.equal(users.lastEvaluatedKey, undefined);
     });
@@ -161,7 +188,18 @@ describe('Hash-range tests', function ()
     it('List items by a hash', async () =>
     {
         let users = await nodenamo.list().from(User).by(1000).execute<User>();
-        
+
+        assert.equal(users.items.length, 3);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], user2);
+        assert.deepEqual(users.items[1], user1);
+        assert.deepEqual(users.items[2], user5);
+    });
+
+    it('List items by a hash strongly', async () =>
+    {
+        let users = await nodenamo.list().from(User).by(1000).stronglyConsistent(true).execute<User>();
+
         assert.equal(users.items.length, 3);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user2);
@@ -172,10 +210,23 @@ describe('Hash-range tests', function ()
     it('List items by a hash and a filter', async () =>
     {
         let users = await nodenamo.list().from(User).by(1000).filter({
-            filterExpression:"#name=:name", 
+            filterExpression:"#name=:name",
             expressionAttributeNames:{'#name':'name'},
             expressionAttributeValues:{':name': 'Some Two'}}).execute<User>();
-        
+
+        assert.equal(users.items.length, 1);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], user2);
+    });
+
+    it('List items by a hash and a filter strongly', async () =>
+    {
+        let users = await nodenamo.list().from(User).by(1000).filter({
+            filterExpression:"#name=:name",
+            expressionAttributeNames:{'#name':'name'},
+            expressionAttributeValues:{':name': 'Some Two'}})
+            .stronglyConsistent(true).execute<User>();
+
         assert.equal(users.items.length, 1);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user2);
@@ -184,7 +235,16 @@ describe('Hash-range tests', function ()
     it('List items by a hash and a range', async () =>
     {
         let users = await nodenamo.list().from(User).by(1000, 2017).execute<User>();
-        
+
+        assert.equal(users.items.length, 1);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], user1);
+    });
+
+    it('List items by a hash and a range strongly', async () =>
+    {
+        let users = await nodenamo.list().from(User).by(1000, 2017).stronglyConsistent(true).execute<User>();
+
         assert.equal(users.items.length, 1);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user1);
@@ -193,7 +253,7 @@ describe('Hash-range tests', function ()
     it('List items by a hash, a range, and a projection', async () =>
     {
         let users = await nodenamo.list("id", "created").from(User).by(1000, 2017).execute<User>();
-        
+
         assert.equal(users.items.length, 1);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], { id: 1, name: undefined, account: undefined, created: 2017 });
@@ -202,10 +262,25 @@ describe('Hash-range tests', function ()
     it('Find items', async () =>
     {
         let users = await nodenamo.find().from(User).where({
-                            keyConditions:"#account=:account", 
+                            keyConditions:"#account=:account",
                             expressionAttributeNames:{'#account':'account'},
                             expressionAttributeValues:{':account': 1000}}).execute<User>();
-        
+
+        assert.equal(users.items.length, 3);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], user2);
+        assert.deepEqual(users.items[1], user1);
+        assert.deepEqual(users.items[2], user5);
+    });
+
+    it('Find items strongly', async () =>
+    {
+        let users = await nodenamo.find().from(User).where({
+                            keyConditions:"#account=:account",
+                            expressionAttributeNames:{'#account':'account'},
+                            expressionAttributeValues:{':account': 1000}})
+                            .stronglyConsistent(true).execute<User>();
+
         assert.equal(users.items.length, 3);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user2);
@@ -216,15 +291,15 @@ describe('Hash-range tests', function ()
     it('Find items with a filter', async () =>
     {
         let users = await nodenamo.find().from(User).where({
-                                keyConditions:"#account=:account", 
+                                keyConditions:"#account=:account",
                                 expressionAttributeNames:{'#account':'account'},
                                 expressionAttributeValues:{':account': 1000}
                             }).filter({
-                                filterExpression:"begins_with(#name,:name)", 
+                                filterExpression:"begins_with(#name,:name)",
                                 expressionAttributeNames:{'#name':'name'},
                                 expressionAttributeValues:{':name': 'Some T'}
                             }).execute<User>();
-        
+
         assert.equal(users.items.length, 1);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], user2);
@@ -233,15 +308,33 @@ describe('Hash-range tests', function ()
     it('Find items with a filter and a projection', async () =>
     {
         let users = await nodenamo.find("id").from(User).where({
-                                keyConditions:"#account=:account", 
+                                keyConditions:"#account=:account",
                                 expressionAttributeNames:{'#account':'account'},
                                 expressionAttributeValues:{':account': 1000}
                             }).filter({
-                                filterExpression:"begins_with(#name,:name)", 
+                                filterExpression:"begins_with(#name,:name)",
                                 expressionAttributeNames:{'#name':'name'},
                                 expressionAttributeValues:{':name': 'Some T'}
                             }).execute<User>();
-        
+
+        assert.equal(users.items.length, 1);
+        assert.equal(users.lastEvaluatedKey, undefined);
+        assert.deepEqual(users.items[0], { id: 2, name: undefined, account: undefined, created: undefined });
+    });
+
+    it('Find items with a filter and a projection strongly', async () =>
+    {
+        let users = await nodenamo.find("id").from(User).where({
+                                keyConditions:"#account=:account",
+                                expressionAttributeNames:{'#account':'account'},
+                                expressionAttributeValues:{':account': 1000}
+                            }).filter({
+                                filterExpression:"begins_with(#name,:name)",
+                                expressionAttributeNames:{'#name':'name'},
+                                expressionAttributeValues:{':name': 'Some T'}
+                            })
+                            .stronglyConsistent(true).execute<User>();
+
         assert.equal(users.items.length, 1);
         assert.equal(users.lastEvaluatedKey, undefined);
         assert.deepEqual(users.items[0], { id: 2, name: undefined, account: undefined, created: undefined });
@@ -250,7 +343,14 @@ describe('Hash-range tests', function ()
     it('Get an item', async () =>
     {
         let user = await nodenamo.get(2).from(User).execute();
-        
+
+        assert.deepEqual(user, user2);
+    });
+
+    it('Get an item strongly', async () =>
+    {
+        let user = await nodenamo.get(2).from(User).stronglyConsistent(true).execute();
+
         assert.deepEqual(user, user2);
     });
 
@@ -262,7 +362,7 @@ describe('Hash-range tests', function ()
         user.name = 'This Three';
         user['extra'] = 'invalid';
         await nodenamo.update(user).from(User).execute();
-        
+
         user = await nodenamo.get(3).from(User).execute();
         assert.deepEqual(user, { id: 3, name: 'This Three', account: 2000, created: 2018 });
     });
@@ -273,7 +373,7 @@ describe('Hash-range tests', function ()
         assert.deepEqual(user, user2);
 
         await nodenamo.update({id:2, name:'This Two', account: undefined, created: undefined}).from(User).execute();
-        
+
         user = await nodenamo.get(2).from(User).execute();
         assert.deepEqual(user, { id: 2, name: 'This Two', account: 1000, created: 2016 });
     });
@@ -284,7 +384,7 @@ describe('Hash-range tests', function ()
         assert.deepEqual(user, user1);
 
         await nodenamo.update({id:1, name:'This One'}).from(User).execute();
-        
+
         user = await nodenamo.get(1).from(User).execute();
         assert.deepEqual(user, { id: 1, name: 'This One', account: 1000, created: 2017 });
     });
@@ -296,7 +396,7 @@ describe('Hash-range tests', function ()
 
         user.account = 4000;
         await nodenamo.update(user).from(User).execute();
-        
+
         user = await nodenamo.get(4).from(User).execute();
         assert.deepEqual(user, { id: 4, name: 'Some Four', account: 4000, created: 2019 });
         assert.deepEqual((await nodenamo.list().from(User).execute()).items.length, 6);
@@ -310,7 +410,7 @@ describe('Hash-range tests', function ()
 
         let user = await nodenamo.get(5).from(User).execute<User>();
         assert.deepEqual(user, user5);
-        
+
         let error = undefined;
         try
         {
@@ -335,7 +435,7 @@ describe('Hash-range tests', function ()
 
         user.name = '';
         await nodenamo.update(user).from(User).execute();
-        
+
         user = await nodenamo.get(6).from(User).execute();
         assert.deepEqual(user, { id: 6, name: '', account: 3000, created: 2020 });
     });
@@ -348,9 +448,9 @@ describe('Hash-range tests', function ()
                       .from(User)
                       .set(['#name=:name'], {'#name': 'name'}, {':name': 'Mr. Six'})
                       .execute();
-        
+
         user = await nodenamo.get(6).from(User).execute();
-        
+
         assert.deepEqual(user, {id:6, name: 'Mr. Six', account: 3000, created: 2020});
     });
 
