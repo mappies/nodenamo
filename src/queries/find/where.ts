@@ -42,7 +42,6 @@ export class Where
         return new Resume(this.manager, this.type, this.keyParams, undefined, this.params, key);
     }
 
-
     stronglyConsistent(stronglyConsistent:boolean) : StronglyConsistent
     {
         return new StronglyConsistent(this.manager, this.type, this.keyParams, undefined, this.params, stronglyConsistent);

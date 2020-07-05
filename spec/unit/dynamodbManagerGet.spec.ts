@@ -8,7 +8,7 @@ import { AWSError } from 'aws-sdk/lib/error';
 import { Request } from 'aws-sdk/lib/request';
 import { Reflector } from '../../src/reflector';
 
-describe('DynamoDbManager.Get()', function () 
+describe('DynamoDbManager.Get()', function ()
 {
     let mockedClient:IMock<DocumentClient>;
     let called:boolean;
@@ -33,7 +33,7 @@ describe('DynamoDbManager.Get()', function ()
 
         let response = getMockedQueryResponse({Items:[<any>obj]});
 
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeValues[':objid'] === 'entity#42' && p.Limit === 1))).callback(()=>called=true).returns(()=>response.object);
+        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.KeyConditionExpression === '#hash=:hash and #range=:range' && p.ExpressionAttributeValues[':hash'] === 'entity#42' && p.ExpressionAttributeValues[':range'] === 'nodenamo' && p.Limit === 1))).callback(()=>called=true).returns(()=>response.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entity = await manager.getOne(Entity, 42);
@@ -54,7 +54,7 @@ describe('DynamoDbManager.Get()', function ()
 
         let response = getMockedGetResponse({});
 
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeValues[':objid'] === 'entity#42' && p.Limit === 1))).callback(()=>called=true).returns(()=>response.object);
+        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.KeyConditionExpression === '#hash=:hash and #range=:range' && p.ExpressionAttributeValues[':hash'] === 'entity#42' && p.ExpressionAttributeValues[':range'] === 'nodenamo' && p.Limit === 1))).callback(()=>called=true).returns(()=>response.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entity = await manager.getOne(Entity, 42);

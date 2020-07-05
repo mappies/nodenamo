@@ -41,8 +41,8 @@ describe('IndexConsistentTest', function ()
         user3 = new User(3, 'Some Three', 'o1');
     });
 
-    /* This test proves DynamoDB's container throws the expected real-world
-       error when trying a strongly consistent read of a GSI */
+    /*  DynamoDB does not allow using(GSI) with ConsistentRead true. This test
+        proves the real-world error occurs agains the DDB container they distribute. */
     it('using() with stronglyConsistent() causes failure', async () => {
         let error: Error;
         try {
@@ -59,7 +59,6 @@ describe('IndexConsistentTest', function ()
             error = e;
         }
         assert.isDefined(error);
-        console.log(JSON.stringify(error, null, 4));
         assert.equal(error.name, "ValidationException");
         assert.equal(error.message, "Consistent read cannot be true when querying a GSI")
     });
