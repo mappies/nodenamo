@@ -138,6 +138,19 @@ describe('Query.Find', function ()
         assert.isTrue(called);
     });
 
+    it('find.from.where.strongly()', async ()=>
+    {
+        mockedManager.setup(m => m.find(Entity, keyCondition, undefined, {stronglyConsistent: true})).callback(()=>called=true).returns(async()=>findResult);
+
+        let find = new Find(mockedManager.object).from(Entity).where(keyCondition).stronglyConsistent(true);
+        let result = await find.execute();
+
+        assert.isTrue(called);
+        assert.equal(result.lastEvaluatedKey, undefined);
+        assert.equal(result.items.length, 1);
+        assert.equal(result.items[0]['id'], 42);
+    });
+
     it('find.from.where.limit.using.order.resume()', async ()=>
     {
         mockedManager.setup(m => m.find(Entity, keyCondition, undefined, {limit: 1, indexName:'index-name', order: 1, exclusiveStartKey: {key:1}})).callback(()=>called=true).returns(async()=>findResult);
@@ -168,6 +181,16 @@ describe('Query.Find', function ()
         assert.isTrue(called);
     });
 
+    it('find.from.where.filter.strongly()', async ()=>
+    {
+        mockedManager.setup(m => m.find(Entity, keyCondition, filterCondition, {stronglyConsistent: true})).callback(()=>called=true).returns(async()=>findResult);
+
+        let find = new Find(mockedManager.object).from(Entity).where(keyCondition).filter(filterCondition).stronglyConsistent(true);
+        await find.execute();
+
+        assert.isTrue(called);
+    });
+
     it('find.from.where.filter.limit()', async ()=>
     {
         mockedManager.setup(m => m.find(Entity, keyCondition, filterCondition, {limit:1})).callback(()=>called=true).returns(async()=>findResult);
@@ -188,7 +211,7 @@ describe('Query.Find', function ()
         assert.isTrue(called);
     });
 
-    it('find.from.where.filter.using()', async ()=>
+    it('find.from.where.filter.order()', async ()=>
     {
         mockedManager.setup(m => m.find(Entity, keyCondition, filterCondition, {order:1})).callback(()=>called=true).returns(async()=>findResult);
 
@@ -223,6 +246,17 @@ describe('Query.Find', function ()
         mockedManager.setup(m => m.find(Entity, keyCondition, filterCondition, {limit: 1, indexName:'index-name', order: 1, exclusiveStartKey: {key:1}, projections: ["p1"]})).callback(()=>called=true).returns(async()=>findResult);
 
         let find = new Find(mockedManager.object, ["p1"]).from(Entity).where(keyCondition).filter(filterCondition).limit(1).using('index-name').order(true).resume('eyJrZXkiOjF9');
+        await find.execute();
+
+        assert.isTrue(called);
+    });
+
+
+    it('find(projections).from.where.filter.limit.using.order.resume.strongly()', async ()=>
+    {
+        mockedManager.setup(m => m.find(Entity, keyCondition, filterCondition, {limit: 1, indexName:'index-name', order: 1, exclusiveStartKey: {key:1}, projections: ["p1"], stronglyConsistent: true})).callback(()=>called=true).returns(async()=>findResult);
+
+        let find = new Find(mockedManager.object, ["p1"]).from(Entity).where(keyCondition).filter(filterCondition).limit(1).using('index-name').order(true).resume('eyJrZXkiOjF9').stronglyConsistent(true);
         await find.execute();
 
         assert.isTrue(called);
@@ -274,6 +308,62 @@ describe('Query.Find', function ()
         mockedManager.setup(m => m.find(Entity, listKeyCondition, undefined, undefined)).callback(()=>called=true).returns(async()=>findResult);
 
         let list = new List(mockedManager.object).from(Entity).by(undefined);
+        let result = await list.execute();
+
+        assert.isTrue(called);
+        assert.equal(result.lastEvaluatedKey, undefined);
+        assert.equal(result.items.length, 1);
+        assert.equal(result.items[0]['id'], 42);
+    });
+
+
+    it('list.from.strongly() - hash', async ()=>
+    {
+        let listKeyCondition = {
+            keyConditions:'#hash = :hash',
+            expressionAttributeNames: {'#hash': Const.HashColumn},
+            expressionAttributeValues: {':hash': Const.DefaultHashValue}
+        };
+        mockedManager.setup(m => m.find(Entity, listKeyCondition, undefined, {stronglyConsistent: true})).callback(()=>called=true).returns(async()=>findResult);
+
+        let list = new List(mockedManager.object).from(Entity).stronglyConsistent(true);
+        let result = await list.execute();
+
+        assert.isTrue(called);
+        assert.equal(result.lastEvaluatedKey, undefined);
+        assert.equal(result.items.length, 1);
+        assert.equal(result.items[0]['id'], 42);
+    });
+
+    it('list.from.by.strongly() - hash', async ()=>
+    {
+        let listKeyCondition = {
+            keyConditions:'#hash = :hash',
+            expressionAttributeNames: {'#hash': Const.HashColumn},
+            expressionAttributeValues: {':hash': 'h1'}
+        };
+        mockedManager.setup(m => m.find(Entity, listKeyCondition, undefined, {stronglyConsistent: true})).callback(()=>called=true).returns(async()=>findResult);
+
+        let list = new List(mockedManager.object).from(Entity).by('h1').stronglyConsistent(true);
+        let result = await list.execute();
+
+        assert.isTrue(called);
+        assert.equal(result.lastEvaluatedKey, undefined);
+        assert.equal(result.items.length, 1);
+        assert.equal(result.items[0]['id'], 42);
+    });
+
+
+    it('list.from.by() - hash and range', async ()=>
+    {
+        let listKeyCondition = {
+            keyConditions:'#hash = :hash and begins_with(#range, :range)',
+            expressionAttributeNames: {'#hash': Const.HashColumn, '#range': Const.RangeColumn},
+            expressionAttributeValues: {':hash': 'h1', ':range': 'r1'}
+        };
+        mockedManager.setup(m => m.find(Entity, listKeyCondition, undefined, {stronglyConsistent: true})).callback(()=>called=true).returns(async()=>findResult);
+
+        let list = new List(mockedManager.object).from(Entity).by('h1', 'r1').stronglyConsistent(true);
         let result = await list.execute();
 
         assert.isTrue(called);
