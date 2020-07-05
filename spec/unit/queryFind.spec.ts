@@ -107,7 +107,6 @@ describe('Query.Find', function ()
         assert.isTrue(called);
     });
 
-
     it('find.from.where.limit()', async ()=>
     {
         mockedManager.setup(m => m.find(Entity, keyCondition, undefined, {limit: 3})).callback(()=>called=true).returns(async()=>findResult);
@@ -251,7 +250,6 @@ describe('Query.Find', function ()
         assert.isTrue(called);
     });
 
-
     it('find(projections).from.where.filter.limit.using.order.resume.strongly()', async ()=>
     {
         mockedManager.setup(m => m.find(Entity, keyCondition, filterCondition, {limit: 1, indexName:'index-name', order: 1, exclusiveStartKey: {key:1}, projections: ["p1"], stronglyConsistent: true})).callback(()=>called=true).returns(async()=>findResult);
@@ -316,7 +314,6 @@ describe('Query.Find', function ()
         assert.equal(result.items[0]['id'], 42);
     });
 
-
     it('list.from.strongly() - hash', async ()=>
     {
         let listKeyCondition = {
@@ -352,7 +349,6 @@ describe('Query.Find', function ()
         assert.equal(result.items.length, 1);
         assert.equal(result.items[0]['id'], 42);
     });
-
 
     it('list.from.by() - hash and range', async ()=>
     {
