@@ -4,14 +4,15 @@ import { Limit } from './limit';
 import { Order } from "./order";
 import { Using } from "./using";
 import { DocumentClient } from "aws-sdk/clients/dynamodb";
+import { StronglyConsistent } from "./stronglyConsistent";
 
 export class Resume
 {
-    constructor(private manager:IDynamoDbManager, 
-                private type:{new(...args: any[])}, 
+    constructor(private manager:IDynamoDbManager,
+                private type:{new(...args: any[])},
                 private keyParams:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
                 private filterParams?:{filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
-                private params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key, projections?:string[]},
+                private params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key, projections?:string[], stronglyConsistent?:boolean},
                 private startKey?:string)
     {
         let realParams:any = Object.assign({}, params);
@@ -37,10 +38,15 @@ export class Resume
     {
         return new Order(this.manager, this.type, this.keyParams, this.filterParams, this.params, forward);
     }
-    
+
     using(indexName:string): Using
     {
         return new Using(this.manager, this.type, this.keyParams, this.filterParams, this.params, indexName);
+    }
+
+    stronglyConsistent(stronglyConsistent:boolean) : StronglyConsistent
+    {
+        return new StronglyConsistent(this.manager, this.type, this.keyParams, this.filterParams, this.params, stronglyConsistent);
     }
 
     async execute<T extends object>(): Promise<{items:T[], lastEvaluatedKey:string}>

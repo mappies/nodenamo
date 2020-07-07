@@ -6,17 +6,18 @@ import { Order } from "./order";
 import { Resume } from "./resume";
 import { Filter } from "./filter";
 import {Const} from "../../const";
+import { StronglyConsistent } from "./stronglyConsistent";
 
 export class By
 {
     private keyParams:any;
-    
-    constructor(private manager:IDynamoDbManager, 
-                private type:{new(...args: any[])}, 
-                hash:string|number|boolean, rangeValueBeginsWith?:string|number|boolean, 
+
+    constructor(private manager:IDynamoDbManager,
+                private type:{new(...args: any[])},
+                hash:string|number|boolean, rangeValueBeginsWith?:string|number|boolean,
                 private params?:{projections?:string[]})
     {
-        this.keyParams = 
+        this.keyParams =
         {
             keyConditions: '#hash = :hash',
             expressionAttributeNames: {'#hash': Const.HashColumn},
@@ -45,17 +46,22 @@ export class By
     {
         return new Using(this.manager, this.type, this.keyParams, undefined, this.params, indexName);
     }
-    
+
     order(forward:boolean): Order
     {
         return new Order(this.manager, this.type, this.keyParams, undefined, this.params, forward);
-    }    
-    
+    }
+
     resume(key:string): Resume
     {
         return new Resume(this.manager, this.type, this.keyParams, undefined, this.params, key);
     }
-    
+
+    stronglyConsistent(stronglyConsistent:boolean) : StronglyConsistent
+    {
+        return new StronglyConsistent(this.manager, this.type, this.keyParams, undefined, this.params, stronglyConsistent);
+    }
+
     async execute<T extends object>(): Promise<{items:T[], lastEvaluatedKey:string}>
     {
         return await new Execute(this.manager, this.type, this.keyParams, undefined, this.params).execute();

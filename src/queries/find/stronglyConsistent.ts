@@ -1,22 +1,27 @@
 import { IDynamoDbManager } from "../../interfaces/iDynamodbManager";
+import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import { Execute } from "./execute";
 import { Using } from "./using";
 import { Order } from "./order";
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import { Resume } from "./resume";
-import { StronglyConsistent } from "./stronglyConsistent";
+import { Limit } from "./limit";
 
-export class Limit
+export class StronglyConsistent
 {
     constructor(private manager:IDynamoDbManager,
                 private type:{new(...args: any[])},
                 private keyParams:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
                 private filterParams?:{filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
                 private params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key, projections?:string[], stronglyConsistent?:boolean},
-                private limit?:number)
+                private stronglyConsistent?:boolean)
     {
         this.params = this.params || {};
-        this.params.limit = this.limit;
+        this.params.stronglyConsistent = this.stronglyConsistent;
+    }
+
+    limit(limit:number): Limit
+    {
+        return new Limit(this.manager, this.type, this.keyParams, this.filterParams, this.params, limit);
     }
 
     using(indexName:string): Using
@@ -32,11 +37,6 @@ export class Limit
     resume(key:string): Resume
     {
         return new Resume(this.manager, this.type, this.keyParams, this.filterParams, this.params, key);
-    }
-
-    stronglyConsistent(stronglyConsistent:boolean) : StronglyConsistent
-    {
-        return new StronglyConsistent(this.manager, this.type, this.keyParams, this.filterParams, this.params, stronglyConsistent);
     }
 
     async execute<T extends object>(): Promise<{items:T[], lastEvaluatedKey:string}>
