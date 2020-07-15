@@ -124,7 +124,7 @@ export class DynamoDbManager implements IDynamoDbManager
     async find<T extends object>(type:{new(...args: any[]):T},
                                  keyParams?:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
                                  filterParams?: {filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
-                                 params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key,projections?:string[], stronglyConsistent?:boolean})
+                                 params?:{limit?:number, fetchSize?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key,projections?:string[], stronglyConsistent?:boolean})
                                  : Promise<{items:T[], lastEvaluatedKey: DocumentClient.Key}>
     {
         let obj:T = new type();
@@ -171,7 +171,7 @@ export class DynamoDbManager implements IDynamoDbManager
             KeyConditionExpression: keyParams ? keyParams.keyConditions : undefined,
             FilterExpression: filterParams ? filterParams.filterExpression : undefined,
             IndexName: params ? params.indexName : undefined,
-            Limit: params ? params.limit : undefined,
+            Limit: params ? params.fetchSize : undefined,
             ExclusiveStartKey: params ? params.exclusiveStartKey : undefined,
             ScanIndexForward: params && (params.order || 1) >= 0,
             ConsistentRead: params? params.stronglyConsistent : undefined,

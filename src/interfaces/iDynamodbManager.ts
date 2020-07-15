@@ -13,7 +13,7 @@ export interface IDynamoDbManager
     find<T extends object>(type:{new(...args: any[]):T},
                                  keyParams?:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
                                  filterParams?: {filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
-                                 params?:{limit?:number, indexName?:string, order?:number, exclusiveStartKey?:DocumentClient.Key, projections?:string[], stronglyConsistent?:boolean})
+                                 params?:{limit?:number, fetchSize?:number, indexName?:string, order?:number, exclusiveStartKey?:DocumentClient.Key, projections?:string[], stronglyConsistent?:boolean})
                                  : Promise<{items:T[], lastEvaluatedKey: DocumentClient.Key}>;
 
     update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction, autoCommit?:boolean): Promise<void>;

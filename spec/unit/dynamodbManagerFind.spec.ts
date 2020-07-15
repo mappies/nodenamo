@@ -159,17 +159,57 @@ describe('DynamoDbManager.Find()', function ()
 
         mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
                                                     && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey === undefined))).callback(()=>page1called=true).returns(()=>response1.object);
+                                                    && p.ExclusiveStartKey === undefined
+                                                    && p.Limit === undefined))).callback(()=>page1called=true).returns(()=>response1.object);
 
         mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
                                                     && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey?.range === <any>'lek1'))).callback(()=>page2called=true).returns(()=>response2.object);
+                                                    && p.ExclusiveStartKey?.range === <any>'lek1'
+                                                    && p.Limit === undefined))).callback(()=>page2called=true).returns(()=>response2.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
                                        {keyConditions:'kcondition'},
                                        {filterExpression:'fcondition'},
                                        {limit:2});
+        
+        assert.isTrue(page1called);
+        assert.isTrue(page2called);
+        assert.deepEqual(entities.lastEvaluatedKey, {hash: '99_hash', range:'99_range'});
+        assert.equal(entities.items.length, 2);
+        assert.deepEqual(entities.items[0], {id:42});
+        assert.deepEqual(entities.items[1], {id:99});
+    });
+
+    it('find() - pagination - more pages with a fetchSize', async () =>
+    {
+        @DBTable()
+        class Entity
+        {
+            @DBColumn()
+            id:number;
+        };
+
+        let page1called = false;
+        let page2called = false;
+        let response1 = getMockedQueryResponse({LastEvaluatedKey: <any> {range:'lek1'}, Items:<any>[{id:42, hash: '42_hash', range: '42_range', objid:42}]});
+        let response2 = getMockedQueryResponse({LastEvaluatedKey: <any> {range:'lek2'}, Items:<any>[{id:99, hash: '99_hash', range: '99_range', objid:99}]});
+
+        mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
+                                                    && p.FilterExpression === 'fcondition'
+                                                    && p.ExclusiveStartKey === undefined
+                                                    && p.Limit === 5))).callback(()=>page1called=true).returns(()=>response1.object);
+
+        mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
+                                                    && p.FilterExpression === 'fcondition'
+                                                    && p.ExclusiveStartKey?.range === <any>'lek1'
+                                                    && p.Limit === 5))).callback(()=>page2called=true).returns(()=>response2.object);
+
+        let manager = new DynamoDbManager(mockedClient.object);
+        let entities = await manager.find(Entity, 
+                                       {keyConditions:'kcondition'},
+                                       {filterExpression:'fcondition'},
+                                       {limit:2, fetchSize:5});
         
         assert.isTrue(page1called);
         assert.isTrue(page2called);
@@ -195,12 +235,14 @@ describe('DynamoDbManager.Find()', function ()
 
         mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
                                                     && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey === undefined))).callback(()=>page1called=true).returns(()=>response1.object);
+                                                    && p.ExclusiveStartKey === undefined
+                                                    && p.Limit === undefined))).callback(()=>page1called=true).returns(()=>response1.object);
 
         mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
                                                     && p.FilterExpression === 'fcondition'
                                                     && p.ExclusiveStartKey?.hash === 'lek1h'
-                                                    && p.ExclusiveStartKey?.range === 'lek1r'))).callback(()=>page2called=true).returns(()=>response2.object);
+                                                    && p.ExclusiveStartKey?.range === 'lek1r'
+                                                    && p.Limit === undefined))).callback(()=>page2called=true).returns(()=>response2.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -234,7 +276,8 @@ describe('DynamoDbManager.Find()', function ()
 
         mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
                                                     && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey === undefined))).returns(()=>response1.object);
+                                                    && p.ExclusiveStartKey === undefined
+                                                    && p.Limit === undefined))).returns(()=>response1.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -266,7 +309,8 @@ describe('DynamoDbManager.Find()', function ()
 
         mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
                                                     && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey === undefined))).returns(()=>response1.object);
+                                                    && p.ExclusiveStartKey === undefined
+                                                    && p.Limit === undefined))).returns(()=>response1.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 

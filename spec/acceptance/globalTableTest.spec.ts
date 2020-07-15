@@ -99,8 +99,31 @@ describe('Global table tests', function ()
         assert.equal(page1.items.length, 1);
         assert.deepEqual(page1.items[0], { id: 1, name: 'Some One' });
 
-        let page2 = await nodenamo.list().from(User).limit(1).resume(page1.lastEvaluatedKey).execute<User>();
+        let page2 = await nodenamo.list().from(User).limit(1,1).resume(page1.lastEvaluatedKey).execute<User>();
 
+        assert.equal(page2.items.length, 1);
+        assert.deepEqual(page2.items[0], { id: 2, name: 'Some Two' });
+        
+        let page3 = await nodenamo.list().from(User).limit(1,1).resume(page2.lastEvaluatedKey).execute<User>();
+        
+        assert.equal(page3.items.length, 1);
+        assert.deepEqual(page3.items[0], { id: 3, name: 'Some Three' });
+
+        let page4 = await nodenamo.list().from(User).limit(1,1).resume(page3.lastEvaluatedKey).execute<User>();
+
+        assert.equal(page4.items.length, 0);
+        assert.isUndefined(page4.lastEvaluatedKey);
+    });
+
+    it('List users with paging and default fetchSize', async () =>
+    {
+        let page1 = await nodenamo.list().from(User).limit(1).execute<User>();
+        
+        assert.equal(page1.items.length, 1);
+        assert.deepEqual(page1.items[0], { id: 1, name: 'Some One' });
+
+        let page2 = await nodenamo.list().from(User).limit(1).resume(page1.lastEvaluatedKey).execute<User>();
+        
         assert.equal(page2.items.length, 1);
         assert.deepEqual(page2.items[0], { id: 2, name: 'Some Two' });
         
@@ -108,14 +131,28 @@ describe('Global table tests', function ()
         
         assert.equal(page3.items.length, 1);
         assert.deepEqual(page3.items[0], { id: 3, name: 'Some Three' });
-
-        let page4 = await nodenamo.list().from(User).limit(1).resume(page3.lastEvaluatedKey).execute<User>();
-
-        assert.equal(page4.items.length, 0);
-        assert.isUndefined(page4.lastEvaluatedKey);
+        assert.isUndefined(page3.lastEvaluatedKey);
     });
 
     it('List books with paging', async () =>
+    {
+        let page1 = await nodenamo.list().from(Book).limit(1,1).execute<Book>();
+        
+        assert.equal(page1.items.length, 1);
+        assert.deepEqual(page1.items[0], { id: 1, title: 'Some Book' });
+
+        let page2 = await nodenamo.list().from(Book).limit(1,1).resume(page1.lastEvaluatedKey).execute<Book>();
+
+        assert.equal(page2.items.length, 1);
+        assert.deepEqual(page2.items[0], { id: 2, title: 'Another Book' });
+
+        let page3 = await nodenamo.list().from(Book).limit(1,1).resume(page2.lastEvaluatedKey).execute<Book>();
+        
+        assert.equal(page3.items.length, 0);
+        assert.isUndefined(page3.lastEvaluatedKey);
+    });
+
+    it('List books with paging and default fetchSize', async () =>
     {
         let page1 = await nodenamo.list().from(Book).limit(1).execute<Book>();
         
@@ -126,11 +163,7 @@ describe('Global table tests', function ()
 
         assert.equal(page2.items.length, 1);
         assert.deepEqual(page2.items[0], { id: 2, title: 'Another Book' });
-
-        let page3 = await nodenamo.list().from(Book).limit(1).resume(page2.lastEvaluatedKey).execute<Book>();
-        
-        assert.equal(page3.items.length, 0);
-        assert.isUndefined(page3.lastEvaluatedKey);
+        assert.isUndefined(page2.lastEvaluatedKey);
     });
 
     it('List items with a filter', async () =>

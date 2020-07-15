@@ -95,6 +95,35 @@ describe('lastEvaluatedKeyWithFilterAndPagingTest', function ()
             expressionAttributeValues: {':organization': 'o1'}
         };
 
+        let page1 = await nodenamo.list().from(User).filter(filter).limit(2,2).execute<User>();
+        
+        assert.equal(page1.items.length, 2);
+        assert.deepEqual(page1.items[0], user1);
+        assert.deepEqual(page1.items[1], user3);
+        assert.isDefined(page1.lastEvaluatedKey)
+
+        let page2 = await nodenamo.list().from(User).filter(filter).limit(2,2).resume(page1.lastEvaluatedKey).execute<User>();
+
+        assert.equal(page2.items.length, 2);
+        assert.deepEqual(page2.items[0], user4);
+        assert.deepEqual(page2.items[1], user5);
+        assert.isDefined(page2.lastEvaluatedKey);
+
+        let page3 = await nodenamo.list().from(User).filter(filter).limit(2,2).resume(page2.lastEvaluatedKey).execute<User>();
+
+        assert.equal(page3.items.length, 0);
+        assert.isUndefined(page3.lastEvaluatedKey);
+    });
+
+    //The same test as above but with default fetchSize
+    it('List items with paging', async () =>
+    {
+        let filter = {
+            filterExpression: '#organization = :organization',
+            expressionAttributeNames: {'#organization': 'organizationId'},
+            expressionAttributeValues: {':organization': 'o1'}
+        };
+
         let page1 = await nodenamo.list().from(User).filter(filter).limit(2).execute<User>();
         
         assert.equal(page1.items.length, 2);
@@ -107,12 +136,7 @@ describe('lastEvaluatedKeyWithFilterAndPagingTest', function ()
         assert.equal(page2.items.length, 2);
         assert.deepEqual(page2.items[0], user4);
         assert.deepEqual(page2.items[1], user5);
-        assert.isDefined(page2.lastEvaluatedKey);
-
-        let page3 = await nodenamo.list().from(User).filter(filter).limit(2).resume(page2.lastEvaluatedKey).execute<User>();
-
-        assert.equal(page3.items.length, 0);
-        assert.isUndefined(page3.lastEvaluatedKey);
+        assert.isUndefined(page2.lastEvaluatedKey);
     });
 
     /*
@@ -124,6 +148,30 @@ describe('lastEvaluatedKeyWithFilterAndPagingTest', function ()
             return: user2, user6, and user7 AND the returned token MUST point to user7. Otherwise, user8 will be skipped.
         The second listing should continue from user3 so that user4 and user5 are returned.
     */
+   it('List items with paging - last page still have items', async () =>
+   {
+       let filter = {
+           filterExpression: '#organization = :organization',
+           expressionAttributeNames: {'#organization': 'organizationId'},
+           expressionAttributeValues: {':organization': 'o2'}
+       };
+
+       let page1 = await nodenamo.list().from(User).filter(filter).limit(3,3).execute<User>();
+       
+       assert.equal(page1.items.length, 3);
+       assert.deepEqual(page1.items[0], user2);
+       assert.deepEqual(page1.items[1], user6);
+       assert.deepEqual(page1.items[2], user7);
+       assert.isDefined(page1.lastEvaluatedKey)
+
+       let page2 = await nodenamo.list().from(User).filter(filter).limit(3,3).resume(page1.lastEvaluatedKey).execute<User>();
+
+       assert.equal(page2.items.length, 1);
+       assert.deepEqual(page2.items[0], user8);
+       assert.isUndefined(page2.lastEvaluatedKey);
+   });
+
+   //The same test as above but with default fetchSize
    it('List items with paging - last page still have items', async () =>
    {
        let filter = {

@@ -12,11 +12,12 @@ export class Limit
                 private type:{new(...args: any[])},
                 private keyParams:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
                 private filterParams?:{filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
-                private params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key, projections?:string[], stronglyConsistent?:boolean},
-                private limit?:number)
+                private params?:{limit?:number, fetchSize?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key, projections?:string[], stronglyConsistent?:boolean},
+                private limit?:number, private fetchSize?:number)
     {
         this.params = this.params || {};
         this.params.limit = this.limit;
+        this.params.fetchSize = this.fetchSize;
     }
 
     using(indexName:string): Using

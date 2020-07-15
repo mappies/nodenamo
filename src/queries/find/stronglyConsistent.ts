@@ -12,16 +12,16 @@ export class StronglyConsistent
                 private type:{new(...args: any[])},
                 private keyParams:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
                 private filterParams?:{filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
-                private params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key, projections?:string[], stronglyConsistent?:boolean},
+                private params?:{limit?:number, fetchSize?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key, projections?:string[], stronglyConsistent?:boolean},
                 private stronglyConsistent?:boolean)
     {
         this.params = this.params || {};
         this.params.stronglyConsistent = this.stronglyConsistent;
     }
 
-    limit(limit:number): Limit
+    limit(limit:number, fetchSize?:number): Limit
     {
-        return new Limit(this.manager, this.type, this.keyParams, this.filterParams, this.params, limit);
+        return new Limit(this.manager, this.type, this.keyParams, this.filterParams, this.params, limit, fetchSize);
     }
 
     using(indexName:string): Using

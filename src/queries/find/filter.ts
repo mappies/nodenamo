@@ -17,9 +17,9 @@ export class Filter
 
     }
 
-    limit(limit:number): Limit
+    limit(limit:number, fetchSize?:number): Limit
     {
-        return new Limit(this.manager, this.type, this.keyParams, this.filterParams, this.params, limit);
+        return new Limit(this.manager, this.type, this.keyParams, this.filterParams, this.params, limit, fetchSize);
     }
 
     using(indexName:string): Using

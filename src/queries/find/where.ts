@@ -22,9 +22,9 @@ export class Where
         return new Filter(this.manager, this.type, this.keyParams, filterParams, this.params);
     }
 
-    limit(limit:number): Limit
+    limit(limit:number, fetchSize?:number): Limit
     {
-        return new Limit(this.manager, this.type, this.keyParams, undefined, this.params, limit);
+        return new Limit(this.manager, this.type, this.keyParams, undefined, this.params, limit, fetchSize);
     }
 
     using(indexName:string): Using

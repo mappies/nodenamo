@@ -12,16 +12,16 @@ export class Using
                 private type:{new(...args: any[])},
                 private keyParams:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
                 private filterParams?:{filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
-                private params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key,projections?:string[], stronglyConsistent?:boolean},
+                private params?:{limit?:number, fetchSize?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key,projections?:string[], stronglyConsistent?:boolean},
                 private indexName?:string)
     {
         this.params = this.params || {};
         this.params.indexName = this.indexName;
     }
 
-    limit(limit:number): Limit
+    limit(limit:number, fetchSize?:number): Limit
     {
-        return new Limit(this.manager, this.type, this.keyParams, this.filterParams, this.params, limit);
+        return new Limit(this.manager, this.type, this.keyParams, this.filterParams, this.params, limit, fetchSize);
     }
 
     order(forward:boolean): Order
