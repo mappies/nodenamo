@@ -31,9 +31,9 @@ describe('DynamoDbManager.Get()', function ()
         let obj = {id:42};
         obj[Const.VersionColumn] = 1;
 
-        let response = getMockedQueryResponse({Items:[<any>obj]});
+        let response = getMockedGetResponse({Item:<any>obj});
 
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.KeyConditionExpression === '#hash=:hash and #range=:range' && p.ExpressionAttributeValues[':hash'] === 'entity#42' && p.ExpressionAttributeValues[':range'] === 'nodenamo' && p.Limit === 1))).callback(()=>called=true).returns(()=>response.object);
+        mockedClient.setup(q => q.get(It.is(p => !!p.TableName && p.Key[Const.HashColumn] === 'entity#42' && p.Key[Const.RangeColumn] === 'nodenamo'))).callback(()=>called=true).returns(()=>response.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entity = await manager.getOne(Entity, 42);
@@ -52,9 +52,9 @@ describe('DynamoDbManager.Get()', function ()
             id:number;
         };
 
-        let response = getMockedGetResponse({});
+        let response = getMockedGetResponse({Item:undefined});
 
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.KeyConditionExpression === '#hash=:hash and #range=:range' && p.ExpressionAttributeValues[':hash'] === 'entity#42' && p.ExpressionAttributeValues[':range'] === 'nodenamo' && p.Limit === 1))).callback(()=>called=true).returns(()=>response.object);
+        mockedClient.setup(q => q.get(It.is(p => !!p.TableName && p.Key[Const.HashColumn] === 'entity#42' && p.Key[Const.RangeColumn] === 'nodenamo'))).callback(()=>called=true).returns(()=>response.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entity = await manager.getOne(Entity, 42);

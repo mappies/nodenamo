@@ -1,7 +1,7 @@
 import {assert as assert} from 'chai';
 import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
-import { DocumentClient, QueryOutput } from 'aws-sdk/clients/dynamodb';
+import { DocumentClient, QueryOutput, GetItemOutput } from 'aws-sdk/clients/dynamodb';
 import { DBTable, DBColumn } from '../../src';
 import { DynamoDbTransaction } from '../../src/managers/dynamodbTransaction';
 import {Const} from '../../src/const';
@@ -592,9 +592,9 @@ describe('DynamoDbManager.Apply()', function ()
          let findResponse1 = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
         ]});
-        let findResponse2 = getMockedQueryResponse({Items: <any>[
+        let getResponse = getMockedGetResponse({Item: <any>
             {hash: 'hash', range: 'range', id:1, objver: 2, name:'Some One'},
-        ]});
+        });
 
         let calledGetById = false;
         let calledGetOne = false;
@@ -603,9 +603,9 @@ describe('DynamoDbManager.Apply()', function ()
                     .callback(()=>calledGetById=true)
                     .returns(()=>findResponse1.object);
 
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.KeyConditionExpression === '#hash=:hash and #range=:range' && p.ExpressionAttributeValues[':hash'] === 'entity#1' && p.ExpressionAttributeValues[':range'] === 'nodenamo' && p.Limit === 1)))
+        mockedClient.setup(q => q.get(It.is(p => !!p.TableName && p.Key[Const.HashColumn] === 'entity#1' && p.Key[Const.RangeColumn] === 'nodenamo')))
                     .callback(()=>calledGetOne=true)
-                    .returns(()=>findResponse2.object);
+                    .returns(()=>getResponse.object);
 
         mockedTransaction.setup(t => t.commit()).throws(new AggregateError([new Error('Simulated error - ConditionalCheckFailed')]));
 
@@ -664,6 +664,12 @@ describe('DynamoDbManager.Apply()', function ()
     });
 });
 
+function getMockedGetResponse(response:GetItemOutput): IMock<Request<GetItemOutput, AWSError>>
+{
+    let mock = Mock.ofType<Request<GetItemOutput, AWSError>>();
+    mock.setup(r => r.promise()).returns(async()=><any>response);
+    return mock;
+}
 function getMockedQueryResponse(response:QueryOutput): IMock<Request<QueryOutput, AWSError>>
 {
     let mock = Mock.ofType<Request<QueryOutput, AWSError>>();

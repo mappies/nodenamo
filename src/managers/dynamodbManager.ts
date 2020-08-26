@@ -1,4 +1,4 @@
-import { DocumentClient, QueryInput, QueryOutput } from 'aws-sdk/clients/dynamodb';
+import { DocumentClient, QueryInput, QueryOutput, GetItemInput } from 'aws-sdk/clients/dynamodb';
 import { DynamoDbTransaction } from './dynamodbTransaction';
 import { RepresentationFactory } from '../representationFactory';
 import { Reflector } from '../reflector';
@@ -96,27 +96,21 @@ export class DynamoDbManager implements IDynamoDbManager
         };
         addColumnValuePrefix(obj, attributeValues, attributeNames)
 
-        let query:QueryInput = {
+        let query:GetItemInput = {
             TableName: tableName,
-            KeyConditionExpression: '#hash=:hash and #range=:range',
-            ExpressionAttributeNames: attributeNames,
-            ExpressionAttributeValues: attributeValues,
-            ConsistentRead: params?.stronglyConsistent,
-            Limit: 1
+            Key: {
+                [Const.HashColumn]: attributeValues[':hash'],
+                [Const.RangeColumn]:  attributeValues[':range']
+            },
+            ConsistentRead: params?.stronglyConsistent
         };
 
-        do
+        let response =  await this.client.get(query).promise();
+
+        if(response.Item)
         {
-            let response =  await this.client.query(query).promise();
-
-            if(response.Items && response.Items.length > 0)
-            {
-                return EntityFactory.create(type, response.Items[0]);
-            }
-
-            query.ExclusiveStartKey = response.LastEvaluatedKey;
+            return EntityFactory.create(type, response.Item);
         }
-        while(query.ExclusiveStartKey);
 
         return undefined;
     }
