@@ -985,7 +985,6 @@ describe('RepresentationFactory', function ()
         };
 
         let representations = RepresentationFactory.get(new Entity());
-        console.log(representations)
         
         assert.equal(representations.length, 2);
 
@@ -1078,7 +1077,7 @@ describe('RepresentationFactory', function ()
         };
 
         let representations = RepresentationFactory.get(new Entity());
-        console.log(representations)
+
         assert.equal(representations.length, 4);
 
         assert.isTrue(representations[0] instanceof Representation);

@@ -1,6 +1,6 @@
 import { Reflector } from './reflector';
 
-export function DBTable(params:{name?: string, dataPrefix?:string, versioning?:boolean} = {}) 
+export function DBTable(params:{name?: string, dataPrefix?:string, versioning?:boolean, stronglyConsistent?:boolean} = {}) 
 {
     return function(constructor:any): any
     {
@@ -9,6 +9,7 @@ export function DBTable(params:{name?: string, dataPrefix?:string, versioning?:b
             Reflector.setTableName(instance, params.name || constructor.name);
             Reflector.setDataPrefix(instance, (params.dataPrefix || constructor.name).toLowerCase());
             Reflector.setTableVersioning(instance, params.versioning);
+            Reflector.setTableStronglyConsistent(instance, params.stronglyConsistent);
             return instance;
         }
     };

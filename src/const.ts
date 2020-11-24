@@ -6,6 +6,7 @@ export enum Const
     RangeKey = "nodenamo:rangekey",
     HashRangeKey = "nodenamo:hashrangekey",
     TableVersioning = "nodenamo:versioning",
+    TableStronglyConsistent = "nodenamo:stronglyconsistent",
     ObjectVersion = "nodenamp:version",
     IdKey = "nodenamo:idkey",
     DataPrefix = "nodenamo:dataprefix",

@@ -52,6 +52,53 @@ describe('DynamoDbManager.Find()', function ()
         assert.equal(Reflector.getObjectVersion(entities.items[0]), 1);
     });
 
+    [ 
+        {tableStrongConsistent: true, callWithStrongConsistent: false, expectedQueryConsistentRead: true},
+        {tableStrongConsistent: true, callWithStrongConsistent: true, expectedQueryConsistentRead: true},
+        {tableStrongConsistent: undefined, callWithStrongConsistent: true, expectedQueryConsistentRead: true},
+        {tableStrongConsistent: undefined, callWithStrongConsistent: false, expectedQueryConsistentRead: false},
+        {tableStrongConsistent: false, callWithStrongConsistent: false, expectedQueryConsistentRead: false},
+        {tableStrongConsistent: false, callWithStrongConsistent: true, expectedQueryConsistentRead: true},
+        {tableStrongConsistent: true, callWithStrongConsistent: undefined, expectedQueryConsistentRead: true},
+        {tableStrongConsistent: false, callWithStrongConsistent: undefined, expectedQueryConsistentRead: false},
+        {tableStrongConsistent: undefined, callWithStrongConsistent: undefined, expectedQueryConsistentRead: false}
+    ]
+    .forEach(test => 
+    { 
+        it(`find() - Table.stronglyConsistent is ${test.tableStrongConsistent}, called with ${test.callWithStrongConsistent} should set Query.ConsistentRead to ${test.expectedQueryConsistentRead}`, async () =>
+        {
+            @DBTable({stronglyConsistent: test.tableStrongConsistent})
+            class Entity
+            {
+                @DBColumn()
+                id:number;
+            };
+
+            let response = getMockedQueryResponse({Items:<any>[obj]});
+
+            mockedClient.setup(q => q.query(It.is(p => 
+                !!p.TableName 
+                && p.KeyConditionExpression === '#id = :id' 
+                && p.ExpressionAttributeNames['#id'] === 'id' 
+                && p.ExpressionAttributeValues[':id'] === 42
+                && p.FilterExpression === undefined
+                && p.ProjectionExpression === undefined
+                && p.ConsistentRead === test.expectedQueryConsistentRead
+            ))).callback(()=>called=true).returns(()=>response.object);
+
+            let manager = new DynamoDbManager(mockedClient.object);
+            let entities = await manager.find(Entity, 
+                                        {keyConditions:'#id = :id', expressionAttributeNames: {'#id': 'id'}, expressionAttributeValues: {':id': 42}},
+                                        undefined,
+                                        {stronglyConsistent: test.callWithStrongConsistent});
+
+            assert.isTrue(called);
+            assert.equal(entities.items.length, 1);
+            assert.deepEqual(entities.items[0], {id:42});
+            assert.equal(Reflector.getObjectVersion(entities.items[0]), 1);
+        });
+    });
+
     it('find() - filter', async () =>
     {
         @DBTable()

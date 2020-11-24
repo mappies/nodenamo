@@ -60,6 +60,15 @@ export class Reflector
         Reflect.defineMetadata(Const.TableVersioning, version, obj);
     }
 
+    static getTableStronglyConsistent(obj:object): boolean
+    {
+        return Reflect.getMetadata(Const.TableStronglyConsistent, obj) || false;
+    }
+
+    static setTableStronglyConsistent(obj:object, stronglyConsistent:boolean): void
+    {
+        Reflect.defineMetadata(Const.TableStronglyConsistent, stronglyConsistent, obj);
+    }
     static getColumns(obj:object): string[]
     {
         return Reflect.getMetadata(Const.DBColumn, obj) || [];

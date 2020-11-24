@@ -75,4 +75,28 @@ describe('DbTable', function ()
 
         assert.isFalse(Reflector.getTableVersioning(new Entity()));
     });
+
+    it('Table StronglyConsistent - true', function () 
+    {
+        @DBTable({stronglyConsistent:true})
+        class Entity {};
+
+        assert.isTrue(Reflector.getTableStronglyConsistent(new Entity()));
+    });
+
+    it('Table StronglyConsistent - false', function () 
+    {
+        @DBTable({stronglyConsistent:false})
+        class Entity {};
+
+        assert.isFalse(Reflector.getTableStronglyConsistent(new Entity()));
+    });
+
+    it('Table StronglyConsistent - undefined', function () 
+    {
+        @DBTable()
+        class Entity {};
+
+        assert.isFalse(Reflector.getTableStronglyConsistent(new Entity()));
+    });
 });

@@ -85,6 +85,7 @@ export class DynamoDbManager implements IDynamoDbManager
     async getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number, params?:{stronglyConsistent?:boolean}): Promise<T>
     {
         let obj:T = new type();
+        let stronglyConsistent = Reflector.getTableStronglyConsistent(obj) || params?.stronglyConsistent || false;
         let tableName = Reflector.getTableName(obj);
         let attributeValues = {
             ':hash': <any>id,
@@ -102,7 +103,7 @@ export class DynamoDbManager implements IDynamoDbManager
                 [Const.HashColumn]: attributeValues[':hash'],
                 [Const.RangeColumn]:  attributeValues[':range']
             },
-            ConsistentRead: params?.stronglyConsistent
+            ConsistentRead: stronglyConsistent
         };
 
         let response =  await this.client.get(query).promise();
@@ -122,6 +123,8 @@ export class DynamoDbManager implements IDynamoDbManager
                                  : Promise<{items:T[], lastEvaluatedKey: DocumentClient.Key}>
     {
         let obj:T = new type();
+
+        let stronglyConsistent = Reflector.getTableStronglyConsistent(obj) || params?.stronglyConsistent || false;
 
         let tableName = Reflector.getTableName(obj);
 
@@ -168,7 +171,7 @@ export class DynamoDbManager implements IDynamoDbManager
             Limit: params ? params.fetchSize : undefined,
             ExclusiveStartKey: params ? params.exclusiveStartKey : undefined,
             ScanIndexForward: params && (params.order || 1) >= 0,
-            ConsistentRead: params? params.stronglyConsistent : undefined,
+            ConsistentRead: params? stronglyConsistent : undefined,
             ProjectionExpression: projectedColumns,
             ...additionalParams
         };
