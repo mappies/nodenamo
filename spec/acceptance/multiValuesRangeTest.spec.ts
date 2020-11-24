@@ -16,7 +16,7 @@ class User
     @DBColumn()
     name:string;
 
-    @DBColumn({range:true})
+    @DBColumn({range:true, name:'newRanges'})
     ranges:any[];
 
     constructor(id:number, name:string, account:number, ranges:any[])

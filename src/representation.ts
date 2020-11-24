@@ -11,58 +11,73 @@ export class Representation
 
     static create(tableName:string, dataPrefix:string = '', hash:any, range:any, id:string, originalData:object): Representation[]
     {
-        let rangeValues = [];
-
-        if(range === undefined)
+        let hashValues = [];
+        
+        if(Array.isArray(originalData[Key.parse(hash).targetName]))
         {
-            //Do nothing
+            hashValues = originalData[Key.parse(hash).targetName].map(propertyValue => addDataPrefix(dataPrefix, propertyValue));
         }
-        if(Array.isArray(originalData[Key.parse(range).propertyName]))
+        else if(hash === Const.IdUniquenessHash)
         {
-            rangeValues = originalData[Key.parse(range).propertyName];
+            hashValues = [addDataPrefix(dataPrefix,  getPropertyValue(originalData, id))];
         }
-        else if(range === Const.IdUniquenessRange)
+        else if(hash)
         {
-            rangeValues = [Const.IdUniquenessRange];
+            hashValues = [addDataPrefix(dataPrefix, getPropertyValue(originalData, hash))];
         }
         else
         {
-            rangeValues = [getPropertyValue(originalData, range)];
+            hashValues = [addDataPrefix(dataPrefix, Const.DefaultHashValue)];
         }
-
+    
         let result:Representation[] = [];
-
-        for(let rangeValue of rangeValues)
+    
+        for(let hashValue of hashValues)
         {
-            result.push(createRepresentation(tableName, dataPrefix, hash, rangeValue, id, originalData));
+            result = result.concat(createRepresentationForHash(tableName, dataPrefix, hash, hashValue, range, id, originalData));
         }
-
+    
         return result;
     }
 };
 
+function createRepresentationForHash(tableName:string, dataPrefix:string = '', hash:any, hashValue:any, range:any, id:string, originalData:object): Representation[]
+{
+    let rangeValues = [];
+    
+    if(Array.isArray(originalData[Key.parse(range).targetName]))
+    {
+        rangeValues = originalData[Key.parse(range).targetName];
+    }
+    else if(range === Const.IdUniquenessRange)
+    {
+        rangeValues = [Const.IdUniquenessRange];
+    }
+    else
+    {
+        rangeValues = [getPropertyValue(originalData, range)];
+    }
+
+    let result:Representation[] = [];
+
+    for(let rangeValue of rangeValues)
+    {
+        result.push(createRepresentationForHashRange(tableName, dataPrefix, hash, hashValue, rangeValue, id, originalData));
+    }
+
+    return result;
+}
 
 
-function createRepresentation(tableName: string, dataPrefix:string = '', hash:any, rangeValue:any, id:string, originalData:object): Representation
+
+function createRepresentationForHashRange(tableName: string, dataPrefix:string = '', hash:any, hashValue:any, rangeValue:any, id:string, originalData:object): Representation
 {
     let result = new Representation(tableName);
 
     result.data = Object.assign({}, originalData);
 
     result.objId = addDataPrefix(dataPrefix, getPropertyValue(result.data, id));
-    
-    if(hash === Const.IdUniquenessHash)
-    {
-        result.hash = addDataPrefix(dataPrefix,  getPropertyValue(result.data, id));
-    }
-    else if(hash)
-    {
-        result.hash = addDataPrefix(dataPrefix, getPropertyValue(result.data, hash))
-    }
-    else
-    {
-        result.hash = addDataPrefix(dataPrefix, Const.DefaultHashValue);
-    }
+    result.hash = hashValue;
 
     if(hash === undefined && rangeValue === undefined)
     {
