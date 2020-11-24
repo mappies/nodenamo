@@ -2,7 +2,7 @@
 A lightweight, high-level ORM for DynamoDB that will make you fall in love with DynamoDB.
 
 
-[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fmappies%2Fnodenamo%2Fbadge&style=popout-square)](https://actions-badge.atrox.dev/mappies/nodenamo/goto)
+![Tests](https://github.com/mappies/nodenamo/workflows/Tests/badge.svg)
 
 
 ## Introduction

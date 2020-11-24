@@ -1,6 +1,8 @@
 name: Package Release
 
-on: [release]
+on: 
+  release:
+    types: [published]
 
 jobs:
 
@@ -29,6 +31,7 @@ jobs:
       
     - name: Publish
       run: |
+        npm run build
         npm config set //registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN
         npm publish
       env:
