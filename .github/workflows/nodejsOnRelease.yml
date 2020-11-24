@@ -32,7 +32,7 @@ jobs:
     - name: Publish
       run: |
         npm run build
-        npm config set //registry.npmjs.org/:_authToken=$NPM_TOKEN
+        echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
         npm publish
       env:
         CI: true
