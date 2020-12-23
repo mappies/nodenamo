@@ -1,6 +1,6 @@
 {
   "name": "nodenamo",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "A powerful ORM for DynamoDb",
   "main": "dist/index.js",
   "typings": "dist/index",

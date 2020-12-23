@@ -282,7 +282,7 @@ export class DynamoDbManager implements IDynamoDbManager
 
         if(versioningRequired)
         {
-            additionalParams.ConditionExpression = '#objver < :objver';
+            additionalParams.ConditionExpression = '(attribute_not_exists(#objver) OR #objver < :objver)';
             additionalParams.ExpressionAttributeNames = {'#objver': Const.VersionColumn};
             additionalParams.ExpressionAttributeValues = {':objver': newRepresentations[0].data[Const.VersionColumn]};
         }
