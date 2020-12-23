@@ -282,7 +282,7 @@ export class DynamoDbManager implements IDynamoDbManager
 
         if(versioningRequired)
         {
-            additionalParams.ConditionExpression = '(#objver < :objver)';
+            additionalParams.ConditionExpression = '#objver < :objver';
             additionalParams.ExpressionAttributeNames = {'#objver': Const.VersionColumn};
             additionalParams.ExpressionAttributeValues = {':objver': newRepresentations[0].data[Const.VersionColumn]};
         }
@@ -325,7 +325,7 @@ export class DynamoDbManager implements IDynamoDbManager
             if(newKey)
             {
                 representationAdditionalParam.ConditionExpression =
-                    (representationAdditionalParam.ConditionExpression ? `(${representationAdditionalParam.ConditionExpression}) AND` : '')
+                    (representationAdditionalParam.ConditionExpression ? `${representationAdditionalParam.ConditionExpression} AND` : '')
                     +
                     '(attribute_not_exists(#hash) AND attribute_not_exists(#range))'
 
