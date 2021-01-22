@@ -5,6 +5,10 @@ function sleep(ms:number)
     return new Promise((resolve)=>setTimeout(resolve, ms));
 }
 
+const random = (min, max) => {
+    return Math.round((Math.random() * (max - min) + min));
+};
+
 const nonRetryableErrors = ['ItemCollectionSizeLimitExceeded', 'ConditionalCheckFailed', 'ProvisionedThroughputExceeded', 'ThrottlingError', 'ValidationError'];
 
 export class Reexecutable
@@ -55,7 +59,7 @@ export class Reexecutable
                 await sleep(waitInMs);
 
                 totalWaitInMs += waitInMs;
-                waitInMs *= 2;
+                waitInMs = waitInMs < 500 ? waitInMs + 150 : random(450,800);
             }
         }
         while(totalWaitInMs <= maxWaitInMs);

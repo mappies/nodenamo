@@ -112,7 +112,7 @@ describe('Reexecutable', function ()
         assert.isDefined(error);
         assert.instanceOf(error, AggregateError);
         assert.isTrue(error.message.includes('TransactionConflict:'));
-        assert.equal(called, 6);
+        assert.isTrue(called >= 9);
     }).timeout(12000);
 
     it('execute() - a transaction error but throw non-transaction error after a retry', async ()=>
