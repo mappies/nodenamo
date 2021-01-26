@@ -13,6 +13,7 @@ import { IDynamoDbManager } from './interfaces/iDynamodbManager';
 import { On } from './queries/on/on';
 import ITransactionable from './interfaces/iTransactionable';
 import { Transaction } from './queries/transaction/on';
+import { Describe } from './queries/describe/describe';
 
 export class NodeNamo
 {
@@ -71,5 +72,10 @@ export class NodeNamo
     deleteTable(): DeleteTable
     {
         return new DeleteTable(this.manager);
+    }
+
+    describe(type:{new(...args: any[])}): Describe
+    {
+        return new Describe(this.manager, type);
     }
 };
