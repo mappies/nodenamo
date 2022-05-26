@@ -410,10 +410,8 @@ describe('DynamoDbManager.Find()', function ()
 
         mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
                                                     && p.FilterExpression === 'fcondition'
-                                                    && p.ScanIndexForward === true
                                                     && p.ExclusiveStartKey['hash'] === '43_hash'
                                                     && p.ExclusiveStartKey['range'] === '43_range'
-                                                    && p.ExclusiveStartKey['order'] === undefined
                                                     ))).callback(()=>called=true).returns(()=>response1.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
@@ -421,36 +419,6 @@ describe('DynamoDbManager.Find()', function ()
                                        {keyConditions:'kcondition'},
                                        {filterExpression:'fcondition'},
                                        {exclusiveStartKey:'eyJoYXNoIjoiNDNfaGFzaCIsInJhbmdlIjoiNDNfcmFuZ2UifQ=='});
-        
-        assert.isTrue(called);
-        assert.equal(entities.items.length, 1);
-        assert.deepEqual(entities.items[0], {id:42});
-    });
-
-    it('find() - exclusive start key from previous page token', async () =>
-    {
-        @DBTable()
-        class Entity
-        {
-            @DBColumn()
-            id:number;
-        };
-
-        let response1 = getMockedQueryResponse({Items:<any>[obj]});
-
-        mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
-                                                    && p.FilterExpression === 'fcondition'
-                                                    && p.ScanIndexForward === false
-                                                    && p.ExclusiveStartKey['hash'] === '43_hash'
-                                                    && p.ExclusiveStartKey['range'] === '43_range'
-                                                    && p.ExclusiveStartKey['order'] === undefined
-                                                    ))).callback(()=>called=true).returns(()=>response1.object);
-
-        let manager = new DynamoDbManager(mockedClient.object);
-        let entities = await manager.find(Entity, 
-                                       {keyConditions:'kcondition'},
-                                       {filterExpression:'fcondition'},
-                                       {exclusiveStartKey:'eyJoYXNoIjoiNDNfaGFzaCIsInJhbmdlIjoiNDNfcmFuZ2UiLCJvcmRlciI6LTF9'});
         
         assert.isTrue(called);
         assert.equal(entities.items.length, 1);

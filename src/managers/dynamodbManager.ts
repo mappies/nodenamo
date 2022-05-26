@@ -163,20 +163,12 @@ export class DynamoDbManager implements IDynamoDbManager
             additionalParams['ExpressionAttributeValues'] = Object.assign(filterParams.expressionAttributeValues, additionalParams['ExpressionAttributeValues']);
         }
         
-        let shouldReverse: boolean = false;
         let exclusiveStartKey;
         if (params?.exclusiveStartKey)
         {
             try
             {
-                
                 exclusiveStartKey = JSON.parse(Buffer.from(params.exclusiveStartKey, 'base64').toString());
-                if (exclusiveStartKey.order === -1)
-                {
-                    shouldReverse = true;
-                    params.order = (params.order || 1) * -1;
-                    delete exclusiveStartKey.order;
-                }
             }
             catch(e){}
         }
@@ -234,18 +226,6 @@ export class DynamoDbManager implements IDynamoDbManager
 
         let items = Object.values(result);
 
-        if (shouldReverse)
-        {
-            let tmpItem = firstItem;
-            firstItem = lastItem;
-            lastItem = tmpItem;
-            response.LastEvaluatedKey = {
-                [Const.HashColumn]: lastItem[Const.HashColumn],
-                [Const.RangeColumn]: lastItem[Const.RangeColumn]
-            }
-            items.reverse();
-        }
-
         let lastEvaluatedKey: string
         if(response.LastEvaluatedKey && lastItem)
         {
@@ -261,7 +241,6 @@ export class DynamoDbManager implements IDynamoDbManager
             firstEvaluatedKey = Buffer.from(JSON.stringify({
                 [Const.HashColumn]: firstItem[Const.HashColumn],
                 [Const.RangeColumn]: firstItem[Const.RangeColumn],
-                order: -1
             })).toString('base64');
         }
 
