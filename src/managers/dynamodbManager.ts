@@ -119,8 +119,8 @@ export class DynamoDbManager implements IDynamoDbManager
     async find<T extends object>(type:{new(...args: any[]):T},
                                  keyParams?:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
                                  filterParams?: {filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
-                                 params?:{limit?:number, fetchSize?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key,projections?:string[], stronglyConsistent?:boolean})
-                                 : Promise<{items:T[], lastEvaluatedKey: DocumentClient.Key}>
+                                 params?:{limit?:number, fetchSize?:number, indexName?:string,order?:number,exclusiveStartKey?:string,projections?:string[], stronglyConsistent?:boolean})
+                                 : Promise<{items:T[], lastEvaluatedKey: string, firstEvaluatedKey: string}>
     {
         let obj:T = new type();
 
@@ -162,6 +162,24 @@ export class DynamoDbManager implements IDynamoDbManager
             addColumnValuePrefix(obj, filterParams.expressionAttributeValues, filterParams.expressionAttributeNames);
             additionalParams['ExpressionAttributeValues'] = Object.assign(filterParams.expressionAttributeValues, additionalParams['ExpressionAttributeValues']);
         }
+        
+        let shouldReverse: boolean = false;
+        let exclusiveStartKey;
+        if (params?.exclusiveStartKey)
+        {
+            try
+            {
+                
+                exclusiveStartKey = JSON.parse(Buffer.from(params.exclusiveStartKey, 'base64').toString());
+                if (exclusiveStartKey.order === -1)
+                {
+                    shouldReverse = true;
+                    params.order = (params.order || 1) * -1;
+                    delete exclusiveStartKey.order;
+                }
+            }
+            catch(e){}
+        }
 
         let query:QueryInput = {
             TableName: tableName,
@@ -169,21 +187,24 @@ export class DynamoDbManager implements IDynamoDbManager
             FilterExpression: filterParams ? filterParams.filterExpression : undefined,
             IndexName: params ? params.indexName : undefined,
             Limit: params ? params.fetchSize : undefined,
-            ExclusiveStartKey: params ? params.exclusiveStartKey : undefined,
+            ExclusiveStartKey: exclusiveStartKey,
             ScanIndexForward: params && (params.order || 1) >= 0,
             ConsistentRead: params? stronglyConsistent : undefined,
             ProjectionExpression: projectedColumns,
             ...additionalParams
         };
 
-        let result:{} = {};
+        let result:{[key: string]: T} = {};
         let response:QueryOutput;
         let itemCount = 0;
+        let firstItem;
         let lastItem;
 
         do
         {
             response =  await this.client.query(query).promise();
+
+            if (!firstItem) firstItem = response.Items[0];
 
             let processedItemCount = 0;
 
@@ -194,7 +215,7 @@ export class DynamoDbManager implements IDynamoDbManager
 
                 lastItem = item;
 
-                result[<any>item[Const.IdColumn]] = EntityFactory.create(type, item);
+                result[<string>item[Const.IdColumn]] = EntityFactory.create(type, item);
 
                 if(!!params && !!params.limit && ++itemCount >= params.limit)
                 {
@@ -211,15 +232,40 @@ export class DynamoDbManager implements IDynamoDbManager
         }
         while(response.LastEvaluatedKey && itemCount < params.limit)
 
-        if(response.LastEvaluatedKey && lastItem)
+        let items = Object.values(result);
+
+        if (shouldReverse)
         {
+            let tmpItem = firstItem;
+            firstItem = lastItem;
+            lastItem = tmpItem;
             response.LastEvaluatedKey = {
                 [Const.HashColumn]: lastItem[Const.HashColumn],
                 [Const.RangeColumn]: lastItem[Const.RangeColumn]
-            };
+            }
+            items.reverse();
         }
 
-        return {items: Object.values(result), lastEvaluatedKey: response.LastEvaluatedKey}
+        let lastEvaluatedKey: string
+        if(response.LastEvaluatedKey && lastItem)
+        {
+            lastEvaluatedKey = Buffer.from(JSON.stringify({
+                [Const.HashColumn]: lastItem[Const.HashColumn],
+                [Const.RangeColumn]: lastItem[Const.RangeColumn]
+            })).toString('base64');
+        }
+
+        let firstEvaluatedKey: string;
+        if (firstItem)
+        {
+            firstEvaluatedKey = Buffer.from(JSON.stringify({
+                [Const.HashColumn]: firstItem[Const.HashColumn],
+                [Const.RangeColumn]: firstItem[Const.RangeColumn],
+                order: -1
+            })).toString('base64');
+        }
+
+        return { items, lastEvaluatedKey, firstEvaluatedKey }
     }
 
     async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction, autoCommit:boolean = true)

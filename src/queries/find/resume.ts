@@ -12,18 +12,14 @@ export class Resume
                 private type:{new(...args: any[])},
                 private keyParams:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
                 private filterParams?:{filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
-                private params?:{limit?:number, fetchSize?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key, projections?:string[], stronglyConsistent?:boolean},
+                private params?:{limit?:number, fetchSize?:number, indexName?:string,order?:number,exclusiveStartKey?:string, projections?:string[], stronglyConsistent?:boolean},
                 private startKey?:string)
     {
-        let realParams:any = Object.assign({}, params);
+        let realParams:typeof params = Object.assign({}, params);
 
         if(startKey)
         {
-            try
-            {
-                realParams.exclusiveStartKey = JSON.parse(Buffer.from(startKey, 'base64').toString());
-            }
-            catch(e){}
+            realParams.exclusiveStartKey = startKey
         }
 
         this.params = realParams;
@@ -49,7 +45,7 @@ export class Resume
         return new StronglyConsistent(this.manager, this.type, this.keyParams, this.filterParams, this.params, stronglyConsistent);
     }
 
-    async execute<T extends object>(): Promise<{items:T[], lastEvaluatedKey:string}>
+    async execute<T extends object>(): Promise<{items:T[], lastEvaluatedKey:string, firstEvaluatedKey: string}>
     {
         return await new Execute(this.manager, this.type, this.keyParams, this.filterParams, this.params).execute();
     }
