@@ -12,7 +12,7 @@ export class StronglyConsistent
                 private type:{new(...args: any[])},
                 private keyParams:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
                 private filterParams?:{filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
-                private params?:{limit?:number, fetchSize?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key, projections?:string[], stronglyConsistent?:boolean},
+                private params?:{limit?:number, fetchSize?:number, indexName?:string,order?:number,exclusiveStartKey?:string, projections?:string[], stronglyConsistent?:boolean},
                 private stronglyConsistent?:boolean)
     {
         this.params = this.params || {};
@@ -39,7 +39,7 @@ export class StronglyConsistent
         return new Resume(this.manager, this.type, this.keyParams, this.filterParams, this.params, key);
     }
 
-    async execute<T extends object>(): Promise<{items:T[], lastEvaluatedKey:string}>
+    async execute<T extends object>(): Promise<{items:T[], lastEvaluatedKey:string, firstEvaluatedKey: string}>
     {
         return await new Execute(this.manager, this.type, this.keyParams, this.filterParams, this.params).execute();
     }

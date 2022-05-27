@@ -41,8 +41,8 @@ export class ValidatedDynamoDbManager implements IDynamoDbManager
     async find<T extends object>(type:{new(...args: any[]):T}, 
                                  keyParams?:{keyConditions:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, 
                                  filterParams?: {filterExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object},
-                                 params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:DocumentClient.Key})
-                                 : Promise<{items:T[], lastEvaluatedKey: DocumentClient.Key}>
+                                 params?:{limit?:number, indexName?:string,order?:number,exclusiveStartKey?:string})
+                                 : Promise<{items:T[], lastEvaluatedKey: string, firstEvaluatedKey: string}>
     {
         validateType(type);
         validateKeyConditionExpression(type, keyParams);

@@ -222,7 +222,7 @@ describe('DynamoDbManager.Find()', function ()
         
         assert.isTrue(page1called);
         assert.isTrue(page2called);
-        assert.deepEqual(entities.lastEvaluatedKey, {hash: '99_hash', range:'99_range'});
+        assert.equal(entities.lastEvaluatedKey, "eyJoYXNoIjoiOTlfaGFzaCIsInJhbmdlIjoiOTlfcmFuZ2UifQ==");
         assert.equal(entities.items.length, 2);
         assert.deepEqual(entities.items[0], {id:42});
         assert.deepEqual(entities.items[1], {id:99});
@@ -260,7 +260,7 @@ describe('DynamoDbManager.Find()', function ()
         
         assert.isTrue(page1called);
         assert.isTrue(page2called);
-        assert.deepEqual(entities.lastEvaluatedKey, {hash: '99_hash', range:'99_range'});
+        assert.equal(entities.lastEvaluatedKey, "eyJoYXNoIjoiOTlfaGFzaCIsInJhbmdlIjoiOTlfcmFuZ2UifQ==");
         assert.equal(entities.items.length, 2);
         assert.deepEqual(entities.items[0], {id:42});
         assert.deepEqual(entities.items[1], {id:99});
@@ -332,7 +332,7 @@ describe('DynamoDbManager.Find()', function ()
                                        {filterExpression:'fcondition'},
                                        {limit:2});
         
-        assert.deepEqual(entities.lastEvaluatedKey, <any>{hash: '43_hash', range:'43_range'});
+        assert.equal(entities.lastEvaluatedKey, 'eyJoYXNoIjoiNDNfaGFzaCIsInJhbmdlIjoiNDNfcmFuZ2UifQ==');
         assert.equal(entities.items.length, 2);
         assert.deepEqual(entities.items[0], {id:42});
         assert.deepEqual(entities.items[1], {id:43});
@@ -365,7 +365,7 @@ describe('DynamoDbManager.Find()', function ()
                                        {filterExpression:'fcondition'},
                                        {limit:2});
         
-        assert.deepEqual(entities.lastEvaluatedKey, <any>{hash:'43_hash', range:'43_range'});
+        assert.equal(entities.lastEvaluatedKey, 'eyJoYXNoIjoiNDNfaGFzaCIsInJhbmdlIjoiNDNfcmFuZ2UifQ==');
         assert.equal(entities.items.length, 2);
         assert.deepEqual(entities.items[0], {id:42});
         assert.deepEqual(entities.items[1], {id:43});
@@ -410,13 +410,15 @@ describe('DynamoDbManager.Find()', function ()
 
         mockedClient.setup(q => q.query(It.is(p => p.KeyConditionExpression === 'kcondition'
                                                     && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey === <any>'lek'))).callback(()=>called=true).returns(()=>response1.object);
+                                                    && p.ExclusiveStartKey['hash'] === '43_hash'
+                                                    && p.ExclusiveStartKey['range'] === '43_range'
+                                                    ))).callback(()=>called=true).returns(()=>response1.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
                                        {keyConditions:'kcondition'},
                                        {filterExpression:'fcondition'},
-                                       {exclusiveStartKey:<any>'lek'});
+                                       {exclusiveStartKey:'eyJoYXNoIjoiNDNfaGFzaCIsInJhbmdlIjoiNDNfcmFuZ2UifQ=='});
         
         assert.isTrue(called);
         assert.equal(entities.items.length, 1);
