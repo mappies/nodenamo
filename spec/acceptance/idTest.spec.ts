@@ -111,6 +111,7 @@ describe('ID tests', function ()
 
         assert.equal(page1.items.length, 1);
         assert.deepEqual(page1.items[0], user1);
+        assert.isDefined(page1.firstEvaluatedKey);
 
         let page2 = await nodenamo.list().from(User).limit(1).resume(page1.lastEvaluatedKey).execute<User>();
 
@@ -127,6 +128,36 @@ describe('ID tests', function ()
 
         assert.equal(page4.items.length, 1);
         assert.deepEqual(page4.items[0], user4);
+        assert.isUndefined(page4.lastEvaluatedKey);
+        
+        let page3again = await nodenamo.list().from(User).limit(1).resume(page4.firstEvaluatedKey).order(false).execute<User>();
+
+        assert.equal(page3again.items.length, 1);
+        assert.deepEqual(page3again.items[0], user3);
+        assert.equal(page3again.firstEvaluatedKey, page3.firstEvaluatedKey);
+        assert.equal(page3again.lastEvaluatedKey, page3.lastEvaluatedKey);
+        
+        let page2again = await nodenamo.list().from(User).limit(1).resume(page3again.firstEvaluatedKey).order(false).execute<User>();
+
+        assert.equal(page2again.items.length, 1);
+        assert.deepEqual(page2again.items[0], user2);
+        assert.equal(page2again.firstEvaluatedKey, page2.firstEvaluatedKey);
+        assert.equal(page2again.lastEvaluatedKey, page2.lastEvaluatedKey);
+        
+        let page1again = await nodenamo.list().from(User).limit(1).resume(page2again.firstEvaluatedKey).order(false).execute<User>();
+
+        assert.equal(page1again.items.length, 1);
+        assert.deepEqual(page1again.items[0], user1);
+        assert.equal(page1again.firstEvaluatedKey, page1.firstEvaluatedKey);
+        assert.isUndefined(page1again.lastEvaluatedKey);
+
+        let page0 = await nodenamo.list().from(User).limit(1).resume(page1.firstEvaluatedKey).order(false).execute<User>();
+        let page0again = await nodenamo.list().from(User).limit(1).resume(page1again.firstEvaluatedKey).order(false).execute<User>();
+        
+        assert.equal(page0.items.length, 0);
+        assert.equal(page0.firstEvaluatedKey, page0again.firstEvaluatedKey);
+        assert.equal(page0.lastEvaluatedKey, page0again.lastEvaluatedKey);
+        assert.deepEqual(page0, page0again);
     });
 
     it('List items with a filter', async () =>

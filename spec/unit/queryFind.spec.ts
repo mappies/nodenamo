@@ -74,7 +74,7 @@ describe('Query.Find', function ()
 
     it('find.from.where() - with lastEvaluatedKey', async ()=>
     {
-        findResult.lastEvaluatedKey = {key:1};
+        findResult.lastEvaluatedKey = 'eyJrZXkiOjF9';
 
         mockedManager.setup(m => m.find(Entity, keyCondition, undefined, undefined)).callback(()=>called=true).returns(async()=>findResult);
 
@@ -119,7 +119,7 @@ describe('Query.Find', function ()
 
     it('find.from.where.resume()', async ()=>
     {
-        mockedManager.setup(m => m.find(Entity, keyCondition, undefined, {exclusiveStartKey: {key:1}})).callback(()=>called=true).returns(async()=>findResult);
+        mockedManager.setup(m => m.find(Entity, keyCondition, undefined, {exclusiveStartKey: 'eyJrZXkiOjF9'})).callback(()=>called=true).returns(async()=>findResult);
 
         let find = new Find(mockedManager.object).from(Entity).where(keyCondition).resume('eyJrZXkiOjF9');
         await find.execute();
@@ -152,7 +152,7 @@ describe('Query.Find', function ()
 
     it('find.from.where.limit.using.order.resume()', async ()=>
     {
-        mockedManager.setup(m => m.find(Entity, keyCondition, undefined, {limit: 1, fetchSize: undefined, indexName:'index-name', order: 1, exclusiveStartKey: {key:1}})).callback(()=>called=true).returns(async()=>findResult);
+        mockedManager.setup(m => m.find(Entity, keyCondition, undefined, {limit: 1, fetchSize: undefined, indexName:'index-name', order: 1, exclusiveStartKey: 'eyJrZXkiOjF9'})).callback(()=>called=true).returns(async()=>findResult);
 
         let find = new Find(mockedManager.object).from(Entity).where(keyCondition).limit(1).using('index-name').order(true).resume('eyJrZXkiOjF9');
         await find.execute();
@@ -162,7 +162,7 @@ describe('Query.Find', function ()
 
     it('find(projections).from.where.limit.using.order.resume()', async ()=>
     {
-        mockedManager.setup(m => m.find(Entity, keyCondition, undefined, {limit: 1, fetchSize: undefined, indexName:'index-name', order: 1, exclusiveStartKey: {key:1}, projections: ["p1", "p2"]})).callback(()=>called=true).returns(async()=>findResult);
+        mockedManager.setup(m => m.find(Entity, keyCondition, undefined, {limit: 1, fetchSize: undefined, indexName:'index-name', order: 1, exclusiveStartKey: 'eyJrZXkiOjF9', projections: ["p1", "p2"]})).callback(()=>called=true).returns(async()=>findResult);
 
         let find = new Find(mockedManager.object, ["p1", "p2"]).from(Entity).where(keyCondition).limit(1).using('index-name').order(true).resume('eyJrZXkiOjF9');
         await find.execute();
@@ -232,7 +232,7 @@ describe('Query.Find', function ()
 
     it('find.from.where.filter.resume()', async ()=>
     {
-        mockedManager.setup(m => m.find(Entity, keyCondition, filterCondition, {exclusiveStartKey:{key:1}})).callback(()=>called=true).returns(async()=>findResult);
+        mockedManager.setup(m => m.find(Entity, keyCondition, filterCondition, {exclusiveStartKey:'eyJrZXkiOjF9'})).callback(()=>called=true).returns(async()=>findResult);
 
         let find = new Find(mockedManager.object).from(Entity).where(keyCondition).filter(filterCondition).resume('eyJrZXkiOjF9');
         await find.execute();
@@ -242,7 +242,7 @@ describe('Query.Find', function ()
 
     it('find.from.where.filter.limit.using.order.resume()', async ()=>
     {
-        mockedManager.setup(m => m.find(Entity, keyCondition, filterCondition, {limit: 1, fetchSize: undefined, indexName:'index-name', order: 1, exclusiveStartKey: {key:1}})).callback(()=>called=true).returns(async()=>findResult);
+        mockedManager.setup(m => m.find(Entity, keyCondition, filterCondition, {limit: 1, fetchSize: undefined, indexName:'index-name', order: 1, exclusiveStartKey: 'eyJrZXkiOjF9'})).callback(()=>called=true).returns(async()=>findResult);
 
         let find = new Find(mockedManager.object).from(Entity).where(keyCondition).filter(filterCondition).limit(1).using('index-name').order(true).resume('eyJrZXkiOjF9');
         await find.execute();
@@ -252,7 +252,7 @@ describe('Query.Find', function ()
 
     it('find(projections).from.where.filter.limit.using.order.resume()', async ()=>
     {
-        mockedManager.setup(m => m.find(Entity, keyCondition, filterCondition, {limit: 1, fetchSize: undefined, indexName:'index-name', order: 1, exclusiveStartKey: {key:1}, projections: ["p1"]})).callback(()=>called=true).returns(async()=>findResult);
+        mockedManager.setup(m => m.find(Entity, keyCondition, filterCondition, {limit: 1, fetchSize: undefined, indexName:'index-name', order: 1, exclusiveStartKey: 'eyJrZXkiOjF9', projections: ["p1"]})).callback(()=>called=true).returns(async()=>findResult);
 
         let find = new Find(mockedManager.object, ["p1"]).from(Entity).where(keyCondition).filter(filterCondition).limit(1).using('index-name').order(true).resume('eyJrZXkiOjF9');
         await find.execute();
@@ -262,7 +262,7 @@ describe('Query.Find', function ()
 
     it('find(projections).from.where.filter.limit.using.order.resume.strongly()', async ()=>
     {
-        mockedManager.setup(m => m.find(Entity, keyCondition, filterCondition, {limit: 1, fetchSize: undefined, indexName:'index-name', order: 1, exclusiveStartKey: {key:1}, projections: ["p1"], stronglyConsistent: true})).callback(()=>called=true).returns(async()=>findResult);
+        mockedManager.setup(m => m.find(Entity, keyCondition, filterCondition, {limit: 1, fetchSize: undefined, indexName:'index-name', order: 1, exclusiveStartKey: 'eyJrZXkiOjF9', projections: ["p1"], stronglyConsistent: true})).callback(()=>called=true).returns(async()=>findResult);
 
         let find = new Find(mockedManager.object, ["p1"]).from(Entity).where(keyCondition).filter(filterCondition).limit(1).using('index-name').order(true).resume('eyJrZXkiOjF9').stronglyConsistent(true);
         await find.execute();
@@ -386,7 +386,7 @@ describe('Query.Find', function ()
             expressionAttributeValues: {':hash': 'h1', ':range': 'r1'}
         };
 
-        mockedManager.setup(m => m.find(Entity, listKeyCondition, filterCondition, {limit: 1, fetchSize: undefined, indexName:'index-name', order: 1, exclusiveStartKey: {key:1}, projections: ["p1", "p2"]})).callback(()=>called=true).returns(async()=>findResult);
+        mockedManager.setup(m => m.find(Entity, listKeyCondition, filterCondition, {limit: 1, fetchSize: undefined, indexName:'index-name', order: 1, exclusiveStartKey: 'eyJrZXkiOjF9', projections: ["p1", "p2"]})).callback(()=>called=true).returns(async()=>findResult);
 
         let list = new List(mockedManager.object, ["p1", "p2"]).from(Entity).by('h1', 'r1').filter(filterCondition).limit(1).using('index-name').order(true).resume('eyJrZXkiOjF9');
         await list.execute();
@@ -402,7 +402,7 @@ describe('Query.Find', function ()
             expressionAttributeValues: {':hash': 'h1', ':range': 'r1'}
         };
 
-        mockedManager.setup(m => m.find(Entity, listKeyCondition, filterCondition, {limit: 1, fetchSize: 2, indexName:'index-name', order: 1, exclusiveStartKey: {key:1}, projections: ["p1", "p2"], stronglyConsistent: true})).callback(()=>called=true).returns(async()=>findResult);
+        mockedManager.setup(m => m.find(Entity, listKeyCondition, filterCondition, {limit: 1, fetchSize: 2, indexName:'index-name', order: 1, exclusiveStartKey: 'eyJrZXkiOjF9', projections: ["p1", "p2"], stronglyConsistent: true})).callback(()=>called=true).returns(async()=>findResult);
 
         let list = new List(mockedManager.object, ["p1", "p2"]).from(Entity).by('h1', 'r1').filter(filterCondition).limit(1,2).using('index-name').order(true).resume('eyJrZXkiOjF9').stronglyConsistent(true);
         await list.execute();

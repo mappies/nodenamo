@@ -62,7 +62,7 @@ export class By
         return new StronglyConsistent(this.manager, this.type, this.keyParams, undefined, this.params, stronglyConsistent);
     }
 
-    async execute<T extends object>(): Promise<{items:T[], lastEvaluatedKey:string}>
+    async execute<T extends object>(): Promise<{items:T[], lastEvaluatedKey:string, firstEvaluatedKey: string}>
     {
         return await new Execute(this.manager, this.type, this.keyParams, undefined, this.params).execute();
     }
