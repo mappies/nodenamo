@@ -103,6 +103,11 @@ describe('lastEvaluatedKeyWithFilterAndPagingTest', function ()
         assert.isDefined(page1.firstEvaluatedKey)
         assert.isDefined(page1.lastEvaluatedKey)
 
+        let page0 = await nodenamo.list().from(User).filter(filter).limit(2,2).order(false).resume(page1.firstEvaluatedKey).execute<User>();
+        assert.equal(page0.items.length, 0)
+        assert.isUndefined(page0.firstEvaluatedKey)
+        assert.isUndefined(page0.lastEvaluatedKey)
+
         let page2 = await nodenamo.list().from(User).filter(filter).limit(2,2).resume(page1.lastEvaluatedKey).execute<User>();
 
         assert.equal(page2.items.length, 2);
@@ -118,10 +123,9 @@ describe('lastEvaluatedKeyWithFilterAndPagingTest', function ()
         assert.isUndefined(page3.lastEvaluatedKey);
 
         let page1Again = await nodenamo.list().from(User).filter(filter).limit(2,2).order(false).resume(page2.firstEvaluatedKey).execute<User>();
-        assert.deepEqual(page1Again.items, [
-            user3,
-            user1
-        ]);
+        assert.deepEqual(page1Again.items[0], user3);
+        assert.deepEqual(page1Again.items[1], user1);
+        assert.equal(page1Again.items.length, 2);
         assert.isDefined(page1Again.firstEvaluatedKey)
         assert.isUndefined(page1Again.lastEvaluatedKey)
 
@@ -131,7 +135,9 @@ describe('lastEvaluatedKeyWithFilterAndPagingTest', function ()
         assert.deepEqual(page2Again.items[0], user4);
         assert.deepEqual(page2Again.items[1], user5);
         assert.isDefined(page2Again.firstEvaluatedKey);
+        assert.deepEqual(page2.firstEvaluatedKey, page2Again.firstEvaluatedKey);
         assert.isDefined(page2Again.lastEvaluatedKey);
+        assert.deepEqual(page2.lastEvaluatedKey, page2Again.lastEvaluatedKey);
     });
 
     //The same test as above but with default fetchSize
@@ -161,10 +167,9 @@ describe('lastEvaluatedKeyWithFilterAndPagingTest', function ()
 
         let page1Again = await nodenamo.list().from(User).filter(filter).limit(2).order(false).resume(page2.firstEvaluatedKey).execute<User>();
 
-        assert.deepEqual(page1Again.items, [
-            user3,
-            user1
-        ]);
+        assert.deepEqual(page1Again.items[0], user3)
+        assert.deepEqual(page1Again.items[1], user1)
+        assert.equal(page1Again.items.length, 2);
         assert.isDefined(page1Again.firstEvaluatedKey)
         assert.isUndefined(page1Again.lastEvaluatedKey)
 
@@ -174,6 +179,7 @@ describe('lastEvaluatedKeyWithFilterAndPagingTest', function ()
         assert.deepEqual(page2Again.items[0], user4);
         assert.deepEqual(page2Again.items[1], user5);
         assert.isDefined(page2Again.firstEvaluatedKey);
+        assert.equal(page2Again.firstEvaluatedKey, page2.firstEvaluatedKey);
         assert.isUndefined(page2Again.lastEvaluatedKey);
     });
 
@@ -188,38 +194,35 @@ describe('lastEvaluatedKeyWithFilterAndPagingTest', function ()
 
         let page1 = await nodenamo.list().from(User).filter(filter).order(false).limit(2).execute<User>();
         
-        assert.deepEqual(page1.items, [
-            user5,
-            user4
-        ]);
+        assert.deepEqual(page1.items[0], user5);
+        assert.deepEqual(page1.items[1], user4);
+        assert.equal(page1.items.length, 2);
         assert.isDefined(page1.firstEvaluatedKey)
         assert.isDefined(page1.lastEvaluatedKey)
 
         let page2 = await nodenamo.list().from(User).filter(filter).limit(2).order(false).resume(page1.lastEvaluatedKey).execute<User>();
 
-        assert.deepEqual(page2.items, [
-            user3,
-            user1
-        ]);
+        assert.deepEqual(page2.items[0], user3)
+        assert.deepEqual(page2.items[1], user1)
+        assert.equal(page2.items.length, 2);
         assert.isDefined(page2.firstEvaluatedKey);
         assert.isUndefined(page2.lastEvaluatedKey);
 
         let page1Again = await nodenamo.list().from(User).filter(filter).limit(2).order(true).resume(page2.firstEvaluatedKey).execute<User>();
 
-        assert.deepEqual(page1Again.items, [
-            user4,
-            user5
-        ]);
+        assert.deepEqual(page1Again.items[0], user4)
+        assert.deepEqual(page1Again.items[1], user5)
+        assert.equal(page1Again.items.length, 2);
         assert.isDefined(page1Again.firstEvaluatedKey)
         assert.isUndefined(page1Again.lastEvaluatedKey)
 
         let page2Again = await nodenamo.list().from(User).filter(filter).limit(2).order(false).resume(page1Again.firstEvaluatedKey).execute<User>();
 
-        assert.deepEqual(page2Again.items, [
-            user3,
-            user1
-        ]);
+        assert.deepEqual(page2Again.items[0], user3);
+        assert.deepEqual(page2Again.items[1], user1);
+        assert.equal(page2Again.items.length, 2);
         assert.isDefined(page2Again.firstEvaluatedKey);
+        assert.equal(page2.firstEvaluatedKey, page2Again.firstEvaluatedKey)
         assert.isUndefined(page2Again.lastEvaluatedKey);
     });
 
@@ -257,19 +260,18 @@ describe('lastEvaluatedKeyWithFilterAndPagingTest', function ()
        assert.isUndefined(page2.lastEvaluatedKey);
 
        let page1Again = await nodenamo.list().from(User).filter(filter).limit(3,3).order(false).resume(page2.firstEvaluatedKey).execute<User>();
-       assert.deepEqual(page1Again.items, [
-           user7,
-           user6,
-           user2
-       ]);
+       assert.deepEqual(page1Again.items[0], user7);
+       assert.deepEqual(page1Again.items[1], user6);
+       assert.deepEqual(page1Again.items[2], user2);
+       assert.equal(page1Again.items.length, 3);
        assert.isDefined(page1Again.firstEvaluatedKey);
        assert.isDefined(page1Again.lastEvaluatedKey);
 
        let page2Again = await nodenamo.list().from(User).filter(filter).limit(3,3).resume(page1Again.firstEvaluatedKey).execute<User>();
-       assert.deepEqual(page2Again.items, [
-           user8
-       ]);
+       assert.deepEqual(page2.items[0], user8);
+       assert.equal(page2.items.length, 1);
        assert.isDefined(page2Again.firstEvaluatedKey);
+       assert.equal(page2.firstEvaluatedKey, page2Again.firstEvaluatedKey);
        assert.isUndefined(page2Again.lastEvaluatedKey);
    });
 
@@ -297,19 +299,18 @@ describe('lastEvaluatedKeyWithFilterAndPagingTest', function ()
        assert.isUndefined(page2.lastEvaluatedKey);
 
        let page1Again = await nodenamo.list().from(User).filter(filter).limit(3).order(false).resume(page2.firstEvaluatedKey).execute<User>();
-       assert.deepEqual(page1Again.items, [
-           user7,
-           user6,
-           user2
-       ]);
+       assert.deepEqual(page1Again.items[0], user7)
+       assert.deepEqual(page1Again.items[1], user6)
+       assert.deepEqual(page1Again.items[2], user2)
+       assert.equal(page1Again.items.length, 3);
        assert.isDefined(page1Again.firstEvaluatedKey);
        assert.isUndefined(page1Again.lastEvaluatedKey);
 
        let page2Again = await nodenamo.list().from(User).filter(filter).limit(3).resume(page1Again.firstEvaluatedKey).execute<User>();
-       assert.deepEqual(page2Again.items, [
-           user8
-       ]);
+       assert.deepEqual(page2Again.items[0], user8);
+       assert.equal(page2Again.items.length, 1);
        assert.isDefined(page2Again.firstEvaluatedKey);
+       assert.equal(page2.firstEvaluatedKey, page2Again.firstEvaluatedKey);
        assert.isUndefined(page2Again.lastEvaluatedKey);
    });
 
