@@ -181,6 +181,7 @@ describe('lastEvaluatedKeyWithFilterAndPagingTest', function ()
         assert.isDefined(page2Again.firstEvaluatedKey);
         assert.equal(page2Again.firstEvaluatedKey, page2.firstEvaluatedKey);
         assert.isUndefined(page2Again.lastEvaluatedKey);
+        assert.equal(page2Again.lastEvaluatedKey, page2.lastEvaluatedKey);
     });
 
     //The same test as above but with inverse order
@@ -222,8 +223,8 @@ describe('lastEvaluatedKeyWithFilterAndPagingTest', function ()
         assert.deepEqual(page2Again.items[1], user1);
         assert.equal(page2Again.items.length, 2);
         assert.isDefined(page2Again.firstEvaluatedKey);
-        assert.equal(page2.firstEvaluatedKey, page2Again.firstEvaluatedKey)
         assert.isUndefined(page2Again.lastEvaluatedKey);
+        assert.equal(page2.lastEvaluatedKey, page2Again.lastEvaluatedKey);
     });
 
     /*
@@ -273,6 +274,7 @@ describe('lastEvaluatedKeyWithFilterAndPagingTest', function ()
        assert.isDefined(page2Again.firstEvaluatedKey);
        assert.equal(page2.firstEvaluatedKey, page2Again.firstEvaluatedKey);
        assert.isUndefined(page2Again.lastEvaluatedKey);
+       assert.equal(page2.lastEvaluatedKey, page2Again.lastEvaluatedKey);
    });
 
    //The same test as above but with default fetchSize
