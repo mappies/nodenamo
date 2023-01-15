@@ -209,7 +209,7 @@ describe('DynamoDbManager.Find()', function ()
 
         mockedClient.setup(q => q.send(It.is((p:any) => p.KeyConditionExpression === 'kcondition'
                                                     && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey?.range === <any>'lek1'
+                                                    && p.ExclusiveStartKey?.range['S'] === <any>'lek1'
                                                     && p.Limit === undefined))).callback(()=>page2called=true).returns(()=>response2.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
@@ -247,7 +247,7 @@ describe('DynamoDbManager.Find()', function ()
 
         mockedClient.setup(q => q.send(It.is((p:any) => p.KeyConditionExpression === 'kcondition'
                                                     && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey?.range === <any>'lek1'
+                                                    && p.ExclusiveStartKey?.range['S'] === <any>'lek1'
                                                     && p.Limit === 5))).callback(()=>page2called=true).returns(()=>response2.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
@@ -285,8 +285,8 @@ describe('DynamoDbManager.Find()', function ()
 
         mockedClient.setup(q => q.send(It.is((p:any) => p.KeyConditionExpression === 'kcondition'
                                                     && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey?.hash === 'lek1h'
-                                                    && p.ExclusiveStartKey?.range === 'lek1r'
+                                                    && p.ExclusiveStartKey?.hash['S'] === 'lek1h'
+                                                    && p.ExclusiveStartKey?.range['S'] === 'lek1r'
                                                     && p.Limit === undefined))).callback(()=>page2called=true).returns(()=>response2.object);
 
         let manager = new DynamoDbManager(mockedClient.object);

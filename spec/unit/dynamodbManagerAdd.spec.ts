@@ -1,11 +1,12 @@
 import {assert as assert} from 'chai';
 import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
-import { DynamoDB } from '@aws-sdk/client-dynamodb';
+import { DynamoDB, PutItemCommand, TransactWriteItem, TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
 import { DBTable, DBColumn } from '../../src';
 import { DynamoDbTransaction } from '../../src/managers/dynamodbTransaction';
 import {Const} from '../../src/const';
 import AggregateError from 'aggregate-error';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
 @DBTable()
 class Entity {
@@ -43,7 +44,7 @@ describe('DynamoDbManager.Add()', function ()
 
     it('put()', async () =>
     {
-        mockedTransaction.setup(t => t.add(It.is(p=>!!p.Put && !!p.Put.TableName && !!p.Put.Item && p.Put.Item[Const.VersionColumn] as any === 1 && p.Put.ConditionExpression === '(attribute_not_exists(#hash) AND attribute_not_exists(#range))' && p.Put.ExpressionAttributeNames['#hash'] === Const.HashColumn && p.Put.ExpressionAttributeNames['#range'] === Const.RangeColumn && !p.Put.ExpressionAttributeValues && !p.Put.ReturnValuesOnConditionCheckFailure))).callback(()=>put=true);
+        mockedTransaction.setup(t => t.add(It.is((p: TransactWriteItem)=>!!p.Put && !!p.Put.TableName && !!p.Put.Item && p.Put.Item[Const.VersionColumn]['N'] === "1" && p.Put.ConditionExpression === '(attribute_not_exists(#hash) AND attribute_not_exists(#range))' && p.Put.ExpressionAttributeNames?.['#hash'] === Const.HashColumn && p.Put.ExpressionAttributeNames?.['#range'] === Const.RangeColumn && !p.Put.ExpressionAttributeValues && !p.Put.ReturnValuesOnConditionCheckFailure))).callback(()=>put=true);
 
         let manager = new DynamoDbManager(mockedClient.object);
         await manager.put(Entity, {}, undefined, mockedTransaction.object);
@@ -54,10 +55,10 @@ describe('DynamoDbManager.Add()', function ()
 
     it('put() - with condition', async () =>
     {
-        mockedTransaction.setup(t => t.add(It.is(p=>(!!p.Put && !!p.Put.TableName && !!p.Put.Item && p.Put.Item[Const.VersionColumn] as any === 1 && !!p.Put.ConditionExpression && !!p.Put.ExpressionAttributeNames && !!p.Put.ExpressionAttributeValues)))).callback(()=>put=true);
+        mockedTransaction.setup(t => t.add(It.is((p: TransactWriteItem) => (!!p.Put && !!p.Put.TableName && !!p.Put.Item && p.Put.Item[Const.VersionColumn]['N'] === "1" && !!p.Put.ConditionExpression && !!p.Put.ExpressionAttributeNames && !!p.Put.ExpressionAttributeValues)))).callback(()=>put=true);
         
         let manager = new DynamoDbManager(mockedClient.object);
-        await manager.put(Entity, {}, {conditionExpression:'a', expressionAttributeNames: {b:1}, expressionAttributeValues: {c:2}}, mockedTransaction.object);
+        await manager.put(Entity, {}, {conditionExpression:'a', expressionAttributeNames: {b:1}, expressionAttributeValues: marshall({c:2})}, mockedTransaction.object);
 
         assert.isTrue(put);
         assert.isTrue(committed);
@@ -76,7 +77,7 @@ describe('DynamoDbManager.Add()', function ()
 
     it('put() - objid column value is prefixed, id isn\'t', async () =>
     {
-        mockedTransaction.setup(t => t.add(It.is(p=>(p?.Put?.ExpressionAttributeValues?.['id'] as any === 123 && p?.Put?.ExpressionAttributeValues?.['objid'] as any === 'user#123' )))).callback(()=>put=true);
+        mockedTransaction.setup(t => t.add(It.is((p: TransactWriteItem)=>(p?.Put?.ExpressionAttributeValues?.['id']['N'] === "123" && p.Put.ExpressionAttributeValues['objid']['S'] === 'user#123' )))).callback(()=>put=true);
         
         let manager = new DynamoDbManager(mockedClient.object);
         await manager.put(EntityWithDataPrefix, {}, {conditionExpression:'a', expressionAttributeValues: {id:123, objid:123}}, mockedTransaction.object);
@@ -87,7 +88,7 @@ describe('DynamoDbManager.Add()', function ()
 
     it('put() - hash column value prefixed', async () =>
     {
-        mockedTransaction.setup(t => t.add(It.is(p=>(p?.Put?.ExpressionAttributeValues?.['name'] as any === 'user#new name' )))).callback(()=>put=true);
+        mockedTransaction.setup(t => t.add(It.is((p: TransactWriteItem)=>(p?.Put?.ExpressionAttributeValues?.['name']['S'] === 'user#new name' )))).callback(()=>put=true);
         
         let manager = new DynamoDbManager(mockedClient.object);
         await manager.put(EntityWithDataPrefix, {}, {conditionExpression:'a', expressionAttributeValues: {name:'new name'}}, mockedTransaction.object);

@@ -85,10 +85,10 @@ export class DynamoDbManager implements IDynamoDbManager
         let obj:T = new type();
         let stronglyConsistent = Reflector.getTableStronglyConsistent(obj) || params?.stronglyConsistent || false;
         let tableName = Reflector.getTableName(obj);
-        let attributeValues = marshall({
+        let attributeValues = {
             ':hash': <any>id,
             ':range': <any>Const.DefaultRangeValue
-        });
+        };
         let attributeNames = {
             '#hash': Const.HashColumn,
             '#range': Const.RangeColumn
@@ -432,7 +432,6 @@ export class DynamoDbManager implements IDynamoDbManager
 
         //Calculate new representations
         let rows = await this.getById(id, type);
-
         if(rows.length === 0)
         {
             throw new Error(`Could not update the object '${id}' because it could not be found.`);
@@ -529,7 +528,6 @@ export class DynamoDbManager implements IDynamoDbManager
                 {
                     throw e;
                 }
-
                 if(currentObject && Reflector.getObjectVersion(currentObject) > rows[0][Const.VersionColumn])
                 {
                     throw new VersionError(`Could not update the object '${id}' because it has been overwritten by the writes of others.`);
@@ -592,7 +590,7 @@ export class DynamoDbManager implements IDynamoDbManager
         let obj:T = new type();
         let tableName = Reflector.getTableName(obj);
 
-        let getAttributeValues = {':objid': {'S': <any>id}};
+        let getAttributeValues = {':objid': <any>id};
         addColumnValuePrefix(obj, getAttributeValues,{'#objid': Const.IdColumn})
 
         let query:QueryInput = {
@@ -608,7 +606,6 @@ export class DynamoDbManager implements IDynamoDbManager
         do
         {
             let response =  await this.client.send(new QueryCommand(query));
-
             if(response.Items)
             {
                 result = result.concat(response.Items.map(item => unmarshall(item)))
