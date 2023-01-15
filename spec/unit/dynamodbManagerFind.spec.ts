@@ -1,10 +1,11 @@
 import {assert as assert} from 'chai';
 import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
-import { DynamoDB, QueryOutput, ServiceOutputTypes } from '@aws-sdk/client-dynamodb';
+import { DynamoDB, QueryCommandOutput, QueryOutput, ServiceOutputTypes } from '@aws-sdk/client-dynamodb';
 import { DBTable, DBColumn } from '../../src';
 import { Const } from '../../src/const';
 import { Reflector } from '../../src/reflector';
+import { marshall } from '@aws-sdk/util-dynamodb';
 
 describe('DynamoDbManager.Find()', function () 
 {
@@ -30,15 +31,15 @@ describe('DynamoDbManager.Find()', function ()
             id:number;
         };
 
-        let response = getMockedQueryResponse({Items:<any>[obj]});
+        let response = {Items: [obj].map(item => marshall(item))};
 
         mockedClient.setup(q => q.send(It.is((p:any) => 
-            !!p.TableName 
-            && p.KeyConditionExpression === '#id = :id' 
-            && p.ExpressionAttributeNames['#id'] === 'id' 
-            && p.ExpressionAttributeValues[':id'] === 42
-            && p.FilterExpression === undefined
-            && p.ProjectionExpression === undefined))).callback(()=>called=true).returns(()=>response.object);
+             !!p.input.TableName 
+            && p.input.KeyConditionExpression === '#id = :id' 
+            && p.input.ExpressionAttributeNames['#id'] === 'id' 
+            && p.input.ExpressionAttributeValues[':id']['N'] === "42"
+            && p.input.FilterExpression === undefined
+            && p.input.ProjectionExpression === undefined))).callback(()=>called=true).returns(async ()=>response as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -72,17 +73,17 @@ describe('DynamoDbManager.Find()', function ()
                 id:number;
             };
 
-            let response = getMockedQueryResponse({Items:<any>[obj]});
+            let response = ({Items:[obj].map(item => marshall(item))});
 
             mockedClient.setup(q => q.send(It.is((p:any) => 
-                !!p.TableName 
-                && p.KeyConditionExpression === '#id = :id' 
-                && p.ExpressionAttributeNames['#id'] === 'id' 
-                && p.ExpressionAttributeValues[':id'] === 42
-                && p.FilterExpression === undefined
-                && p.ProjectionExpression === undefined
-                && p.ConsistentRead === test.expectedQueryConsistentRead
-            ))).callback(()=>called=true).returns(()=>response.object);
+                !!p.input.TableName 
+                && p.input.KeyConditionExpression === '#id = :id' 
+                && p.input.ExpressionAttributeNames['#id'] === 'id' 
+                && p.input.ExpressionAttributeValues[':id']['N'] === "42"
+                && p.input.FilterExpression === undefined
+                && p.input.ProjectionExpression === undefined
+                && p.input.ConsistentRead === test.expectedQueryConsistentRead
+            ))).callback(()=>called=true).returns(async ()=>response as QueryCommandOutput);
 
             let manager = new DynamoDbManager(mockedClient.object);
             let entities = await manager.find(Entity, 
@@ -109,15 +110,15 @@ describe('DynamoDbManager.Find()', function ()
             created:number;
         };
 
-        let response = getMockedQueryResponse({Items:<any>[obj]});
+        let response = ({Items:[obj].map(item => marshall(item))});
 
-        mockedClient.setup(q => q.send(It.is((p:any) => !!p.TableName 
-                                                    && p.KeyConditionExpression === '#id = :id' 
-                                                    && p.ExpressionAttributeNames['#id'] === 'id' 
-                                                    && p.ExpressionAttributeValues[':id'] === 42
-                                                    && p.FilterExpression === '#created > :created' 
-                                                    && p.ExpressionAttributeNames['#created'] === 'created' 
-                                                    && p.ExpressionAttributeValues[':created'] === 2019))).callback(()=>called=true).returns(()=>response.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => !!p.input.TableName 
+                                                    && p.input.KeyConditionExpression === '#id = :id' 
+                                                    && p.input.ExpressionAttributeNames['#id'] === 'id' 
+                                                    && p.input.ExpressionAttributeValues[':id']['N'] === "42"
+                                                    && p.input.FilterExpression === '#created > :created' 
+                                                    && p.input.ExpressionAttributeNames['#created'] === 'created' 
+                                                    && p.input.ExpressionAttributeValues[':created']['N'] === "2019"))).callback(()=>called=true).returns(async ()=>response as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -138,11 +139,11 @@ describe('DynamoDbManager.Find()', function ()
             id:number;
         };
 
-        let response1 = getMockedQueryResponse({Items:<any>[obj]});
+        let response1 = ({Items:<any>[obj].map(item => marshall(item))});
 
-        mockedClient.setup(q => q.send(It.is((p:any) => p.KeyConditionExpression === '#id = :id'
-                                                    && p.ExpressionAttributeNames['#id'] === 'hash'
-                                                    && p.ExpressionAttributeValues[':id'] === 'entity#42'))).callback(()=>called=true).returns(()=>response1.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === '#id = :id'
+                                                    && p.input.ExpressionAttributeNames['#id'] === 'hash'
+                                                    && p.input.ExpressionAttributeValues[':id']['S'] === 'entity#42'))).callback(()=>called=true).returns(async ()=>response1 as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -168,15 +169,15 @@ describe('DynamoDbManager.Find()', function ()
             created:number;
         };
 
-        let response = getMockedQueryResponse({Items:<any>[obj]});
+        let response = ({Items:[obj].map(item => marshall(item))});
 
-        mockedClient.setup(q => q.send(It.is((p:any) => !!p.TableName 
-                                                    && p.ExpressionAttributeNames['#id'] === 'id' 
-                                                    && p.ExpressionAttributeValues[':id'] === 42
-                                                    && p.ExpressionAttributeNames['#objid'] === 'objid' 
-                                                    && p.ExpressionAttributeValues[':objid'] === 'entity#42'
-                                                    && p.ExpressionAttributeNames['#name'] === 'hash' 
-                                                    && p.ExpressionAttributeValues[':name'] === 'entity#Some One'))).callback(()=>called=true).returns(()=>response.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => !!p.input.TableName 
+                                                    && p.input.ExpressionAttributeNames['#id'] === 'id' 
+                                                    && p.input.ExpressionAttributeValues[':id']['N'] === "42"
+                                                    && p.input.ExpressionAttributeNames['#objid'] === 'objid' 
+                                                    && p.input.ExpressionAttributeValues[':objid']['S'] === 'entity#42'
+                                                    && p.input.ExpressionAttributeNames['#name'] === 'hash' 
+                                                    && p.input.ExpressionAttributeValues[':name']['S'] === 'entity#Some One'))).callback(()=>called=true).returns(async ()=>response as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -199,18 +200,17 @@ describe('DynamoDbManager.Find()', function ()
 
         let page1called = false;
         let page2called = false;
-        let response1 = getMockedQueryResponse({LastEvaluatedKey: <any> {range:'lek1'}, Items:<any>[{id:42, hash: '42_hash', range: '42_range', objid:42}]});
-        let response2 = getMockedQueryResponse({LastEvaluatedKey: <any> {range:'lek2'}, Items:<any>[{id:99, hash: '99_hash', range: '99_range', objid:99}]});
-
-        mockedClient.setup(q => q.send(It.is((p:any) => p.KeyConditionExpression === 'kcondition'
-                                                    && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey === undefined
-                                                    && p.Limit === undefined))).callback(()=>page1called=true).returns(()=>response1.object);
-
-        mockedClient.setup(q => q.send(It.is((p:any) => p.KeyConditionExpression === 'kcondition'
-                                                    && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey?.range['S'] === <any>'lek1'
-                                                    && p.Limit === undefined))).callback(()=>page2called=true).returns(()=>response2.object);
+        let response1 = ({LastEvaluatedKey: <any> {range:'lek1'}, Items:[{id:42, hash: '42_hash', range: '42_range', objid:42}].map(item => marshall(item))});
+        let response2 = ({LastEvaluatedKey: <any> {range:'lek2'}, Items:[{id:99, hash: '99_hash', range: '99_range', objid:99}].map(item => marshall(item))});
+        mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
+                                                        && p.input.FilterExpression === 'fcondition'
+                                                        && p.input.ExclusiveStartKey === undefined
+                                                        && p.input.Limit === undefined))).callback(()=>page1called=true).returns(async ()=> response1 as QueryCommandOutput);
+        
+        mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
+                                                    && p.input.FilterExpression === 'fcondition'
+                                                    && p.input.ExclusiveStartKey?.range['S'] === 'lek1'
+                                                    && p.input.Limit === undefined))).callback(()=>page2called=true).returns(async ()=> response2 as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -237,18 +237,18 @@ describe('DynamoDbManager.Find()', function ()
 
         let page1called = false;
         let page2called = false;
-        let response1 = getMockedQueryResponse({LastEvaluatedKey: <any> {range:'lek1'}, Items:<any>[{id:42, hash: '42_hash', range: '42_range', objid:42}]});
-        let response2 = getMockedQueryResponse({LastEvaluatedKey: <any> {range:'lek2'}, Items:<any>[{id:99, hash: '99_hash', range: '99_range', objid:99}]});
+        let response1 = ({LastEvaluatedKey: <any> {range:'lek1'}, Items:<any>[{id:42, hash: '42_hash', range: '42_range', objid:42}].map(item => marshall(item))});
+        let response2 = ({LastEvaluatedKey: <any> {range:'lek2'}, Items:<any>[{id:99, hash: '99_hash', range: '99_range', objid:99}].map(item => marshall(item))});
 
-        mockedClient.setup(q => q.send(It.is((p:any) => p.KeyConditionExpression === 'kcondition'
-                                                    && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey === undefined
-                                                    && p.Limit === 5))).callback(()=>page1called=true).returns(()=>response1.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
+                                                    && p.input.FilterExpression === 'fcondition'
+                                                    && p.input.ExclusiveStartKey === undefined
+                                                    && p.input.Limit === 5))).callback(()=>page1called=true).returns(async ()=>response1 as QueryCommandOutput);
 
-        mockedClient.setup(q => q.send(It.is((p:any) => p.KeyConditionExpression === 'kcondition'
-                                                    && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey?.range['S'] === <any>'lek1'
-                                                    && p.Limit === 5))).callback(()=>page2called=true).returns(()=>response2.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
+                                                    && p.input.FilterExpression === 'fcondition'
+                                                    && p.input.ExclusiveStartKey?.range['S'] === <any>'lek1'
+                                                    && p.input.Limit === 5))).callback(()=>page2called=true).returns(async ()=>response2 as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -275,19 +275,19 @@ describe('DynamoDbManager.Find()', function ()
 
         let page1called = false;
         let page2called = false;
-        let response1 = getMockedQueryResponse({LastEvaluatedKey: <any>{hash: 'lek1h', range:'lek1r'}, Items:<any>[{id:42, hash: '42_hash', range: '42_range', objid:42}]});
-        let response2 = getMockedQueryResponse({Items:<any>[{id:99, hash:'99_hash', range: '99_range', objid:99}]});
+        let response1 = ({LastEvaluatedKey: <any>{hash: 'lek1h', range:'lek1r'}, Items:<any>[{id:42, hash: '42_hash', range: '42_range', objid:42}].map(item => marshall(item))});
+        let response2 = ({Items:<any>[{id:99, hash:'99_hash', range: '99_range', objid:99}].map(item => marshall(item))});
 
-        mockedClient.setup(q => q.send(It.is((p:any) => p.KeyConditionExpression === 'kcondition'
-                                                    && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey === undefined
-                                                    && p.Limit === undefined))).callback(()=>page1called=true).returns(()=>response1.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
+                                                    && p.input.FilterExpression === 'fcondition'
+                                                    && p.input.ExclusiveStartKey === undefined
+                                                    && p.input.Limit === undefined))).callback(()=>page1called=true).returns( async ()=>response1 as QueryCommandOutput);
 
-        mockedClient.setup(q => q.send(It.is((p:any) => p.KeyConditionExpression === 'kcondition'
-                                                    && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey?.hash['S'] === 'lek1h'
-                                                    && p.ExclusiveStartKey?.range['S'] === 'lek1r'
-                                                    && p.Limit === undefined))).callback(()=>page2called=true).returns(()=>response2.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
+                                                    && p.input.FilterExpression === 'fcondition'
+                                                    && p.input.ExclusiveStartKey?.hash['S'] === 'lek1h'
+                                                    && p.input.ExclusiveStartKey?.range['S'] === 'lek1r'
+                                                    && p.input.Limit === undefined))).callback(()=>page2called=true).returns( async ()=>response2 as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -312,17 +312,17 @@ describe('DynamoDbManager.Find()', function ()
             id:number;
         };
 
-        let response1 = getMockedQueryResponse({LastEvaluatedKey: <any> {hash: 'lek1h', range: 'lek1r'}, 
-                                                Items:<any>[
+        let response1 = ({LastEvaluatedKey: <any> {hash: 'lek1h', range: 'lek1r'}, 
+                                                Items:[
                                                     {id:42, hash: '42_hash', range: '42_range', objid:42},
                                                     {id:43, hash: '43_hash', range: '43_range', objid:43}
                                                     ,{id:99, hash: '99_hash', range: '99_range', objid:99}
-                                                ]});
+                                                ].map(item => marshall(item))});
 
-        mockedClient.setup(q => q.send(It.is((p:any) => p.KeyConditionExpression === 'kcondition'
-                                                    && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey === undefined
-                                                    && p.Limit === undefined))).returns(()=>response1.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
+                                                    && p.input.FilterExpression === 'fcondition'
+                                                    && p.input.ExclusiveStartKey === undefined
+                                                    && p.input.Limit === undefined))).returns(async ()=>response1 as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -345,17 +345,17 @@ describe('DynamoDbManager.Find()', function ()
             id:number;
         };
 
-        let response1 = getMockedQueryResponse({LastEvaluatedKey: undefined, 
+        let response1 = ({LastEvaluatedKey: undefined, 
                                                 Items:<any>[
                                                     {id:42, hash: '42_hash', range: '42_range', objid:42},
                                                     {id:43, hash: '43_hash', range: '43_range', objid:43}
                                                     ,{id:99, hash: '99_hash', range: '99_range', objid:99}
-                                                ]});
+                                                ].map(item => marshall(item))});
 
-        mockedClient.setup(q => q.send(It.is((p:any) => p.KeyConditionExpression === 'kcondition'
-                                                    && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey === undefined
-                                                    && p.Limit === undefined))).returns(()=>response1.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
+                                                    && p.input.FilterExpression === 'fcondition'
+                                                    && p.input.ExclusiveStartKey === undefined
+                                                    && p.input.Limit === undefined))).returns(async ()=>response1 as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -378,11 +378,11 @@ describe('DynamoDbManager.Find()', function ()
             id:number;
         };
 
-        let response1 = getMockedQueryResponse({Items:<any>[obj]});
+        let response1 = ({Items:[obj].map(item => marshall(item))});
 
-        mockedClient.setup(q => q.send(It.is((p:any) => p.KeyConditionExpression === 'kcondition'
-                                                    && p.FilterExpression === 'fcondition'
-                                                    && p.IndexName === 'custom-index'))).callback(()=>called=true).returns(()=>response1.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
+                                                    && p.input.FilterExpression === 'fcondition'
+                                                    && p.input.IndexName === 'custom-index'))).callback(()=>called=true).returns(async ()=>response1 as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -404,13 +404,13 @@ describe('DynamoDbManager.Find()', function ()
             id:number;
         };
 
-        let response1 = getMockedQueryResponse({Items:<any>[obj]});
+        let response1 = ({Items:[obj].map(item => marshall(item))});
 
-        mockedClient.setup(q => q.send(It.is((p:any) => p.KeyConditionExpression === 'kcondition'
-                                                    && p.FilterExpression === 'fcondition'
-                                                    && p.ExclusiveStartKey['hash'] === '43_hash'
-                                                    && p.ExclusiveStartKey['range'] === '43_range'
-                                                    ))).callback(()=>called=true).returns(()=>response1.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
+                                                    && p.input.FilterExpression === 'fcondition'
+                                                    && p.input.ExclusiveStartKey['hash']['S'] === '43_hash'
+                                                    && p.input.ExclusiveStartKey['range']['S'] === '43_range'
+                                                    ))).callback(()=>called=true).returns(async ()=>response1 as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -432,10 +432,10 @@ describe('DynamoDbManager.Find()', function ()
             id:number;
         };
 
-        let response1 = getMockedQueryResponse({Items:<any>[obj]});
+        let response1 = ({Items:[obj].map(item => marshall(item))});
 
-        mockedClient.setup(q => q.send(It.is((p:any) => p.KeyConditionExpression === 'kcondition'
-                                                    && p.ScanIndexForward === false))).callback(()=>called=true).returns(()=>response1.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
+                                                    && p.input.ScanIndexForward === false))).callback(()=>called=true).returns(async ()=>response1 as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -457,10 +457,10 @@ describe('DynamoDbManager.Find()', function ()
             id:number;
         };
 
-        let response1 = getMockedQueryResponse({Items:<any>[obj]});
+        let response1 = ({Items:[obj].map(item => marshall(item))});
 
-        mockedClient.setup(q => q.send(It.is((p:any) => p.KeyConditionExpression === 'kcondition'
-                                                    && p.ScanIndexForward === true))).callback(()=>called=true).returns(()=>response1.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
+                                                    && p.input.ScanIndexForward === true))).callback(()=>called=true).returns(async ()=>response1 as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -488,19 +488,19 @@ describe('DynamoDbManager.Find()', function ()
             propertyName2:string;
         };
 
-        let response = getMockedQueryResponse({Items:<any>[obj]});
+        let response = ({Items:[obj].map(item => marshall(item))});
 
         mockedClient.setup(q => q.send(It.is((p:any) => 
-            !!p.TableName 
-            && p.KeyConditionExpression === 'condition'
-            && p.ExpressionAttributeNames['#newName'] === '42'
-            && p.ExpressionAttributeNames['#propertyName1'] === 'propertyName1'
-            && p.ExpressionAttributeNames['#propertyName2'] === 'targetName'
-            && p.ExpressionAttributeNames[`#${Const.HashColumn}`] === Const.HashColumn
-            && p.ExpressionAttributeNames[`#${Const.RangeColumn}`] === Const.RangeColumn
-            && p.ExpressionAttributeNames[`#${Const.IdColumn}`] === Const.IdColumn
-            && p.ExpressionAttributeNames[`#${Const.VersionColumn}`] === Const.VersionColumn
-            && p.ProjectionExpression === `#propertyName1,#propertyName2,#${Const.HashColumn},#${Const.RangeColumn},#${Const.IdColumn},#${Const.VersionColumn}`))).callback(()=>called=true).returns(()=>response.object);
+            !!p.input.TableName 
+            && p.input.KeyConditionExpression === 'condition'
+            && p.input.ExpressionAttributeNames['#newName'] === '42'
+            && p.input.ExpressionAttributeNames['#propertyName1'] === 'propertyName1'
+            && p.input.ExpressionAttributeNames['#propertyName2'] === 'targetName'
+            && p.input.ExpressionAttributeNames[`#${Const.HashColumn}`] === Const.HashColumn
+            && p.input.ExpressionAttributeNames[`#${Const.RangeColumn}`] === Const.RangeColumn
+            && p.input.ExpressionAttributeNames[`#${Const.IdColumn}`] === Const.IdColumn
+            && p.input.ExpressionAttributeNames[`#${Const.VersionColumn}`] === Const.VersionColumn
+            && p.input.ProjectionExpression === `#propertyName1,#propertyName2,#${Const.HashColumn},#${Const.RangeColumn},#${Const.IdColumn},#${Const.VersionColumn}`))).callback(()=>called=true).returns(async()=>response as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -529,18 +529,18 @@ describe('DynamoDbManager.Find()', function ()
             propertyName2:string;
         };
 
-        let response = getMockedQueryResponse({Items:<any>[obj]});
+        let response = ({Items:[obj].map(item => marshall(item))});
 
         mockedClient.setup(q => q.send(It.is((p:any) => 
-            !!p.TableName 
-            && p.KeyConditionExpression === 'condition' 
-            && p.ExpressionAttributeNames['#newName'] === '42'
-            && p.ExpressionAttributeNames['#propertyName1'] === 'propertyName1'
-            && p.ExpressionAttributeNames[`#${Const.HashColumn}`] === Const.HashColumn
-            && p.ExpressionAttributeNames[`#${Const.RangeColumn}`] === Const.RangeColumn
-            && p.ExpressionAttributeNames[`#${Const.IdColumn}`] === Const.IdColumn
-            && p.ExpressionAttributeNames[`#${Const.VersionColumn}`] === Const.VersionColumn
-            && p.ProjectionExpression === `#propertyName1,#${Const.HashColumn},#${Const.RangeColumn},#${Const.IdColumn},#${Const.VersionColumn}`))).callback(()=>called=true).returns(()=>response.object);
+            !!p.input.TableName 
+            && p.input.KeyConditionExpression === 'condition' 
+            && p.input.ExpressionAttributeNames['#newName'] === '42'
+            && p.input.ExpressionAttributeNames['#propertyName1'] === 'propertyName1'
+            && p.input.ExpressionAttributeNames[`#${Const.HashColumn}`] === Const.HashColumn
+            && p.input.ExpressionAttributeNames[`#${Const.RangeColumn}`] === Const.RangeColumn
+            && p.input.ExpressionAttributeNames[`#${Const.IdColumn}`] === Const.IdColumn
+            && p.input.ExpressionAttributeNames[`#${Const.VersionColumn}`] === Const.VersionColumn
+            && p.input.ProjectionExpression === `#propertyName1,#${Const.HashColumn},#${Const.RangeColumn},#${Const.IdColumn},#${Const.VersionColumn}`))).callback(()=>called=true).returns(async ()=>response as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -569,12 +569,12 @@ describe('DynamoDbManager.Find()', function ()
             propertyName2:string;
         };
 
-        let response = getMockedQueryResponse({Items:<any>[obj]});
+        let response = ({Items:[obj].map(item => marshall(item))});
 
         mockedClient.setup(q => q.send(It.is((p:any) => 
-            !!p.TableName 
-            && p.KeyConditionExpression === 'condition' 
-            && p.ProjectionExpression === undefined))).callback(()=>called=true).returns(()=>response.object);
+            !!p.input.TableName 
+            && p.input.KeyConditionExpression === 'condition' 
+            && p.input.ProjectionExpression === undefined))).callback(()=>called=true).returns(async ()=>response as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entities = await manager.find(Entity, 
@@ -588,10 +588,3 @@ describe('DynamoDbManager.Find()', function ()
         assert.equal(Reflector.getObjectVersion(entities.items[0]), 1);
     });
 });
-
-function getMockedQueryResponse(response:QueryOutput): IMock<Promise<ServiceOutputTypes>>
-{
-    let mock = Mock.ofType<Promise<ServiceOutputTypes>>();
-    mock.setup(r => r.then()).returns(async()=><any>response);
-    return mock;
-}

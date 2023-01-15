@@ -177,7 +177,7 @@ export class DynamoDbManager implements IDynamoDbManager
             FilterExpression: filterParams ? filterParams.filterExpression : undefined,
             IndexName: params ? params.indexName : undefined,
             Limit: params ? params.fetchSize : undefined,
-            ExclusiveStartKey: exclusiveStartKey,
+            ExclusiveStartKey: exclusiveStartKey? marshall(exclusiveStartKey): undefined,
             ScanIndexForward: params && (params.order || 1) >= 0,
             ConsistentRead: params? stronglyConsistent : undefined,
             ProjectionExpression: projectedColumns,
@@ -218,7 +218,7 @@ export class DynamoDbManager implements IDynamoDbManager
                 }
             }
 
-            query.ExclusiveStartKey = response.LastEvaluatedKey;
+            query.ExclusiveStartKey = response.LastEvaluatedKey? marshall(response.LastEvaluatedKey): undefined;
         }
         while(response.LastEvaluatedKey && itemCount < params.limit)
 
