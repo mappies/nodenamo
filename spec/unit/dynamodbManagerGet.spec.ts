@@ -1,10 +1,11 @@
 import {assert as assert} from 'chai';
 import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
-import { DynamoDB, GetItemOutput, QueryOutput, ServiceOutputTypes } from '@aws-sdk/client-dynamodb';
+import { DynamoDB, GetItemCommandOutput, GetItemOutput, QueryCommandOutput, QueryOutput, ServiceOutputTypes } from '@aws-sdk/client-dynamodb';
 import { DBTable, DBColumn } from '../../src';
 import {Const} from '../../src/const';
 import { Reflector } from '../../src/reflector';
+import { marshall } from '@aws-sdk/util-dynamodb';
 
 describe('DynamoDbManager.send()', function ()
 {
@@ -29,9 +30,9 @@ describe('DynamoDbManager.send()', function ()
         let obj = {id:42};
         obj[Const.VersionColumn] = 1;
 
-        let response = getMockedGetResponse({Item:<any>obj});
+        let response = ({Item:marshall(obj)});
 
-        mockedClient.setup(q => q.send(It.is((p:any) => !!p.TableName && p.Key[Const.HashColumn] === 'entity#42' && p.Key[Const.RangeColumn] === 'nodenamo'))).callback(()=>called=true).returns(()=>response.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => !!p.input.TableName && p.input.Key[Const.HashColumn]['S'] === 'entity#42' && p.input.Key[Const.RangeColumn]['S'] === 'nodenamo'))).callback(()=>called=true).returns(async ()=>response as GetItemCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entity = await manager.getOne(Entity, 42);
@@ -66,13 +67,12 @@ describe('DynamoDbManager.send()', function ()
             let obj = {id:42};
             obj[Const.VersionColumn] = 1;
     
-            let response = getMockedGetResponse({Item:<any>obj});
-    
-            mockedClient.setup(q => q.send(It.is((p:any) => !!p.TableName && 
-                                                       p.Key[Const.HashColumn] === 'entity#42' && 
-                                                       p.Key[Const.RangeColumn] === 'nodenamo' &&
-                                                       p.ConsistentRead === test.expectedQueryConsistentRead)))
-                                     .callback(()=>called=true).returns(()=>response.object);
+            let response = ({Item:marshall(obj)});
+            mockedClient.setup(q => q.send(It.is((p:any) => !!p.input.TableName && 
+                                                       p.input.Key[Const.HashColumn]['S'] === 'entity#42' && 
+                                                       p.input.Key[Const.RangeColumn]['S'] === 'nodenamo' &&
+                                                       p.input.ConsistentRead === test.expectedQueryConsistentRead)))
+                                     .callback(()=>called=true).returns(async () => response as GetItemCommandOutput);
     
             let manager = new DynamoDbManager(mockedClient.object);
             let entity = await manager.getOne(Entity, 42, {stronglyConsistent: test.callWithStrongConsistent});
@@ -92,9 +92,9 @@ describe('DynamoDbManager.send()', function ()
             id:number;
         };
 
-        let response = getMockedGetResponse({Item:undefined});
+        let response = ({Item:undefined});
 
-        mockedClient.setup(q => q.send(It.is((p:any) => !!p.TableName && p.Key[Const.HashColumn] === 'entity#42' && p.Key[Const.RangeColumn] === 'nodenamo'))).callback(()=>called=true).returns(()=>response.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => !!p.input.TableName && p.input.Key[Const.HashColumn]['S'] === 'entity#42' && p.input.Key[Const.RangeColumn]['S'] === 'nodenamo'))).callback(()=>called=true).returns(async () => response as GetItemCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entity = await manager.getOne(Entity, 42);
@@ -103,16 +103,3 @@ describe('DynamoDbManager.send()', function ()
         assert.isUndefined(entity);
     });
 });
-
-function getMockedGetResponse(response:GetItemOutput): IMock<Promise<ServiceOutputTypes>>
-{
-    let mock = Mock.ofType<Promise<ServiceOutputTypes>>();
-    mock.setup(r => r.then()).returns(async()=><any>response);
-    return mock;
-}
-function getMockedQueryResponse(response:QueryOutput): IMock<Promise<ServiceOutputTypes>>
-{
-    let mock = Mock.ofType<Promise<ServiceOutputTypes>>();
-    mock.setup(r => r.then()).returns(async()=><any>response);
-    return mock;
-}
