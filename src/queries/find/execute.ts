@@ -13,7 +13,6 @@ export class Execute
 
     async execute<T extends object>(): Promise<{items:T[],lastEvaluatedKey:string, firstEvaluatedKey: string}>
     {
-        console.log(this.keyParams, this.filterParams, this.params)
         let result = await this.manager.find(this.type, this.keyParams, this.filterParams, this.params);
 
         return {
