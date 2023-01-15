@@ -357,7 +357,7 @@ export class DynamoDbManager implements IDynamoDbManager
             representationAdditionalParam.ExpressionAttributeValues = representationAdditionalParam.ExpressionAttributeValues? marshall(representationAdditionalParam.ExpressionAttributeValues): undefined;
             let putParams = {
                 TableName: tableName,
-                Item: marshall(representation.data),
+                Item: representation.data.Keys? marshall(representation.data): undefined,
                 ...representationAdditionalParam
             };
             transaction.add({Put: putParams});
@@ -659,7 +659,6 @@ export class DynamoDbManager implements IDynamoDbManager
             };
             query['GlobalSecondaryIndexes'][0]['ProvisionedThroughput'] = Object.assign({}, query['ProvisionedThroughput']);
         }
-
         await (dynamoDb || new DynamoDB(this.client['options'])).createTable(query);
     }
 
