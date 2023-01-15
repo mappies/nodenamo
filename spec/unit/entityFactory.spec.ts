@@ -1,4 +1,4 @@
-import {assert as assert} from 'chai';
+import {assert} from 'chai';
 import { DBColumn, DBTable } from '../../src';
 import { EntityFactory } from '../../src/entityFactory';
 import { Const } from '../../src/const';

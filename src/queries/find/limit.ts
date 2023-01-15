@@ -2,7 +2,6 @@ import { IDynamoDbManager } from "../../interfaces/iDynamodbManager";
 import { Execute } from "./execute";
 import { Using } from "./using";
 import { Order } from "./order";
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import { Resume } from "./resume";
 import { StronglyConsistent } from "./stronglyConsistent";
 

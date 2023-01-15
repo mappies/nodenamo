@@ -1,23 +1,23 @@
-import {assert as assert} from 'chai';
-import { DynamoDbManager } from '../../src/managers/dynamodbManager';
-import { Mock, IMock, It } from 'typemoq';
-import { DocumentClient, GetItemOutput, QueryOutput } from 'aws-sdk/clients/dynamodb';
-import { DBTable, DBColumn } from '../../src';
-import {Const} from '../../src/const';
+import { GetItemOutput } from 'aws-sdk/clients/dynamodb';
 import { AWSError } from 'aws-sdk/lib/error';
 import { Request } from 'aws-sdk/lib/request';
+import { assert } from 'chai';
+import { IMock, It, Mock } from 'typemoq';
+
+import { DBColumn, DBTable } from '../../src';
+import { Const } from '../../src/const';
+import { NodenamoDynamoDBClient } from '../../src/managers/nodenamoDynamoDBClient';
+import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Reflector } from '../../src/reflector';
-import { table } from 'console';
-import { DynamoDBClient } from '../../src/managers/dynamodbClient';
 
 describe('DynamoDbManager.Get()', function ()
 {
-    let mockedClient:IMock<DynamoDBClient>;
+    let mockedClient:IMock<NodenamoDynamoDBClient>;
     let called:boolean;
 
     beforeEach(()=>
     {
-        mockedClient = Mock.ofType<DynamoDBClient>();
+        mockedClient = Mock.ofType<NodenamoDynamoDBClient>();
         called = false;
     });
 
@@ -111,12 +111,6 @@ describe('DynamoDbManager.Get()', function ()
 function getMockedGetResponse(response:GetItemOutput): IMock<Request<GetItemOutput, AWSError>>
 {
     let mock = Mock.ofType<Request<GetItemOutput, AWSError>>();
-    mock.setup(r => r.promise()).returns(async()=><any>response);
-    return mock;
-}
-function getMockedQueryResponse(response:QueryOutput): IMock<Request<QueryOutput, AWSError>>
-{
-    let mock = Mock.ofType<Request<QueryOutput, AWSError>>();
     mock.setup(r => r.promise()).returns(async()=><any>response);
     return mock;
 }

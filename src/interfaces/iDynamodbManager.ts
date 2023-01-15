@@ -1,11 +1,10 @@
-import { DynamoDB } from 'aws-sdk/clients/all';
-
-import { DynamoDBClient } from '../managers/dynamodbClient';
+import { NodenamoDynamoDBClient } from '../managers/nodenamoDynamoDBClient';
 import { DynamoDbTransaction } from '../managers/dynamodbTransaction';
+import { NodeNamoDynamoDB } from '../managers/nodenamoDynamoDB';
 
 export interface IDynamoDbManager
 {
-    client:DynamoDBClient;
+    client:NodenamoDynamoDBClient;
 
     put<T extends object>(type:{new(...args: any[]):T}, object:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction, autoCommit?:boolean): Promise<void>;
 
@@ -23,7 +22,7 @@ export interface IDynamoDbManager
 
     delete<T extends object>(type:{new(...args: any[]):T}, id:string|number,  params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction, autoCommit?:boolean): Promise<void>;
 
-    createTable<T extends object>(type?:{new(...args: any[]):T}, params?:{onDemand?:boolean, readCapacityUnits?:number, writeCapacityUnits?:number}, dynamoDb?:DynamoDB): Promise<void>;
+    createTable<T extends object>(type?:{new(...args: any[]):T}, params?:{onDemand?:boolean, readCapacityUnits?:number, writeCapacityUnits?:number}, dynamoDb?:NodeNamoDynamoDB): Promise<void>;
 
-    deleteTable<T extends object>(type?:{new(...args: any[]):T}, dynamoDb?:DynamoDB): Promise<void>;
+    deleteTable<T extends object>(type?:{new(...args: any[]):T}, dynamoDb?:NodeNamoDynamoDB): Promise<void>;
 }

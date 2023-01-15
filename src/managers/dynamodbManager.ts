@@ -1,20 +1,20 @@
-import { DocumentClient, QueryInput, QueryOutput, GetItemInput } from 'aws-sdk/clients/dynamodb';
+import { QueryInput, QueryOutput, GetItemInput } from 'aws-sdk/clients/dynamodb';
 import { DynamoDbTransaction } from './dynamodbTransaction';
 import { RepresentationFactory } from '../representationFactory';
 import { Reflector } from '../reflector';
 import {Const} from '../const';
 import { EntityFactory } from '../entityFactory';
 import { NodenamoError } from '../errors/nodenamoError';
-import { DynamoDB } from 'aws-sdk/clients/all';
 import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
 import { VersionError } from '../errors/versionError';
 import { Key } from '../Key';
 import AggregateError from 'aggregate-error';
-import { DynamoDBClient } from './dynamodbClient';
+import { NodenamoDynamoDBClient } from './nodenamoDynamoDBClient';
+import { NodeNamoDynamoDB } from './nodenamoDynamoDB';
 
 export class DynamoDbManager implements IDynamoDbManager
 {
-    constructor(public client:DynamoDBClient)
+    constructor(public client:NodenamoDynamoDBClient)
     {
 
     }
@@ -208,7 +208,7 @@ export class DynamoDbManager implements IDynamoDbManager
 
                 lastItem = item;
 
-                result[<string>item[Const.IdColumn]] = EntityFactory.create(type, item);
+                result[<any>item[Const.IdColumn]] = EntityFactory.create(type, item);
 
                 if(!!params && !!params.limit && ++itemCount >= params.limit)
                 {
@@ -623,7 +623,7 @@ export class DynamoDbManager implements IDynamoDbManager
         return result;
     }
 
-    async createTable<T extends object>(type?:{new(...args: any[]):T}, params?:{onDemand?:boolean, readCapacityUnits?:number, writeCapacityUnits?:number}, dynamoDb?:DynamoDB): Promise<void>
+    async createTable<T extends object>(type?:{new(...args: any[]):T}, params?:{onDemand?:boolean, readCapacityUnits?:number, writeCapacityUnits?:number}, dynamoDb?:NodeNamoDynamoDB): Promise<void>
     {
         let query = {
             AttributeDefinitions: [
@@ -665,16 +665,16 @@ export class DynamoDbManager implements IDynamoDbManager
             query['GlobalSecondaryIndexes'][0]['ProvisionedThroughput'] = Object.assign({}, query['ProvisionedThroughput']);
         }
 
-        await (dynamoDb || new DynamoDB(this.client['options'])).createTable(query).promise();
+        await (dynamoDb || new NodeNamoDynamoDB(this.client['options'])).createTable(query).promise();
     }
 
-    async deleteTable<T extends object>(type?:{new(...args: any[]):T}, dynamoDb?:DynamoDB): Promise<void>
+    async deleteTable<T extends object>(type?:{new(...args: any[]):T}, dynamoDb?:NodeNamoDynamoDB): Promise<void>
     {
         let query = {
             TableName: Reflector.getTableName(new type())
         };
 
-        await (dynamoDb || new DynamoDB(this.client['options'])).deleteTable(query).promise();
+        await (dynamoDb || new NodeNamoDynamoDB(this.client['options'])).deleteTable(query).promise();
     }
 }
 

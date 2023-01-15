@@ -1,26 +1,25 @@
-import { Insert } from './queries/insert/insert';
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
-import { DynamoDbManager } from "./managers/dynamodbManager";
-import { Get } from "./queries/get/get";
-import { Find } from "./queries/find/find";
-import { Delete } from "./queries/delete/delete";
-import { List } from "./queries/find/list";
-import { Update } from './queries/update/update';
-import { CreateTable } from './queries/createTable/createTable';
-import { DeleteTable } from './queries/deleteTable/deleteTable';
-import { ValidatedDynamoDbManager } from './managers/validatedDynamodbManager';
 import { IDynamoDbManager } from './interfaces/iDynamodbManager';
-import { On } from './queries/on/on';
 import ITransactionable from './interfaces/iTransactionable';
-import { Transaction } from './queries/transaction/on';
+import { NodenamoDynamoDBClient } from './managers/nodenamoDynamoDBClient';
+import { DynamoDbManager } from './managers/dynamodbManager';
+import { ValidatedDynamoDbManager } from './managers/validatedDynamodbManager';
+import { CreateTable } from './queries/createTable/createTable';
+import { Delete } from './queries/delete/delete';
+import { DeleteTable } from './queries/deleteTable/deleteTable';
 import { Describe } from './queries/describe/describe';
-import { DynamoDBClient } from './managers/dynamodbClient';
+import { Find } from './queries/find/find';
+import { List } from './queries/find/list';
+import { Get } from './queries/get/get';
+import { Insert } from './queries/insert/insert';
+import { On } from './queries/on/on';
+import { Transaction } from './queries/transaction/on';
+import { Update } from './queries/update/update';
 
 export class NodeNamo
 {
     private manager:IDynamoDbManager
 
-    constructor(private client:DynamoDBClient)
+    constructor(private client:NodenamoDynamoDBClient)
     {
         this.manager = new ValidatedDynamoDbManager(new DynamoDbManager(this.client));
     }

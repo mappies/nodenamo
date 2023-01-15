@@ -1,7 +1,7 @@
 import AggregateError from 'aggregate-error';
 import { TransactWriteItem } from 'aws-sdk/clients/dynamodb';
 
-import { DynamoDBClient } from './dynamodbClient';
+import { NodenamoDynamoDBClient } from './nodenamoDynamoDBClient';
 
 const MAX_AWS_TRANSACTION_OPERATIONS = Number(process.env.MAX_AWS_TRANSACTION_OPERATIONS) || 25;
 
@@ -9,7 +9,7 @@ export class DynamoDbTransaction
 {
     private operations:TransactWriteItem[];
 
-    constructor(private client: DynamoDBClient)
+    constructor(private client: NodenamoDynamoDBClient)
     {
         
         this.operations = [];

@@ -1,5 +1,4 @@
 import { IDynamoDbManager } from "../../interfaces/iDynamodbManager";
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import { Execute } from "./execute";
 import { Using } from "./using";
 import { Order } from "./order";

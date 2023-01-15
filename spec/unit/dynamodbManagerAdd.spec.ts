@@ -1,12 +1,11 @@
-import {assert as assert} from 'chai';
+import {assert} from 'chai';
 import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { DBTable, DBColumn } from '../../src';
 import { DynamoDbTransaction } from '../../src/managers/dynamodbTransaction';
 import {Const} from '../../src/const';
 import AggregateError from 'aggregate-error';
-import { DynamoDBClient } from '../../src/managers/dynamodbClient';
+import { NodenamoDynamoDBClient } from '../../src/managers/nodenamoDynamoDBClient';
 
 @DBTable()
 class Entity {
@@ -28,14 +27,14 @@ class EntityWithDataPrefix {
 
 describe('DynamoDbManager.Add()', function () 
 {
-    let mockedClient:IMock<DynamoDBClient>;
+    let mockedClient:IMock<NodenamoDynamoDBClient>;
     let mockedTransaction:IMock<DynamoDbTransaction>;
     let put:boolean;
     let committed:boolean;
 
     beforeEach(()=>
     {
-        mockedClient = Mock.ofType<DynamoDBClient>();
+        mockedClient = Mock.ofType<NodenamoDynamoDBClient>();
         mockedTransaction = Mock.ofType<DynamoDbTransaction>();
         mockedTransaction.setup(t => t.commit()).callback(()=>committed=true);
         put = false;

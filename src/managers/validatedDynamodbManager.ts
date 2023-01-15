@@ -1,4 +1,3 @@
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { DynamoDbTransaction } from './dynamodbTransaction';
 import { DynamoDbManager } from './dynamodbManager';
 import { Reflector } from '../reflector';
@@ -7,11 +6,11 @@ import { isNullOrUndefined } from 'util';
 import {Const} from '../const';
 import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
 import { Key } from '../Key';
-import { DynamoDBClient } from './dynamodbClient';
+import { NodenamoDynamoDBClient } from './nodenamoDynamoDBClient';
 
 export class ValidatedDynamoDbManager implements IDynamoDbManager
 {
-    get client(): DynamoDBClient
+    get client(): NodenamoDynamoDBClient
     {
         return this.manager.client;
     }
