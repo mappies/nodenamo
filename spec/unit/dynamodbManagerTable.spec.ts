@@ -1,7 +1,7 @@
 import {assert as assert} from 'chai';
 import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
-import { DynamoDB, CreateTableOutput, DeleteTableOutput, ServiceOutputTypes } from '@aws-sdk/client-dynamodb';
+import { DynamoDB, CreateTableOutput, DeleteTableOutput, ServiceOutputTypes, CreateTableCommand, CreateTableCommandOutput, CreateTableCommandInput, DeleteTableCommandOutput } from '@aws-sdk/client-dynamodb';
 import { DBTable, DBColumn } from '../../src';
 
 @DBTable()
@@ -30,7 +30,7 @@ describe('DynamoDbManager.create/deleteTable()', function ()
 
     it('createTable() - on demand', async () =>
     {
-        mockedDynamoDb.setup(db => db.createTable(It.is((p:any) => !!p.TableName && p.BillingMode === 'PAY_PER_REQUEST'))).callback(()=>called=true).returns(()=>getMockedCreateTableResponse().object);
+        mockedDynamoDb.setup(db => db.createTable(It.is((p:any) => !!p.TableName && p.BillingMode === 'PAY_PER_REQUEST'))).callback(()=>called=true).returns(async () => {return {} as CreateTableCommandOutput});
 
         let manager = new DynamoDbManager(mockedClient.object);
         await manager.createTable(Entity, {onDemand:true}, mockedDynamoDb.object);
@@ -40,13 +40,13 @@ describe('DynamoDbManager.create/deleteTable()', function ()
 
     it('createTable() - provisioned capacity', async () =>
     {
-        mockedDynamoDb.setup(db => db.createTable(It.is((p:any) => !!p.TableName 
+        mockedDynamoDb.setup(db => db.createTable(It.is((p:CreateTableCommandInput) => !!p.TableName 
                                                               && p.BillingMode === 'PROVISIONED'
-                                                              && p.ProvisionedThroughput.ReadCapacityUnits === 2
+                                                              && p?.ProvisionedThroughput?.ReadCapacityUnits === 2
                                                               && p.ProvisionedThroughput.WriteCapacityUnits === 3
-                                                              && p.GlobalSecondaryIndexes[0].ProvisionedThroughput.ReadCapacityUnits === 2
-                                                              && p.GlobalSecondaryIndexes[0].ProvisionedThroughput.WriteCapacityUnits === 3)))
-                      .callback(()=>called=true).returns(()=>getMockedCreateTableResponse().object);
+                                                              && p?.GlobalSecondaryIndexes?.[0]?.ProvisionedThroughput?.ReadCapacityUnits === 2
+                                                              && p?.GlobalSecondaryIndexes?.[0]?.ProvisionedThroughput?.WriteCapacityUnits === 3)))
+                      .callback(()=>called=true).returns(async () => {return {} as CreateTableCommandOutput} );
 
         let manager = new DynamoDbManager(mockedClient.object);
         await manager.createTable(Entity, {readCapacityUnits:2, writeCapacityUnits:3}, mockedDynamoDb.object);
@@ -56,7 +56,7 @@ describe('DynamoDbManager.create/deleteTable()', function ()
 
     it('deleteTable()', async () =>
     {
-        mockedDynamoDb.setup(db => db.deleteTable(It.is((p:any) => !!p.TableName))).callback(()=>called=true).returns(()=>getMockedDeleteTableResponse().object);
+        mockedDynamoDb.setup(db => db.deleteTable(It.is((p:any) => !!p.TableName))).callback(()=>called=true).returns(async () => {return {} as DeleteTableCommandOutput});
 
         let manager = new DynamoDbManager(mockedClient.object);
         await manager.deleteTable(Entity, mockedDynamoDb.object);
@@ -64,16 +64,3 @@ describe('DynamoDbManager.create/deleteTable()', function ()
         assert.isTrue(called);
     });
 });
-
-function getMockedCreateTableResponse(response?:CreateTableOutput): IMock<Promise<ServiceOutputTypes>>
-{
-    let mock = Mock.ofType<Promise<ServiceOutputTypes>>();
-    mock.setup(r => r.then()).returns(async()=><any>response);
-    return mock;
-}
-function getMockedDeleteTableResponse(response?:DeleteTableOutput): IMock<Promise<ServiceOutputTypes>>
-{
-    let mock = Mock.ofType<Promise<ServiceOutputTypes>>();
-    mock.setup(r => r.then()).returns(async()=><any>response);
-    return mock;
-}
