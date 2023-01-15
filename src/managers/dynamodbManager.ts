@@ -665,7 +665,7 @@ export class DynamoDbManager implements IDynamoDbManager
             query['GlobalSecondaryIndexes'][0]['ProvisionedThroughput'] = Object.assign({}, query['ProvisionedThroughput']);
         }
 
-        await (dynamoDb || new NodeNamoDynamoDB({...this.client['options'], ...this.client['options'] })).createTable(query).promise();
+        await (dynamoDb || new NodeNamoDynamoDB(this.client['options'])).createTable(query).promise();
     }
 
     async deleteTable<T extends object>(type?:{new(...args: any[]):T}, dynamoDb?:NodeNamoDynamoDB | DynamoDB): Promise<void>
@@ -674,7 +674,7 @@ export class DynamoDbManager implements IDynamoDbManager
             TableName: Reflector.getTableName(new type())
         };
 
-        await (dynamoDb || new NodeNamoDynamoDB({...this.client['options'], ...this.client['options'] })).deleteTable(query).promise();
+        await (dynamoDb || new NodeNamoDynamoDB(this.client['options'])).deleteTable(query).promise();
     }
 }
 
