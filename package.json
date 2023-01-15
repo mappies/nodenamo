@@ -23,6 +23,8 @@
   },
   "homepage": "https://github.com/mappies/nodenamo#readme",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.245.0",
+    "@aws-sdk/util-dynamodb": "^3.245.0",
     "aggregate-error": "^3.0.1",
     "aws-sdk": "^2.597.0",
     "reflect-metadata": "^0.1.13"

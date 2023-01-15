@@ -7,10 +7,11 @@ import { isNullOrUndefined } from 'util';
 import {Const} from '../const';
 import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
 import { Key } from '../Key';
+import { DynamoDBClient } from './dynamodbClient';
 
 export class ValidatedDynamoDbManager implements IDynamoDbManager
 {
-    get client(): DocumentClient
+    get client(): DynamoDBClient
     {
         return this.manager.client;
     }

@@ -9,10 +9,11 @@ import { AWSError } from 'aws-sdk/lib/error';
 import { Request } from 'aws-sdk/lib/request';
 import { VersionError } from '../../src/errors/versionError';
 import AggregateError = require('aggregate-error');
+import { DynamoDBClient } from '../../src/managers/dynamodbClient';
 
 describe('DynamoDbManager.Update()', function ()
 {
-    let mockedClient:IMock<DocumentClient>;
+    let mockedClient:IMock<DynamoDBClient>;
     let mockedTransaction:IMock<DynamoDbTransaction>;
     let put:boolean;
     let put2:boolean;
@@ -23,7 +24,7 @@ describe('DynamoDbManager.Update()', function ()
 
     beforeEach(()=>
     {
-        mockedClient = Mock.ofType<DocumentClient>();
+        mockedClient = Mock.ofType<DynamoDBClient>();
         mockedTransaction = Mock.ofType<DynamoDbTransaction>();
         put = false;
         put2 = false;

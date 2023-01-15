@@ -7,16 +7,17 @@ import { AWSError } from 'aws-sdk/lib/error';
 import { Request } from 'aws-sdk/lib/request';
 import { Const } from '../../src/const';
 import { Reflector } from '../../src/reflector';
+import { DynamoDBClient } from '../../src/managers/dynamodbClient';
 
 describe('DynamoDbManager.Find()', function () 
 {
-    let mockedClient:IMock<DocumentClient>;
+    let mockedClient:IMock<DynamoDBClient>;
     let called:boolean;
     let obj:object;
 
     beforeEach(()=>
     {
-        mockedClient = Mock.ofType<DocumentClient>();
+        mockedClient = Mock.ofType<DynamoDBClient>();
         called = false;
         
         obj = {id:42};

@@ -14,12 +14,13 @@ import { On } from './queries/on/on';
 import ITransactionable from './interfaces/iTransactionable';
 import { Transaction } from './queries/transaction/on';
 import { Describe } from './queries/describe/describe';
+import { DynamoDBClient } from './managers/dynamodbClient';
 
 export class NodeNamo
 {
     private manager:IDynamoDbManager
 
-    constructor(private client:DocumentClient)
+    constructor(private client:DynamoDBClient)
     {
         this.manager = new ValidatedDynamoDbManager(new DynamoDbManager(this.client));
     }

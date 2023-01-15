@@ -6,6 +6,7 @@ import { DBTable, DBColumn } from '../../src';
 import { AWSError } from 'aws-sdk/lib/error';
 import { Request } from 'aws-sdk/lib/request';
 import { DynamoDB } from 'aws-sdk/clients/all';
+import { DynamoDBClient } from '../../src/managers/dynamodbClient';
 
 @DBTable()
 class Entity {
@@ -20,13 +21,13 @@ class Entity {
 
 describe('DynamoDbManager.create/deleteTable()', function () 
 {
-    let mockedClient:IMock<DocumentClient>;
+    let mockedClient:IMock<DynamoDBClient>;
     let mockedDynamoDb:IMock<DynamoDB>;
     let called:boolean;
 
     beforeEach(()=>
     {
-        mockedClient = Mock.ofType<DocumentClient>();
+        mockedClient = Mock.ofType<DynamoDBClient>();
         mockedDynamoDb = Mock.ofType<DynamoDB>();
         called = false;
     });

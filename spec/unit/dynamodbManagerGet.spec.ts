@@ -8,15 +8,16 @@ import { AWSError } from 'aws-sdk/lib/error';
 import { Request } from 'aws-sdk/lib/request';
 import { Reflector } from '../../src/reflector';
 import { table } from 'console';
+import { DynamoDBClient } from '../../src/managers/dynamodbClient';
 
 describe('DynamoDbManager.Get()', function ()
 {
-    let mockedClient:IMock<DocumentClient>;
+    let mockedClient:IMock<DynamoDBClient>;
     let called:boolean;
 
     beforeEach(()=>
     {
-        mockedClient = Mock.ofType<DocumentClient>();
+        mockedClient = Mock.ofType<DynamoDBClient>();
         called = false;
     });
 

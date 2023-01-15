@@ -6,6 +6,7 @@ import { DBTable, DBColumn } from '../../src';
 import { DynamoDbTransaction } from '../../src/managers/dynamodbTransaction';
 import {Const} from '../../src/const';
 import AggregateError from 'aggregate-error';
+import { DynamoDBClient } from '../../src/managers/dynamodbClient';
 
 @DBTable()
 class Entity {
@@ -27,14 +28,14 @@ class EntityWithDataPrefix {
 
 describe('DynamoDbManager.Add()', function () 
 {
-    let mockedClient:IMock<DocumentClient>;
+    let mockedClient:IMock<DynamoDBClient>;
     let mockedTransaction:IMock<DynamoDbTransaction>;
     let put:boolean;
     let committed:boolean;
 
     beforeEach(()=>
     {
-        mockedClient = Mock.ofType<DocumentClient>();
+        mockedClient = Mock.ofType<DynamoDBClient>();
         mockedTransaction = Mock.ofType<DynamoDbTransaction>();
         mockedTransaction.setup(t => t.commit()).callback(()=>committed=true);
         put = false;

@@ -10,10 +10,11 @@ import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
 import { VersionError } from '../errors/versionError';
 import { Key } from '../Key';
 import AggregateError from 'aggregate-error';
+import { DynamoDBClient } from './dynamodbClient';
 
 export class DynamoDbManager implements IDynamoDbManager
 {
-    constructor(public client:DocumentClient)
+    constructor(public client:DynamoDBClient)
     {
 
     }
