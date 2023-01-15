@@ -2,7 +2,7 @@ import {assert as assert} from 'chai';
 import { DBTable, DBColumn } from '../../src';
 import { NodeNamo } from '../../src/nodeNamo';
 import Config from './config';
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { DynamoDB } from '@aws-sdk/client-dynamodb';
 
 @DBTable({name:'nodenamo_acceptance_globalTableTest'})
 class User
@@ -42,7 +42,12 @@ describe('Global table tests', function ()
     let nodenamo:NodeNamo;
 
     before(async ()=>{
-        nodenamo = new NodeNamo(new DocumentClient({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'us-east-1' }))
+        nodenamo = new NodeNamo(new DynamoDB({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'localhost',
+        credentials: {
+          accessKeyId: "a_non_empty_value",
+          secretAccessKey: "a_non_empty_value",
+        },
+     }))
         await nodenamo.createTable().for(User).execute();
     });
 

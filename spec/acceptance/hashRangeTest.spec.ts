@@ -2,7 +2,7 @@ import {assert as assert} from 'chai';
 import { DBTable, DBColumn } from '../../src';
 import { NodeNamo } from '../../src/nodeNamo';
 import Config from './config';
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { DynamoDB } from '@aws-sdk/client-dynamodb';
 
 @DBTable({name:'nodenamo_acceptance_hashRangeTest'})
 class User
@@ -39,7 +39,7 @@ describe('Hash-range tests', function ()
     let user6:User;
 
     before(async ()=>{
-        nodenamo = new NodeNamo(new DocumentClient({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'us-east-1' }))
+        nodenamo = new NodeNamo(new DynamoDB({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'us-east-1' }))
         await nodenamo.createTable().for(User).execute();
     });
 

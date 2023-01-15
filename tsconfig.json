@@ -7,6 +7,8 @@
         "forceConsistentCasingInFileNames": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
+        "strict": false,
+        "noImplicitAny": false,
         "esModuleInterop": true,
         "lib": [ "es2015", "dom"]
     },

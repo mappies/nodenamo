@@ -24,10 +24,11 @@
   "homepage": "https://github.com/mappies/nodenamo#readme",
   "dependencies": {
     "aggregate-error": "^3.0.1",
-    "aws-sdk": "^2.597.0",
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.245.0",
+    "@aws-sdk/util-dynamodb": "^3.245.0",
     "@types/chai": "^4.2.7",
     "@types/mocha": "^5.2.7",
     "@types/node": "^13.1.4",

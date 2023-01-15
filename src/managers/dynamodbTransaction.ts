@@ -1,4 +1,4 @@
-import { DocumentClient, TransactWriteItem } from "aws-sdk/clients/dynamodb";
+import { DynamoDB, TransactWriteItem, TransactWriteItemsCommand } from "@aws-sdk/client-dynamodb";
 import AggregateError from 'aggregate-error';
 
 const MAX_AWS_TRANSACTION_OPERATIONS = Number(process.env.MAX_AWS_TRANSACTION_OPERATIONS) || 25;
@@ -7,7 +7,7 @@ export class DynamoDbTransaction
 {
     private operations:TransactWriteItem[];
 
-    constructor(private client: DocumentClient)
+    constructor(private client: DynamoDB)
     {
         
         this.operations = [];
@@ -27,14 +27,19 @@ export class DynamoDbTransaction
             for (let i=0; i < this.operations.length; i += MAX_AWS_TRANSACTION_OPERATIONS) 
             {
                 const transactions = this.operations.slice(i, i + MAX_AWS_TRANSACTION_OPERATIONS);
-                
-                let transactionRequest = this.client.transactWrite({ TransactItems: transactions })
+
+                let transactionRequest = this.client.send(new TransactWriteItemsCommand({ TransactItems: transactions }));
 
                 let errors = [];
 
-                transactionRequest.on('extractError', (response) => {
+                try
+                {
+                    await transactionRequest;
+                }
+                catch(e)
+                {
                     try {
-                        let error = JSON.parse(response.httpResponse.body.toString());
+                        let error = JSON.parse(e.httpResponse.body.toString());
 
                         if(error.CancellationReasons)
                         {
@@ -57,14 +62,6 @@ export class DynamoDbTransaction
                     } catch (err) {
                         errors.push(err);
                     }
-                });
-
-                try
-                {
-                    await transactionRequest.promise();
-                }
-                catch(e)
-                {
                     throw new AggregateError([e, ...errors]);
                 }
             }

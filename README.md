@@ -16,7 +16,7 @@ A simple usecase without any hash/range keys
 ```javascript
 
 import { DBTable, DBColumn, NodeNamo } from 'nodenamo';
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
+import { DynamoDB } from "@aws-sdk/client-dynamodb";
 
 @DBTable()
 class User
@@ -38,7 +38,7 @@ class User
     }
 }
 
-let nodenamo = new NodeNamo(new DocumentClient());
+let nodenamo = new NodeNamo(new DynamoDB());
 
 //Create a table
 await nodenamo.createTable().for(User).execute();

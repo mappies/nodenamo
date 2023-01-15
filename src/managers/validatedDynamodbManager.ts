@@ -1,4 +1,4 @@
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDbTransaction } from './dynamodbTransaction';
 import { DynamoDbManager } from './dynamodbManager';
 import { Reflector } from '../reflector';
@@ -10,7 +10,7 @@ import { Key } from '../Key';
 
 export class ValidatedDynamoDbManager implements IDynamoDbManager
 {
-    get client(): DocumentClient
+    get client(): DynamoDB
     {
         return this.manager.client;
     }

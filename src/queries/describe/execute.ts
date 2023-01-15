@@ -1,5 +1,5 @@
 import { IDynamoDbManager } from "../../interfaces/iDynamodbManager";
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
+import { DynamoDB } from "@aws-sdk/client-dynamodb";
 import { Reflector } from '../../reflector';
 import { Key } from "../../Key";
 

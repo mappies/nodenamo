@@ -1,22 +1,20 @@
-import { DocumentClient, QueryInput, QueryOutput, GetItemInput } from 'aws-sdk/clients/dynamodb';
-import { DynamoDbTransaction } from './dynamodbTransaction';
-import { RepresentationFactory } from '../representationFactory';
-import { Reflector } from '../reflector';
-import {Const} from '../const';
+import { DynamoDB, GetItemCommand, GetItemInput, QueryCommand, QueryInput, QueryOutput } from '@aws-sdk/client-dynamodb';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import AggregateError from 'aggregate-error';
+
+import { Const } from '../const';
 import { EntityFactory } from '../entityFactory';
 import { NodenamoError } from '../errors/nodenamoError';
-import { DynamoDB } from 'aws-sdk/clients/all';
-import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
 import { VersionError } from '../errors/versionError';
+import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
 import { Key } from '../Key';
-import AggregateError from 'aggregate-error';
+import { Reflector } from '../reflector';
+import { RepresentationFactory } from '../representationFactory';
+import { DynamoDbTransaction } from './dynamodbTransaction';
 
 export class DynamoDbManager implements IDynamoDbManager
 {
-    constructor(public client:DocumentClient)
-    {
-
-    }
+    constructor(public client:DynamoDB){}
 
     async put<T extends object>(type:{new(...args: any[]):T}, object:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction, autoCommit:boolean = true): Promise<void>
     {
@@ -44,7 +42,7 @@ export class DynamoDbManager implements IDynamoDbManager
         if(params && params.expressionAttributeValues)
         {
             addColumnValuePrefix(instance, params.expressionAttributeValues, params.expressionAttributeNames);
-            additionalParams['ExpressionAttributeValues'] = params.expressionAttributeValues;
+            additionalParams['ExpressionAttributeValues'] = marshall(params.expressionAttributeValues);
         }
 
         for(let representation of representations)
@@ -52,7 +50,7 @@ export class DynamoDbManager implements IDynamoDbManager
             transaction.add({
                 Put: {
                     TableName: representation.tableName,
-                    Item: representation.data,
+                    Item: marshall(representation.data),
                     ...additionalParams
                 }
             })
@@ -87,10 +85,10 @@ export class DynamoDbManager implements IDynamoDbManager
         let obj:T = new type();
         let stronglyConsistent = Reflector.getTableStronglyConsistent(obj) || params?.stronglyConsistent || false;
         let tableName = Reflector.getTableName(obj);
-        let attributeValues = {
+        let attributeValues = marshall({
             ':hash': <any>id,
             ':range': <any>Const.DefaultRangeValue
-        };
+        });
         let attributeNames = {
             '#hash': Const.HashColumn,
             '#range': Const.RangeColumn
@@ -99,18 +97,18 @@ export class DynamoDbManager implements IDynamoDbManager
 
         let query:GetItemInput = {
             TableName: tableName,
-            Key: {
+            Key: marshall({
                 [Const.HashColumn]: attributeValues[':hash'],
                 [Const.RangeColumn]:  attributeValues[':range']
-            },
+            }),
             ConsistentRead: stronglyConsistent
         };
 
-        let response =  await this.client.get(query).promise();
+        let response =  await this.client.send(new GetItemCommand(query));
 
         if(response.Item)
         {
-            return EntityFactory.create(type, response.Item);
+            return EntityFactory.create(type, unmarshall(response.Item));
         }
 
         return undefined;
@@ -172,7 +170,7 @@ export class DynamoDbManager implements IDynamoDbManager
             }
             catch(e){}
         }
-
+        additionalParams['ExpressionAttributeValues'] = additionalParams['ExpressionAttributeValues']? marshall(additionalParams['ExpressionAttributeValues']): undefined
         let query:QueryInput = {
             TableName: tableName,
             KeyConditionExpression: keyParams ? keyParams.keyConditions : undefined,
@@ -194,20 +192,20 @@ export class DynamoDbManager implements IDynamoDbManager
 
         do
         {
-            response =  await this.client.query(query).promise();
+            response =  await this.client.send(new QueryCommand(query));
 
             if (!firstItem) firstItem = response.Items[0];
 
             let processedItemCount = 0;
 
-            for(let item of response.Items)
+            for(let item of response.Items.map( item => unmarshall(item)))
             {
                 processedItemCount++;
                 if(<any>item[Const.IdColumn] in result) continue;
 
                 lastItem = item;
 
-                result[<string>item[Const.IdColumn]] = EntityFactory.create(type, item);
+                result[<string><unknown>item[Const.IdColumn]] = EntityFactory.create(type, item);
 
                 if(!!params && !!params.limit && ++itemCount >= params.limit)
                 {
@@ -356,10 +354,10 @@ export class DynamoDbManager implements IDynamoDbManager
 
                     representationAdditionalParam.ExpressionAttributeNames = Object.assign(representationAdditionalParam.ExpressionAttributeNames || {}, {'#hash': Const.HashColumn, '#range': Const.RangeColumn})
             }
-
+            representationAdditionalParam.ExpressionAttributeValues = representationAdditionalParam.ExpressionAttributeValues? marshall(representationAdditionalParam.ExpressionAttributeValues): undefined;
             let putParams = {
                 TableName: tableName,
-                Item: representation.data,
+                Item: marshall(representation.data),
                 ...representationAdditionalParam
             };
             transaction.add({Put: putParams});
@@ -497,15 +495,15 @@ export class DynamoDbManager implements IDynamoDbManager
         {
             updateExpression = `DELETE ${params.updateExpression.delete.join(',')} ${updateExpression}`;
         }
-
+        additionalParams.ExpressionAttributeValues = additionalParams.ExpressionAttributeValues? marshall(additionalParams.ExpressionAttributeValues): undefined;
         for(let row of rows)
         {
             transaction.add({Update: {
                 TableName: tableName,
-                Key: {
+                Key: marshall({
                     [Const.HashColumn]: row[Const.HashColumn],
                     [Const.RangeColumn]: row[Const.RangeColumn]
-                },
+                }),
                 UpdateExpression: updateExpression,
                 ...additionalParams
             }})
@@ -572,6 +570,7 @@ export class DynamoDbManager implements IDynamoDbManager
 
         for(let row of rows)
         {
+            additionalParams.ExpressionAttributeValues = additionalParams.ExpressionAttributeValues? marshall(additionalParams.ExpressionAttributeValues): undefined;
             let query = {
                 TableName: tableName,
                 Key: {},
@@ -579,7 +578,7 @@ export class DynamoDbManager implements IDynamoDbManager
             };
             query.Key[Const.HashColumn] = row[Const.HashColumn];
             query.Key[Const.RangeColumn] = row[Const.RangeColumn];
-
+            query.Key = marshall(query.Key);
             transaction.add({Delete: query});
         }
 
@@ -593,14 +592,14 @@ export class DynamoDbManager implements IDynamoDbManager
         let obj:T = new type();
         let tableName = Reflector.getTableName(obj);
 
-        let getAttributeValues = {':objid': <any>id};
+        let getAttributeValues = {':objid': {'S': <any>id}};
         addColumnValuePrefix(obj, getAttributeValues,{'#objid': Const.IdColumn})
 
         let query:QueryInput = {
             TableName: tableName,
             KeyConditionExpression: '#objid = :objid',
             ExpressionAttributeNames: {'#objid': Const.IdColumn},
-            ExpressionAttributeValues: getAttributeValues,
+            ExpressionAttributeValues: marshall(getAttributeValues),
             IndexName: Const.IdIndexName
         };
 
@@ -608,11 +607,11 @@ export class DynamoDbManager implements IDynamoDbManager
 
         do
         {
-            let response =  await this.client.query(query).promise();
+            let response =  await this.client.send(new QueryCommand(query));
 
             if(response.Items)
             {
-                result = result.concat(response.Items)
+                result = result.concat(response.Items.map(item => unmarshall(item)))
             }
 
             query.ExclusiveStartKey = response.LastEvaluatedKey;
@@ -664,7 +663,7 @@ export class DynamoDbManager implements IDynamoDbManager
             query['GlobalSecondaryIndexes'][0]['ProvisionedThroughput'] = Object.assign({}, query['ProvisionedThroughput']);
         }
 
-        await (dynamoDb || new DynamoDB(this.client['options'])).createTable(query).promise();
+        await (dynamoDb || new DynamoDB(this.client['options'])).createTable(query);
     }
 
     async deleteTable<T extends object>(type?:{new(...args: any[]):T}, dynamoDb?:DynamoDB): Promise<void>
@@ -673,7 +672,7 @@ export class DynamoDbManager implements IDynamoDbManager
             TableName: Reflector.getTableName(new type())
         };
 
-        await (dynamoDb || new DynamoDB(this.client['options'])).deleteTable(query).promise();
+        await (dynamoDb || new DynamoDB(this.client['options'])).deleteTable(query);
     }
 }
 

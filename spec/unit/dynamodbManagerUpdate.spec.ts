@@ -1,18 +1,16 @@
 import {assert as assert} from 'chai';
 import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
-import { DocumentClient, QueryOutput, GetItemOutput } from 'aws-sdk/clients/dynamodb';
+import { DynamoDB, QueryOutput, GetItemOutput, ServiceOutputTypes } from '@aws-sdk/client-dynamodb';
 import { DBTable, DBColumn } from '../../src';
 import { DynamoDbTransaction } from '../../src/managers/dynamodbTransaction';
 import {Const} from '../../src/const';
-import { AWSError } from 'aws-sdk/lib/error';
-import { Request } from 'aws-sdk/lib/request';
 import { VersionError } from '../../src/errors/versionError';
 import AggregateError = require('aggregate-error');
 
 describe('DynamoDbManager.Update()', function ()
 {
-    let mockedClient:IMock<DocumentClient>;
+    let mockedClient:IMock<DynamoDB>;
     let mockedTransaction:IMock<DynamoDbTransaction>;
     let put:boolean;
     let put2:boolean;
@@ -23,7 +21,7 @@ describe('DynamoDbManager.Update()', function ()
 
     beforeEach(()=>
     {
-        mockedClient = Mock.ofType<DocumentClient>();
+        mockedClient = Mock.ofType<DynamoDB>();
         mockedTransaction = Mock.ofType<DynamoDbTransaction>();
         put = false;
         put2 = false;
@@ -52,7 +50,7 @@ describe('DynamoDbManager.Update()', function ()
         };
 
         let findResponse = getMockedQueryResponse({Items: <any>[{hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'}, {hash: 'entity#1', range: 'order', id:1, name:'Some Two', created:'created', order:'order'}]});
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
 
@@ -80,11 +78,11 @@ describe('DynamoDbManager.Update()', function ()
         };
 
         let findResponse = getMockedQueryResponse({Items: <any>[{hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'}, {hash: 'entity#1', range: 'order', id:1, name:'Some Two', created:'created', order:'order'}]});
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'new created' && t.Put.Item.name === 'New Two' && t.Put.Item.created === 'new created' && t.Put.Item.order === 'new order'))).callback(()=>put=true);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'new order' && t.Put.Item.name === 'New Two' && t.Put.Item.created === 'new created' && t.Put.Item.order === 'new order'))).callback(()=>put2=true);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Delete && t.Delete.Key.hash === 'entity#1' && t.Delete.Key.range === 'created'))).callback(()=>deleted=true);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Delete && t.Delete.Key.hash === 'entity#1' && t.Delete.Key.range === 'order'))).callback(()=>deleted2=true);
+        mockedClient.setup(q => q.send(It.is((p:any) => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'new created' && t.Put.Item.name === 'New Two' && t.Put.Item.created === 'new created' && t.Put.Item.order === 'new order'))).callback(()=>put=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'new order' && t.Put.Item.name === 'New Two' && t.Put.Item.created === 'new created' && t.Put.Item.order === 'new order'))).callback(()=>put2=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Delete && t.Delete.Key.hash === 'entity#1' && t.Delete.Key.range === 'created'))).callback(()=>deleted=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Delete && t.Delete.Key.hash === 'entity#1' && t.Delete.Key.range === 'order'))).callback(()=>deleted2=true);
 
         let manager = new DynamoDbManager(mockedClient.object);
         await manager.update(Entity, 1, {name: 'New Two', created: "new created", order: "new order"}, undefined, mockedTransaction.object);
@@ -115,12 +113,12 @@ describe('DynamoDbManager.Update()', function ()
             {hash: 'entity#nodenamo', range: 'created#1', id:1, name:'Some One', created:'created', order:'order'},
             {hash: 'entity#Some One', range: 'created', id:1, name:'Some One', created:'created', order:'order'},
             {hash: 'entity#1', range: 'nodenamo', id:1, name:'Some One', created:'created', order:'order'}]});
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
+        mockedClient.setup(q => q.send(It.is((p:any) => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
 
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'nodenamo' && !t.Put.ConditionExpression && !t.Put.ExpressionAttributeNames))).callback(()=>put=true);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && t.Put.Item.hash === 'entity#New Two' && t.Put.Item.range === 'created' && t.Put.ConditionExpression && !!t.Put.ExpressionAttributeNames['#hash'] && !!t.Put.ExpressionAttributeNames['#range']))).callback(()=>put2=true);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && t.Put.Item.hash === 'entity#nodenamo' && t.Put.Item.range === 'created#1' && !t.Put.ConditionExpression && !t.Put.ExpressionAttributeNames))).callback(()=>put3=true);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Delete && t.Delete.Key.hash === 'entity#Some One' && t.Delete.Key.range === 'created'))).callback(()=>deleted=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Put && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'nodenamo' && !t.Put.ConditionExpression && !t.Put.ExpressionAttributeNames))).callback(()=>put=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Put && t.Put.Item.hash === 'entity#New Two' && t.Put.Item.range === 'created' && t.Put.ConditionExpression && !!t.Put.ExpressionAttributeNames['#hash'] && !!t.Put.ExpressionAttributeNames['#range']))).callback(()=>put2=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Put && t.Put.Item.hash === 'entity#nodenamo' && t.Put.Item.range === 'created#1' && !t.Put.ConditionExpression && !t.Put.ExpressionAttributeNames))).callback(()=>put3=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Delete && t.Delete.Key.hash === 'entity#Some One' && t.Delete.Key.range === 'created'))).callback(()=>deleted=true);
 
         let manager = new DynamoDbManager(mockedClient.object);
         await manager.update(Entity, 1, {name: 'New Two'}, undefined, mockedTransaction.object);
@@ -151,10 +149,10 @@ describe('DynamoDbManager.Update()', function ()
         };
 
         let findResponse = getMockedQueryResponse({Items: <any>[{hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'}, {hash: 'entity#1', range: 'order', id:1, name:'Some Two', created:'created', order:'order'}]});
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'created' && !t.Put.ConditionExpression && t.Put.Item.name === 'New Two' && t.Put.Item.created === 'created' && t.Put.Item.order === 'order'))).callback(()=>put=true);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'order' && !t.Put.ConditionExpression && t.Put.Item.name === 'New Two' && t.Put.Item.created === 'created' && t.Put.Item.order === 'order'))).callback(()=>put2=true);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Delete))).callback(()=>deleted=true);
+        mockedClient.setup(q => q.send(It.is((p:any) => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'created' && !t.Put.ConditionExpression && t.Put.Item.name === 'New Two' && t.Put.Item.created === 'created' && t.Put.Item.order === 'order'))).callback(()=>put=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'order' && !t.Put.ConditionExpression && t.Put.Item.name === 'New Two' && t.Put.Item.created === 'created' && t.Put.Item.order === 'order'))).callback(()=>put2=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Delete))).callback(()=>deleted=true);
 
         let manager = new DynamoDbManager(mockedClient.object);
         await manager.update(Entity, 1, {name: 'New Two'}, undefined, mockedTransaction.object);
@@ -184,11 +182,11 @@ describe('DynamoDbManager.Update()', function ()
         };
 
         let findResponse = getMockedQueryResponse({Items: <any>[{hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'}, {hash: 'entity#1', range: 'order', id:1, name:'Some Two', created:'created', order:'order'}]});
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1a' && t.Put.Item.range === 'created' && !!t.Put.ConditionExpression && t.Put.Item.id === '1a'))).callback(()=>put=true);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1a' && t.Put.Item.range === 'order' && !!t.Put.ConditionExpression && t.Put.Item.id === '1a'))).callback(()=>put2=true);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Delete && !!t.Delete.TableName && t.Delete.Key.hash === 'entity#1' && t.Delete.Key.range === 'created'))).callback(()=>deleted=true);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Delete && !!t.Delete.TableName && t.Delete.Key.hash === 'entity#1' && t.Delete.Key.range === 'order'))).callback(()=>deleted2=true);
+        mockedClient.setup(q => q.send(It.is((p:any) => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1a' && t.Put.Item.range === 'created' && !!t.Put.ConditionExpression && t.Put.Item.id === '1a'))).callback(()=>put=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1a' && t.Put.Item.range === 'order' && !!t.Put.ConditionExpression && t.Put.Item.id === '1a'))).callback(()=>put2=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Delete && !!t.Delete.TableName && t.Delete.Key.hash === 'entity#1' && t.Delete.Key.range === 'created'))).callback(()=>deleted=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Delete && !!t.Delete.TableName && t.Delete.Key.hash === 'entity#1' && t.Delete.Key.range === 'order'))).callback(()=>deleted2=true);
 
         let manager = new DynamoDbManager(mockedClient.object);
         await manager.update(Entity, 1, {id: '1a'}, undefined, mockedTransaction.object);
@@ -221,10 +219,10 @@ describe('DynamoDbManager.Update()', function ()
         let condition = {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'name'}, expressionAttributeValues: {':v': true}};
 
         let findResponse = getMockedQueryResponse({Items: <any>[{hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'}, {hash: 'entity#1', range: 'order', id:1, name:'Some Two', created:'created', order:'order'}]});
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'created' && t.Put.Item.name === 'New Two' && t.Put.ConditionExpression === 'condition' && t.Put.ExpressionAttributeNames['#n'] === 'name' && t.Put.ExpressionAttributeValues[':v'] === 'true'))).callback(()=>put=true);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'order' && t.Put.Item.name === 'New Two' && t.Put.ConditionExpression === 'condition' && t.Put.ExpressionAttributeNames['#n'] === 'name' && t.Put.ExpressionAttributeValues[':v'] === 'true'))).callback(()=>put2=true);
-        mockedTransaction.setup(t => t.add(It.is(t => !!t.Delete))).callback(()=>deleted=true);
+        mockedClient.setup(q => q.send(It.is((p:any) => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'created' && t.Put.Item.name === 'New Two' && t.Put.ConditionExpression === 'condition' && t.Put.ExpressionAttributeNames['#n'] === 'name' && t.Put.ExpressionAttributeValues[':v'] === 'true'))).callback(()=>put=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'order' && t.Put.Item.name === 'New Two' && t.Put.ConditionExpression === 'condition' && t.Put.ExpressionAttributeNames['#n'] === 'name' && t.Put.ExpressionAttributeValues[':v'] === 'true'))).callback(()=>put2=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Delete))).callback(()=>deleted=true);
 
         let manager = new DynamoDbManager(mockedClient.object);
         await manager.update(Entity, 1, {name: 'New Two'}, condition, mockedTransaction.object);
@@ -250,8 +248,8 @@ describe('DynamoDbManager.Update()', function ()
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
         ]});
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
-        mockedTransaction.setup(t => t.add(It.is(t =>
+        mockedClient.setup(q => q.send(It.is((p:any) => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
+        mockedTransaction.setup(t => t.add(It.is((t:any) =>
             !!t.Put
             && t.Put.Item.name === 'New Two'
             && t.Put.Item[Const.VersionColumn] === 2
@@ -281,8 +279,8 @@ describe('DynamoDbManager.Update()', function ()
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
         ]});
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
-        mockedTransaction.setup(t => t.add(It.is(t =>
+        mockedClient.setup(q => q.send(It.is((p:any) => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
+        mockedTransaction.setup(t => t.add(It.is((t:any) =>
             !!t.Put
             && t.Put.Item.name === 'New Two'
             && t.Put.Item[Const.VersionColumn] === 2
@@ -312,8 +310,8 @@ describe('DynamoDbManager.Update()', function ()
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
         ]});
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
-        mockedTransaction.setup(t => t.add(It.is(t =>
+        mockedClient.setup(q => q.send(It.is((p:any) => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
+        mockedTransaction.setup(t => t.add(It.is((t:any) =>
             !!t.Put
             && t.Put.Item.name === 'New Two'
             && t.Put.Item[Const.VersionColumn] === 2
@@ -343,8 +341,8 @@ describe('DynamoDbManager.Update()', function ()
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
         ]});
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
-        mockedTransaction.setup(t => t.add(It.is(t =>
+        mockedClient.setup(q => q.send(It.is((p:any) => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
+        mockedTransaction.setup(t => t.add(It.is((t:any) =>
             !!t.Put
             && t.Put.Item.name === 'New Two'
             && t.Put.Item[Const.VersionColumn] === 2
@@ -374,8 +372,8 @@ describe('DynamoDbManager.Update()', function ()
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
         ]});
-        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
-        mockedTransaction.setup(t => t.add(It.is(t =>
+        mockedClient.setup(q => q.send(It.is((p:any) => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
+        mockedTransaction.setup(t => t.add(It.is((t:any) =>
             !!t.Put
             && t.Put.Item.name === 'New Two'
             && t.Put.Item[Const.VersionColumn] === 2
@@ -413,7 +411,7 @@ describe('DynamoDbManager.Update()', function ()
         });
 
         let calledGetById = false;
-        mockedClient.setup(q => q.query(It.is(p =>
+        mockedClient.setup(q => q.send(It.is((p:any) =>
             !!p.TableName
             && p.IndexName === Const.IdIndexName
             && p.KeyConditionExpression === '#objid = :objid'
@@ -423,7 +421,7 @@ describe('DynamoDbManager.Update()', function ()
             .returns(()=>findResponse1.object);
 
         let calledGetOne = false;
-        mockedClient.setup(q => q.get(It.is(p =>
+        mockedClient.setup(q => q.send(It.is((p:any) =>
             !!p.TableName
             && p.Key[Const.HashColumn] === 'entity#1'
             && p.Key[Const.RangeColumn] === 'nodenamo')))
@@ -465,7 +463,7 @@ describe('DynamoDbManager.Update()', function ()
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
         ]});
-        mockedClient.setup(q => q.query(It.is(p =>
+        mockedClient.setup(q => q.send(It.is((p:any) =>
             !!p.TableName
             && p.IndexName === Const.IdIndexName
             && p.KeyConditionExpression === '#objid = :objid'
@@ -488,7 +486,7 @@ describe('DynamoDbManager.Update()', function ()
         }
 
         assert.notInstanceOf(error, VersionError);
-        assert.equal(error.message, 'Simulated error');
+        assert.equal(error?.['message'], 'Simulated error');
     });
 
     it('put() - failed from an error', async () =>
@@ -506,7 +504,7 @@ describe('DynamoDbManager.Update()', function ()
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
         ]});
-        mockedClient.setup(q => q.query(It.isAny())).callback(()=>called=true).returns(()=>findResponse.object);
+        mockedClient.setup(q => q.send(It.isAny())).callback(()=>called=true).returns(()=>findResponse.object);
 
         mockedTransaction = Mock.ofType<DynamoDbTransaction>();
         mockedTransaction.setup(t => t.commit()).throws(new Error('Simulated error'));
@@ -524,7 +522,7 @@ describe('DynamoDbManager.Update()', function ()
         }
 
         assert.isDefined(error);
-        assert.equal(error.message, 'Simulated error');
+        assert.equal(error?.['message'], 'Simulated error');
     });
 
     it('put() - failed from a ConditionalCheckFailed', async () =>
@@ -542,7 +540,7 @@ describe('DynamoDbManager.Update()', function ()
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
         ]});
-        mockedClient.setup(q => q.query(It.isAny())).callback(()=>called=true).returns(()=>findResponse.object);
+        mockedClient.setup(q => q.send(It.isAny())).callback(()=>called=true).returns(()=>findResponse.object);
 
         mockedTransaction = Mock.ofType<DynamoDbTransaction>();
         mockedTransaction.setup(t => t.commit()).throws(new AggregateError([new Error('Simulated error - ConditionalCheckFailed')]));
@@ -559,19 +557,19 @@ describe('DynamoDbManager.Update()', function ()
         }
 
         assert.isDefined(error);
-        assert.isTrue(error.message.includes('An object with the same ID or hash-range key already exists in \'Entity\' table'));
+        assert.isTrue((error?.['message'] as any)?.includes('An object with the same ID or hash-range key already exists in \'Entity\' table'));
     });
 });
 
-function getMockedGetResponse(response:GetItemOutput): IMock<Request<GetItemOutput, AWSError>>
+function getMockedGetResponse(response:GetItemOutput): IMock<Promise<ServiceOutputTypes>>
 {
-    let mock = Mock.ofType<Request<GetItemOutput, AWSError>>();
-    mock.setup(r => r.promise()).returns(async()=><any>response);
+    let mock = Mock.ofType<Promise<ServiceOutputTypes>>();
+    mock.setup(r => r.then()).returns(async()=><any>response);
     return mock;
 }
-function getMockedQueryResponse(response:QueryOutput): IMock<Request<QueryOutput, AWSError>>
+function getMockedQueryResponse(response:QueryOutput): IMock<Promise<ServiceOutputTypes>>
 {
-    let mock = Mock.ofType<Request<QueryOutput, AWSError>>();
-    mock.setup(r => r.promise()).returns(async()=><any>response);
+    let mock = Mock.ofType<Promise<ServiceOutputTypes>>();
+    mock.setup(r => r.then()).returns(async()=><any>response);
     return mock;
 }

@@ -1,10 +1,9 @@
-import { DocumentClient} from 'aws-sdk/clients/dynamodb';
+import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDbTransaction } from '../managers/dynamodbTransaction';
-import { DynamoDB } from 'aws-sdk/clients/all';
 
 export interface IDynamoDbManager
 {
-    client:DocumentClient;
+    client:DynamoDB;
 
     put<T extends object>(type:{new(...args: any[]):T}, object:object, params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction, autoCommit?:boolean): Promise<void>;
 
