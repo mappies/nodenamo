@@ -22,20 +22,20 @@ export class NodenamoDynamoDBClient {
 
     public get(query: any): { promise: any } {
         return { 
-            promise: async () => new Promise(async (ress) => {
+            promise: async () => new Promise(async () => {
                     let results = await this.client.send(new GetItemCommand(this.marsh(query)));
                     results.Item = unmarshall(results.Item);
-                    ress(results);
+                    return results;
                 })
         }
     }
 
     public query(query: any): { promise: any } {
         return { 
-            promise: async () => new Promise(async (ress) => {
+            promise: async () => new Promise(async () => {
                 let results = await this.client.send(new QueryCommand(this.marsh(query)));
                 results.Items = results.Items?.map(item => unmarshall(item));
-                ress(results);
+                return results;
             })
         }
     }
@@ -43,9 +43,7 @@ export class NodenamoDynamoDBClient {
     public transactWrite(items: { TransactItems: any}): { promise: any, on: any } {
         items = {TransactItems: items.TransactItems.map(item => this.marsh(item))};
         return { 
-            promise: async () => new Promise(async (ress) => {
-                ress(await this.client.send(new TransactWriteItemsCommand(items)));
-            }),
+            promise: async () => new Promise(async () => await this.client.send(new TransactWriteItemsCommand(items))),
             on: () => {}
         }
     }

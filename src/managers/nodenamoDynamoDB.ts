@@ -5,19 +5,13 @@ export class NodeNamoDynamoDB {
 
     createTable(query: any): { promise: any } {
         return { 
-            promise: async () => new Promise(async (ress) => {
-                let res = await this.client.createTable(query);
-                ress(res)
-            })
+            promise: async () => new Promise(async () => await this.client.createTable(query))
         }
     }
 
     deleteTable(query: any): { promise: any } {
         return { 
-            promise: async () => new Promise(async (ress) => {
-                let res = await this.client.deleteTable(query);
-                ress(res)
-            })
+            promise: async () => new Promise(async () => await this.client.deleteTable(query))
         }
     }
 }
