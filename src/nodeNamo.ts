@@ -14,12 +14,13 @@ import { Insert } from './queries/insert/insert';
 import { On } from './queries/on/on';
 import { Transaction } from './queries/transaction/on';
 import { Update } from './queries/update/update';
+import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 
 export class NodeNamo
 {
     private manager:IDynamoDbManager
 
-    constructor(private client:NodenamoDynamoDBClient)
+    constructor(private client:NodenamoDynamoDBClient | DocumentClient)
     {
         this.manager = new ValidatedDynamoDbManager(new DynamoDbManager(this.client));
     }

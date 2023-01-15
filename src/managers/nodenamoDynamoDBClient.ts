@@ -1,4 +1,9 @@
-import { DynamoDBClient as DynamoClient, QueryCommand, TransactWriteItemsCommand, GetItemCommand } from '@aws-sdk/client-dynamodb';
+import {
+    DynamoDBClient as DynamoClient,
+    GetItemCommand,
+    QueryCommand,
+    TransactWriteItemsCommand,
+} from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
 export class NodenamoDynamoDBClient {

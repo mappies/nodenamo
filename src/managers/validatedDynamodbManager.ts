@@ -7,10 +7,11 @@ import {Const} from '../const';
 import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
 import { Key } from '../Key';
 import { NodenamoDynamoDBClient } from './nodenamoDynamoDBClient';
+import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 
 export class ValidatedDynamoDbManager implements IDynamoDbManager
 {
-    get client(): NodenamoDynamoDBClient
+    get client(): NodenamoDynamoDBClient | DocumentClient
     {
         return this.manager.client;
     }

@@ -1,4 +1,4 @@
-import { QueryInput, QueryOutput, GetItemInput } from 'aws-sdk/clients/dynamodb';
+import DynamoDB, { QueryInput, QueryOutput, GetItemInput, DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { DynamoDbTransaction } from './dynamodbTransaction';
 import { RepresentationFactory } from '../representationFactory';
 import { Reflector } from '../reflector';
@@ -14,7 +14,7 @@ import { NodeNamoDynamoDB } from './nodenamoDynamoDB';
 
 export class DynamoDbManager implements IDynamoDbManager
 {
-    constructor(public client:NodenamoDynamoDBClient)
+    constructor(public client:NodenamoDynamoDBClient | DocumentClient)
     {
 
     }
@@ -623,7 +623,7 @@ export class DynamoDbManager implements IDynamoDbManager
         return result;
     }
 
-    async createTable<T extends object>(type?:{new(...args: any[]):T}, params?:{onDemand?:boolean, readCapacityUnits?:number, writeCapacityUnits?:number}, dynamoDb?:NodeNamoDynamoDB): Promise<void>
+    async createTable<T extends object>(type?:{new(...args: any[]):T}, params?:{onDemand?:boolean, readCapacityUnits?:number, writeCapacityUnits?:number}, dynamoDb?:NodeNamoDynamoDB | DynamoDB): Promise<void>
     {
         let query = {
             AttributeDefinitions: [
@@ -665,16 +665,16 @@ export class DynamoDbManager implements IDynamoDbManager
             query['GlobalSecondaryIndexes'][0]['ProvisionedThroughput'] = Object.assign({}, query['ProvisionedThroughput']);
         }
 
-        await (dynamoDb || new NodeNamoDynamoDB(this.client['options'])).createTable(query).promise();
+        await (dynamoDb || new NodeNamoDynamoDB({...this.client['options'], ...this.client['options'] })).createTable(query).promise();
     }
 
-    async deleteTable<T extends object>(type?:{new(...args: any[]):T}, dynamoDb?:NodeNamoDynamoDB): Promise<void>
+    async deleteTable<T extends object>(type?:{new(...args: any[]):T}, dynamoDb?:NodeNamoDynamoDB | DynamoDB): Promise<void>
     {
         let query = {
             TableName: Reflector.getTableName(new type())
         };
 
-        await (dynamoDb || new NodeNamoDynamoDB(this.client['options'])).deleteTable(query).promise();
+        await (dynamoDb || new NodeNamoDynamoDB({...this.client['options'], ...this.client['options'] })).deleteTable(query).promise();
     }
 }
 

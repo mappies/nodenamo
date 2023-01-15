@@ -1,5 +1,5 @@
 import AggregateError from 'aggregate-error';
-import { TransactWriteItem } from 'aws-sdk/clients/dynamodb';
+import { DocumentClient, TransactWriteItem } from 'aws-sdk/clients/dynamodb';
 
 import { NodenamoDynamoDBClient } from './nodenamoDynamoDBClient';
 
@@ -9,7 +9,7 @@ export class DynamoDbTransaction
 {
     private operations:TransactWriteItem[];
 
-    constructor(private client: NodenamoDynamoDBClient)
+    constructor(private client: NodenamoDynamoDBClient | DocumentClient)
     {
         
         this.operations = [];
