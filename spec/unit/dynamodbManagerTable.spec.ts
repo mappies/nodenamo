@@ -3,7 +3,6 @@ import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
 import { DynamoDB, CreateTableOutput, DeleteTableOutput, ServiceOutputTypes } from '@aws-sdk/client-dynamodb';
 import { DBTable, DBColumn } from '../../src';
-import { DynamoDB } from "@aws-sdk/client-dynamodb";
 
 @DBTable()
 class Entity {
