@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import {assert} from 'chai';
+import {assert as assert} from 'chai';
 import { DBColumn, DBTable } from "../../src";
 import { RepresentationFactory } from '../../src/representationFactory';
 import { Representation } from '../../src/representation';

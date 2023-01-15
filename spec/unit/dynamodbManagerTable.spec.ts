@@ -1,13 +1,11 @@
-import { CreateTableOutput, DeleteTableOutput } from 'aws-sdk/clients/dynamodb';
+import {assert as assert} from 'chai';
+import { DynamoDbManager } from '../../src/managers/dynamodbManager';
+import { Mock, IMock, It } from 'typemoq';
+import { DocumentClient, CreateTableOutput, DeleteTableOutput } from 'aws-sdk/clients/dynamodb';
+import { DBTable, DBColumn } from '../../src';
 import { AWSError } from 'aws-sdk/lib/error';
 import { Request } from 'aws-sdk/lib/request';
-import { assert } from 'chai';
-import { IMock, It, Mock } from 'typemoq';
-
-import { DBColumn, DBTable } from '../../src';
-import { NodenamoDynamoDBClient } from '../../src/managers/nodenamoDynamoDBClient';
-import { DynamoDbManager } from '../../src/managers/dynamodbManager';
-import { NodeNamoDynamoDB } from '../../src/managers/nodenamoDynamoDB';
+import { DynamoDB } from 'aws-sdk/clients/all';
 
 @DBTable()
 class Entity {
@@ -22,14 +20,14 @@ class Entity {
 
 describe('DynamoDbManager.create/deleteTable()', function () 
 {
-    let mockedClient:IMock<NodenamoDynamoDBClient>;
-    let mockedDynamoDb:IMock<NodeNamoDynamoDB>;
+    let mockedClient:IMock<DocumentClient>;
+    let mockedDynamoDb:IMock<DynamoDB>;
     let called:boolean;
 
     beforeEach(()=>
     {
-        mockedClient = Mock.ofType<NodenamoDynamoDBClient>();
-        mockedDynamoDb = Mock.ofType<NodeNamoDynamoDB>();
+        mockedClient = Mock.ofType<DocumentClient>();
+        mockedDynamoDb = Mock.ofType<DynamoDB>();
         called = false;
     });
 

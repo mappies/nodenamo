@@ -1,7 +1,7 @@
-import {assert} from 'chai';
+import {assert as assert} from 'chai';
 import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
-import { QueryOutput, GetItemOutput } from 'aws-sdk/clients/dynamodb';
+import { DocumentClient, QueryOutput, GetItemOutput } from 'aws-sdk/clients/dynamodb';
 import { DBTable, DBColumn } from '../../src';
 import { DynamoDbTransaction } from '../../src/managers/dynamodbTransaction';
 import {Const} from '../../src/const';
@@ -9,11 +9,10 @@ import { AWSError } from 'aws-sdk/lib/error';
 import { Request } from 'aws-sdk/lib/request';
 import { VersionError } from '../../src/errors/versionError';
 import AggregateError = require('aggregate-error');
-import { NodenamoDynamoDBClient } from '../../src/managers/nodenamoDynamoDBClient';
 
 describe('DynamoDbManager.Apply()', function ()
 {
-    let mockedClient:IMock<NodenamoDynamoDBClient>;
+    let mockedClient:IMock<DocumentClient>;
     let mockedTransaction:IMock<DynamoDbTransaction>;
     let updated1:boolean;
     let updated2:boolean;
@@ -22,7 +21,7 @@ describe('DynamoDbManager.Apply()', function ()
 
     beforeEach(()=>
     {
-        mockedClient = Mock.ofType<NodenamoDynamoDBClient>();
+        mockedClient = Mock.ofType<DocumentClient>();
         mockedTransaction = Mock.ofType<DynamoDbTransaction>();
         updated1 = false;
         updated2 = false;

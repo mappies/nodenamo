@@ -1,15 +1,13 @@
-import { ConditionCheck, TransactWriteItem, TransactWriteItemsOutput } from 'aws-sdk/clients/dynamodb';
+import {IMock, Mock, It} from "typemoq";
+import { assert as assert } from 'chai';
+import { DynamoDbTransaction } from '../../src/managers/dynamodbTransaction';
+import { DocumentClient, TransactWriteItem, ConditionCheck, TransactWriteItemsOutput } from 'aws-sdk/clients/dynamodb';
 import { AWSError } from 'aws-sdk/lib/error';
 import { Request } from 'aws-sdk/lib/request';
-import { assert } from 'chai';
-import { IMock, It, Mock } from 'typemoq';
-
-import { NodenamoDynamoDBClient } from '../../src/managers/nodenamoDynamoDBClient';
-import { DynamoDbTransaction } from '../../src/managers/dynamodbTransaction';
 
 describe('DynamoDbTransaction', function () 
 {
-    let mockedClient:IMock<NodenamoDynamoDBClient>;
+    let mockedClient:IMock<DocumentClient>;
     let called:boolean;
     let transactionOutput:any;
     let putParam:TransactWriteItem;
@@ -20,7 +18,7 @@ describe('DynamoDbTransaction', function ()
     beforeEach(() => 
     {
         called = false;
-        mockedClient = Mock.ofType<NodenamoDynamoDBClient>();
+        mockedClient = Mock.ofType<DocumentClient>();
         transactionOutput = {on: ()=>{}, send: ()=>{}, promise: ()=>new Promise((resolve)=>resolve({Items:[true]}))}
 
         putParam = { Put: {TableName: 'table', Item: {}}};

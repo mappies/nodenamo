@@ -1,4 +1,4 @@
-import {assert} from 'chai';
+import {assert as assert} from 'chai';
 import { DBTable } from '../../src';
 import { Reflector } from '../../src/reflector';
 

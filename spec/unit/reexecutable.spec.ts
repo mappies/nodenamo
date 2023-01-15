@@ -1,5 +1,5 @@
 import AggregateError from 'aggregate-error';
-import {assert} from 'chai';
+import {assert as assert} from 'chai';
 import { Mock } from 'typemoq';
 import { Reexecutable } from '../../src/queries/Reexecutable';
 

@@ -1,4 +1,4 @@
-import {assert} from 'chai';
+import {assert as assert} from 'chai';
 import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
 import { DocumentClient, QueryOutput } from 'aws-sdk/clients/dynamodb';
@@ -7,17 +7,16 @@ import { AWSError } from 'aws-sdk/lib/error';
 import { Request } from 'aws-sdk/lib/request';
 import { Const } from '../../src/const';
 import { Reflector } from '../../src/reflector';
-import { NodenamoDynamoDBClient } from '../../src/managers/nodenamoDynamoDBClient';
 
 describe('DynamoDbManager.Find()', function () 
 {
-    let mockedClient:IMock<NodenamoDynamoDBClient>;
+    let mockedClient:IMock<DocumentClient>;
     let called:boolean;
     let obj:object;
 
     beforeEach(()=>
     {
-        mockedClient = Mock.ofType<NodenamoDynamoDBClient>();
+        mockedClient = Mock.ofType<DocumentClient>();
         called = false;
         
         obj = {id:42};
