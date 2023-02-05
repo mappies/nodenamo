@@ -210,7 +210,6 @@ export class DynamoDbManager implements IDynamoDbManager
                 lastItem = item;
 
                 result[<string><unknown>item[Const.IdColumn]] = EntityFactory.create(type, item);
-                // itemCount++;
                 if(!!params && !!params.limit && ++itemCount >= params.limit)
                 {
                     if(processedItemCount !== response.Items.length)
