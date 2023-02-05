@@ -1,8 +1,8 @@
-import {assert as assert} from 'chai';
-import { DBTable, DBColumn } from '../../src';
+import { assert } from 'chai';
+
+import { DBColumn, DBTable } from '../../src';
 import { NodeNamo } from '../../src/nodeNamo';
 import Config from './config';
-import { DynamoDB } from '@aws-sdk/client-dynamodb';
 
 @DBTable({name:'nodenamo_acceptance_idTest'})
 class User
@@ -40,7 +40,13 @@ describe('ID tests', function ()
     let user4:User;
 
     before(async ()=>{
-        nodenamo = new NodeNamo(new DynamoDB({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'us-east-1' }))
+        nodenamo = new NodeNamo({
+            endpoint: 'http://localhost:8000',
+            credentials: {
+                secretAccessKey: 'does-not-matter',
+                accessKeyId: 'does-not-matter'
+            }
+        })
         await nodenamo.createTable().for(User).execute();
 
         user1 = new User(1, 'Some One', 'Description 1');
@@ -112,7 +118,6 @@ describe('ID tests', function ()
         assert.equal(page1.items.length, 1);
         assert.deepEqual(page1.items[0], user1);
         assert.isDefined(page1.firstEvaluatedKey);
-
         let page2 = await nodenamo.list().from(User).limit(1).resume(page1.lastEvaluatedKey).execute<User>();
 
         assert.equal(page2.items.length, 1);

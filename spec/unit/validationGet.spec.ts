@@ -1,4 +1,4 @@
-import {assert as assert} from 'chai';
+import {assert} from 'chai';
 import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
 import { DBTable, DBColumn } from '../../src';
@@ -46,7 +46,7 @@ describe('ValidationDynamoDbManager - Get()', function ()
         {
             try
             {
-                await manager.getOne(Entity, undefined);
+                await manager.getOne(Entity, undefined as any);
             }
             catch(e) { error = e; }
 
@@ -58,7 +58,7 @@ describe('ValidationDynamoDbManager - Get()', function ()
         {
             try
             {
-                await manager.getOne(Entity, null);
+                await manager.getOne(Entity, null as any);
             }
             catch(e) { error = e; }
 

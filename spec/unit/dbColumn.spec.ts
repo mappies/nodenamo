@@ -1,4 +1,4 @@
-import {assert as assert} from 'chai';
+import {assert} from 'chai';
 import { DBColumn } from '../../src';
 import { Reflector } from '../../src/reflector';
 

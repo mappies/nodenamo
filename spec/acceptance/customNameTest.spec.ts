@@ -1,10 +1,9 @@
-import {assert as assert} from 'chai';
-import { DBTable, DBColumn } from '../../src';
+import { assert } from 'chai';
+
+import { DBColumn, DBTable } from '../../src';
 import { NodeNamo } from '../../src/nodeNamo';
 import Config from './config';
-import { DynamoDB, DynamoDB } from '@aws-sdk/client-dynamodb';
 
-Config
 @DBTable({name:'nodenamo_acceptance_targetNameTest'})
 class User
 {
@@ -46,14 +45,7 @@ describe('Custom-name tests', function ()
     let user6:User;
 
     before(async ()=>{
-        nodenamo = new NodeNamo(new DynamoDB({
-            endpoint: {
-                hostname: 'dynamodb',
-                port: 8000,
-                path: '',
-                protocol: 'http:',
-            }
-        }));
+        nodenamo = new NodeNamo({ endpoint: Config.DYNAMODB_ENDPOINT});
         await nodenamo.createTable().for(User).execute();
     });
 
@@ -65,7 +57,7 @@ describe('Custom-name tests', function ()
         user6 = new User(6, 'Some Six', 3000, 2020, 'hr', true);
     });
 
-    it.only('Add items', async () =>
+    it('Add items', async () =>
     {
         await Promise.all([
             nodenamo.insert(user1).into(User).execute(),
@@ -74,7 +66,7 @@ describe('Custom-name tests', function ()
             nodenamo.insert(user6).into(User).execute()]);
     });
 
-    it.only('List all items', async () =>
+    it('List all items', async () =>
     {
         let users = await nodenamo.list().from(User).execute<User>();
         
@@ -86,9 +78,9 @@ describe('Custom-name tests', function ()
         assert.deepEqual(users.items[3], user6);
     });
 
-    it.only('List items by undefined', async () =>
+    it('List items by undefined', async () =>
     {
-        let users = await nodenamo.list().from(User).by(undefined).execute<User>();
+        let users = await nodenamo.list().from(User).by(undefined as any).execute<User>();
         
         assert.equal(users.items.length, 4);
         assert.equal(users.lastEvaluatedKey, undefined);
@@ -98,7 +90,7 @@ describe('Custom-name tests', function ()
         assert.deepEqual(users.items[3], user6);
     });
 
-    it.only('List items by an invalid value', async () =>
+    it('List items by an invalid value', async () =>
     {
         let users = await nodenamo.list().from(User).by('invalid').execute<User>();
         
@@ -106,7 +98,7 @@ describe('Custom-name tests', function ()
         assert.equal(users.lastEvaluatedKey, undefined);
     });
 
-    it.only('List all items with a projection', async () =>
+    it('List all items with a projection', async () =>
     {
         let users = await nodenamo.list('name', 'created').from(User).execute<User>();
         
@@ -118,7 +110,7 @@ describe('Custom-name tests', function ()
         assert.deepEqual(users.items[3], { id: undefined, name: 'Some Six', account: undefined, created: 2020, department: undefined, enabled: undefined });
     });
 
-    it.only('List items with a filter', async () =>
+    it('List items with a filter', async () =>
     {
         let users = await nodenamo.list().from(User).filter({
                             filterExpression:"#name=:name", 
@@ -130,7 +122,7 @@ describe('Custom-name tests', function ()
         assert.deepEqual(users.items[0], user2);
     });
 
-    it.only('List items by a hash', async () =>
+    it('List items by a hash', async () =>
     {
         let users = await nodenamo.list().from(User).by(1000).execute<User>();
         

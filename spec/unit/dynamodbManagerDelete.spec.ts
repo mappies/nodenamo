@@ -1,4 +1,4 @@
-import {assert as assert} from 'chai';
+import {assert} from 'chai';
 import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
 import { DeleteItemCommand, DynamoDB, QueryCommand, QueryCommandOutput, QueryOutput, ServiceOutputTypes } from '@aws-sdk/client-dynamodb';

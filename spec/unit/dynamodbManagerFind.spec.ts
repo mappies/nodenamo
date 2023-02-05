@@ -1,4 +1,4 @@
-import {assert as assert} from 'chai';
+import {assert} from 'chai';
 import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
 import { DynamoDB, QueryCommandOutput, QueryOutput, ServiceOutputTypes } from '@aws-sdk/client-dynamodb';
@@ -194,14 +194,14 @@ describe('DynamoDbManager.Find()', function ()
         @DBTable()
         class Entity
         {
-            @DBColumn()
+            @DBColumn({id: true})
             id:number;
         };
 
         let page1called = false;
         let page2called = false;
-        let response1 = ({LastEvaluatedKey: <any> {range:'lek1'}, Items:[{id:42, hash: '42_hash', range: '42_range', objid:42}].map(item => marshall(item))});
-        let response2 = ({LastEvaluatedKey: <any> {range:'lek2'}, Items:[{id:99, hash: '99_hash', range: '99_range', objid:99}].map(item => marshall(item))});
+        let response1 = ({LastEvaluatedKey: <any> marshall({range:'lek1'}), Items:[{id:42, hash: '42_hash', range: '42_range', objid:42}].map(item => marshall(item))});
+        let response2 = ({LastEvaluatedKey: <any> marshall({range:'lek2'}), Items:[{id:99, hash: '99_hash', range: '99_range', objid:99}].map(item => marshall(item))});
         mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
                                                         && p.input.FilterExpression === 'fcondition'
                                                         && p.input.ExclusiveStartKey === undefined
@@ -209,6 +209,7 @@ describe('DynamoDbManager.Find()', function ()
         
         mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
                                                     && p.input.FilterExpression === 'fcondition'
+                                                    && p.input.ExclusiveStartKey
                                                     && p.input.ExclusiveStartKey?.range['S'] === 'lek1'
                                                     && p.input.Limit === undefined))).callback(()=>page2called=true).returns(async ()=> response2 as QueryCommandOutput);
 
@@ -231,14 +232,14 @@ describe('DynamoDbManager.Find()', function ()
         @DBTable()
         class Entity
         {
-            @DBColumn()
+            @DBColumn({id: true})
             id:number;
         };
 
         let page1called = false;
         let page2called = false;
-        let response1 = ({LastEvaluatedKey: <any> {range:'lek1'}, Items:<any>[{id:42, hash: '42_hash', range: '42_range', objid:42}].map(item => marshall(item))});
-        let response2 = ({LastEvaluatedKey: <any> {range:'lek2'}, Items:<any>[{id:99, hash: '99_hash', range: '99_range', objid:99}].map(item => marshall(item))});
+        let response1 = ({LastEvaluatedKey: marshall({range:'lek1'}), Items:<any>[{id:42, hash: '42_hash', range: '42_range', objid:42}].map(item => marshall(item))});
+        let response2 = ({LastEvaluatedKey: marshall({range:'lek2'}), Items:<any>[{id:99, hash: '99_hash', range: '99_range', objid:99}].map(item => marshall(item))});
 
         mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
                                                     && p.input.FilterExpression === 'fcondition'
@@ -247,6 +248,7 @@ describe('DynamoDbManager.Find()', function ()
 
         mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
                                                     && p.input.FilterExpression === 'fcondition'
+                                                    && p.input.ExclusiveStartKey
                                                     && p.input.ExclusiveStartKey?.range['S'] === <any>'lek1'
                                                     && p.input.Limit === 5))).callback(()=>page2called=true).returns(async ()=>response2 as QueryCommandOutput);
 
@@ -269,24 +271,31 @@ describe('DynamoDbManager.Find()', function ()
         @DBTable()
         class Entity
         {
-            @DBColumn()
+            @DBColumn({id: true})
             id:number;
         };
 
         let page1called = false;
         let page2called = false;
-        let response1 = ({LastEvaluatedKey: <any>{hash: 'lek1h', range:'lek1r'}, Items:<any>[{id:42, hash: '42_hash', range: '42_range', objid:42}].map(item => marshall(item))});
-        let response2 = ({Items:<any>[{id:99, hash:'99_hash', range: '99_range', objid:99}].map(item => marshall(item))});
+        let response1 = ({LastEvaluatedKey: marshall({hash: 'lek1h', range:'lek1r'}), 
+        Items:<any>[
+            {id:42, hash: '42_hash', range: '42_range', objid:42}
+        ].map(item => marshall(item))});
+        let response2 = (
+            {Items:<any>[{id:99, hash:'99_hash', range: '99_range', objid:99}
+        ].map(item => marshall(item))});
 
         mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
-                                                    && p.input.FilterExpression === 'fcondition'
                                                     && p.input.ExclusiveStartKey === undefined
-                                                    && p.input.Limit === undefined))).callback(()=>page1called=true).returns( async ()=>response1 as QueryCommandOutput);
+                                                    && p.input.ExclusiveStartKey?.hash === undefined
+                                                    && p.input.FilterExpression === 'fcondition'
+                                                    && p.input?.Limit === undefined))).callback(()=>page1called=true).returns( async ()=>response1 as QueryCommandOutput);
 
         mockedClient.setup(q => q.send(It.is((p:any) => p.input.KeyConditionExpression === 'kcondition'
                                                     && p.input.FilterExpression === 'fcondition'
-                                                    && p.input.ExclusiveStartKey?.hash['S'] === 'lek1h'
-                                                    && p.input.ExclusiveStartKey?.range['S'] === 'lek1r'
+                                                    && p.input.ExclusiveStartKey
+                                                    && p.input.ExclusiveStartKey.hash['S'] === 'lek1h'
+                                                    && p.input.ExclusiveStartKey.range['S'] === 'lek1r'
                                                     && p.input.Limit === undefined))).callback(()=>page2called=true).returns( async ()=>response2 as QueryCommandOutput);
 
         let manager = new DynamoDbManager(mockedClient.object);
@@ -308,11 +317,11 @@ describe('DynamoDbManager.Find()', function ()
         @DBTable()
         class Entity
         {
-            @DBColumn()
+            @DBColumn({id: true})
             id:number;
         };
 
-        let response1 = ({LastEvaluatedKey: <any> {hash: 'lek1h', range: 'lek1r'}, 
+        let response1 = ({LastEvaluatedKey: marshall({hash: 'lek1h', range: 'lek1r'}), 
                                                 Items:[
                                                     {id:42, hash: '42_hash', range: '42_range', objid:42},
                                                     {id:43, hash: '43_hash', range: '43_range', objid:43}
@@ -341,7 +350,7 @@ describe('DynamoDbManager.Find()', function ()
         @DBTable()
         class Entity
         {
-            @DBColumn()
+            @DBColumn({id: true})
             id:number;
         };
 
@@ -374,7 +383,7 @@ describe('DynamoDbManager.Find()', function ()
         @DBTable()
         class Entity
         {
-            @DBColumn()
+            @DBColumn({id: true})
             id:number;
         };
 

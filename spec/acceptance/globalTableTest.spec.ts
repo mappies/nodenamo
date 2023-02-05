@@ -1,8 +1,8 @@
-import {assert as assert} from 'chai';
-import { DBTable, DBColumn } from '../../src';
+import { assert } from 'chai';
+
+import { DBColumn, DBTable } from '../../src';
 import { NodeNamo } from '../../src/nodeNamo';
 import Config from './config';
-import { DynamoDB } from '@aws-sdk/client-dynamodb';
 
 @DBTable({name:'nodenamo_acceptance_globalTableTest'})
 class User
@@ -42,12 +42,7 @@ describe('Global table tests', function ()
     let nodenamo:NodeNamo;
 
     before(async ()=>{
-        nodenamo = new NodeNamo(new DynamoDB({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'localhost',
-        credentials: {
-          accessKeyId: "a_non_empty_value",
-          secretAccessKey: "a_non_empty_value",
-        },
-     }))
+        nodenamo = new NodeNamo({ endpoint: Config.DYNAMODB_ENDPOINT})
         await nodenamo.createTable().for(User).execute();
     });
 

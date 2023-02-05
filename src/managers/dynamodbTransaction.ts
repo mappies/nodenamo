@@ -1,13 +1,15 @@
-import { DynamoDB, TransactWriteItem, TransactWriteItemsCommand } from "@aws-sdk/client-dynamodb";
+import { TransactWriteItem, TransactWriteItemsCommand } from "@aws-sdk/client-dynamodb";
 import AggregateError from 'aggregate-error';
 
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { marshall } from '@aws-sdk/util-dynamodb';
 const MAX_AWS_TRANSACTION_OPERATIONS = Number(process.env.MAX_AWS_TRANSACTION_OPERATIONS) || 25;
 
 export class DynamoDbTransaction
 {
     private operations:TransactWriteItem[];
 
-    constructor(private client: DynamoDB)
+    constructor(private client: DynamoDBDocumentClient)
     {
         
         this.operations = [];

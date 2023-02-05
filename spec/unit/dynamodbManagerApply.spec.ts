@@ -7,7 +7,7 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { marshall } from '@aws-sdk/util-dynamodb';
 import AggregateError = require('aggregate-error');
-import { assert as assert } from 'chai';
+import { assert } from 'chai';
 import { IMock, It, Mock } from 'typemoq';
 
 import { DBColumn, DBTable } from '../../src';

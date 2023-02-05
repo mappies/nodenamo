@@ -1,8 +1,10 @@
-import {assert as assert} from 'chai';
+import { CreateTableCommandOutput, DeleteTableCommandOutput } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { assert } from 'chai';
+import { IMock, It, Mock } from 'typemoq';
+
+import { DBColumn, DBTable } from '../../src';
 import { DynamoDbManager } from '../../src/managers/dynamodbManager';
-import { Mock, IMock, It } from 'typemoq';
-import { DynamoDB, CreateTableOutput, DeleteTableOutput, ServiceOutputTypes, CreateTableCommand, CreateTableCommandOutput, CreateTableCommandInput, DeleteTableCommandOutput } from '@aws-sdk/client-dynamodb';
-import { DBTable, DBColumn } from '../../src';
 
 @DBTable()
 class Entity {
@@ -17,49 +19,50 @@ class Entity {
 
 describe('DynamoDbManager.create/deleteTable()', function () 
 {
-    let mockedClient:IMock<DynamoDB>;
-    let mockedDynamoDb:IMock<DynamoDB>;
+    let mockedClient:IMock<DynamoDBDocumentClient>;
     let called:boolean;
 
     beforeEach(()=>
     {
-        mockedClient = Mock.ofType<DynamoDB>();
-        mockedDynamoDb = Mock.ofType<DynamoDB>();
+        mockedClient = Mock.ofType<DynamoDBDocumentClient>();
         called = false;
     });
 
     it('createTable() - on demand', async () =>
     {
-        mockedDynamoDb.setup(db => db.createTable(It.is((p:any) => !!p.TableName && p.BillingMode === 'PAY_PER_REQUEST'))).callback(()=>called=true).returns(async () => {return {} as CreateTableCommandOutput});
+        
+        mockedClient
+        .setup(db => db.send(It.is((p:any) => !!p.input.TableName && p.input.BillingMode === 'PAY_PER_REQUEST')))
+        .callback(()=>called=true).returns(async () => {return {} as CreateTableCommandOutput})
 
         let manager = new DynamoDbManager(mockedClient.object);
-        await manager.createTable(Entity, {onDemand:true}, mockedDynamoDb.object);
+        await manager.createTable(Entity, {onDemand:true});
 
         assert.isTrue(called);
     });
 
     it('createTable() - provisioned capacity', async () =>
     {
-        mockedDynamoDb.setup(db => db.createTable(It.is((p:CreateTableCommandInput) => !!p.TableName 
-                                                              && p.BillingMode === 'PROVISIONED'
-                                                              && p?.ProvisionedThroughput?.ReadCapacityUnits === 2
-                                                              && p.ProvisionedThroughput.WriteCapacityUnits === 3
-                                                              && p?.GlobalSecondaryIndexes?.[0]?.ProvisionedThroughput?.ReadCapacityUnits === 2
-                                                              && p?.GlobalSecondaryIndexes?.[0]?.ProvisionedThroughput?.WriteCapacityUnits === 3)))
+        mockedClient.setup(db => db.send(It.is((p:any) => !!p.input.TableName 
+                                                              && p.input.BillingMode === 'PROVISIONED'
+                                                              && p.input?.ProvisionedThroughput?.ReadCapacityUnits === 2
+                                                              && p.input.ProvisionedThroughput.WriteCapacityUnits === 3
+                                                              && p.input?.GlobalSecondaryIndexes?.[0]?.ProvisionedThroughput?.ReadCapacityUnits === 2
+                                                              && p.input?.GlobalSecondaryIndexes?.[0]?.ProvisionedThroughput?.WriteCapacityUnits === 3)))
                       .callback(()=>called=true).returns(async () => {return {} as CreateTableCommandOutput} );
 
         let manager = new DynamoDbManager(mockedClient.object);
-        await manager.createTable(Entity, {readCapacityUnits:2, writeCapacityUnits:3}, mockedDynamoDb.object);
+        await manager.createTable(Entity, {readCapacityUnits:2, writeCapacityUnits:3});
 
         assert.isTrue(called);
     });
 
     it('deleteTable()', async () =>
     {
-        mockedDynamoDb.setup(db => db.deleteTable(It.is((p:any) => !!p.TableName))).callback(()=>called=true).returns(async () => {return {} as DeleteTableCommandOutput});
+        mockedClient.setup(db => db.send(It.is((p:any) => !!p.input.TableName))).callback(()=>called=true).returns(async () => {return {} as DeleteTableCommandOutput});
 
         let manager = new DynamoDbManager(mockedClient.object);
-        await manager.deleteTable(Entity, mockedDynamoDb.object);
+        await manager.deleteTable(Entity);
 
         assert.isTrue(called);
     });

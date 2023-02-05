@@ -1,4 +1,4 @@
-import {assert as assert} from 'chai';
+import {assert} from 'chai';
 import { Key } from '../../src/Key';
 
 describe('Key', function () 

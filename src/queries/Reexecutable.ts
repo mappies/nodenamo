@@ -38,7 +38,7 @@ export class Reexecutable
 
                 let hasTransactionError = false;
 
-                for(let innerError of errors)
+                for(let innerError of (errors as any))
                 {
                     if(nonRetryableErrors.find(e => innerError.message.includes(e)))
                     {

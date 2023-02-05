@@ -27,15 +27,16 @@
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
-    "@aws-sdk/client-dynamodb": "^3.245.0",
-    "@aws-sdk/util-dynamodb": "^3.245.0",
-    "@types/chai": "^4.2.7",
-    "@types/mocha": "^5.2.7",
-    "@types/node": "^13.1.4",
-    "chai": "^4.2.0",
-    "mocha": "^7.0.0",
-    "ts-node": "^8.5.4",
+    "@aws-sdk/lib-dynamodb": "^3.264.0",
+    "@aws-sdk/client-dynamodb": "^3.264.0",
+    "@aws-sdk/util-dynamodb": "^3.264.0",
+    "@types/chai": "^4.3.4",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^18.11.18",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "ts-node": "^10.9.1",
     "typemoq": "^2.1.0",
-    "typescript": "^3.7.4"
+    "typescript": "^4.9.5"
   }
 }

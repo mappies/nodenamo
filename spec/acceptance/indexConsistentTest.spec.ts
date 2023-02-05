@@ -1,9 +1,9 @@
-import {assert as assert} from 'chai';
-import { DBTable, DBColumn } from '../../src';
+import { assert } from 'chai';
+
+import { DBColumn, DBTable } from '../../src';
+import { Const } from '../../src/const';
 import { NodeNamo } from '../../src/nodeNamo';
 import Config from './config';
-import { DynamoDB } from '@aws-sdk/client-dynamodb';
-import { Const } from '../../src/const';
 
 @DBTable({name:'nodenamo_acceptance_indexConsistentTest'})
 class User
@@ -33,7 +33,7 @@ describe('IndexConsistentTest', function ()
     let user3:User;
 
     before(async ()=>{
-        nodenamo = new NodeNamo(new DynamoDB({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'us-east-1' }))
+        nodenamo = new NodeNamo({ endpoint: Config.DYNAMODB_ENDPOINT})
         await nodenamo.createTable().for(User).execute();
 
         user1 = new User(1, 'Some One', 'o1');

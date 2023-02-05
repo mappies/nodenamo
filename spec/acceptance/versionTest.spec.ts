@@ -1,10 +1,10 @@
-import {assert as assert} from 'chai';
-import { DBTable, DBColumn } from '../../src';
-import { NodeNamo } from '../../src/nodeNamo';
-import Config from './config';
-import { DynamoDB } from '@aws-sdk/client-dynamodb';
-import { Reflector } from '../../src/reflector';
+import { assert } from 'chai';
+
+import { DBColumn, DBTable } from '../../src';
 import { VersionError } from '../../src/errors/versionError';
+import { NodeNamo } from '../../src/nodeNamo';
+import { Reflector } from '../../src/reflector';
+import Config from './config';
 
 @DBTable({name:'nodenamo_acceptance_versionTest'})
 class User
@@ -31,7 +31,7 @@ describe('Version tests', function ()
     let nodenamo:NodeNamo;
 
     before(async ()=>{
-        nodenamo = new NodeNamo(new DynamoDB({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'us-east-1' }))
+        nodenamo = new NodeNamo({ endpoint: Config.DYNAMODB_ENDPOINT})
         await nodenamo.createTable().for(User).execute();
     });
 
