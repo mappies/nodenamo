@@ -33,7 +33,7 @@ describe('Transaction tests', function ()
     let user4:User;
 
     before(async ()=>{
-        nodenamo = new NodeNamo({ endpoint: Config.DYNAMODB_ENDPOINT})
+        nodenamo = new NodeNamo({ endpoint: Config.DYNAMODB_ENDPOINT })
         await nodenamo.createTable().for(User).execute();
 
         user1 = new User(1, 'Some One', 'Description 1');

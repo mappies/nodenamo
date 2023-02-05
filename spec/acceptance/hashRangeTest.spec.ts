@@ -39,7 +39,7 @@ describe('Hash-range tests', function ()
     let user6:User;
 
     before(async ()=>{
-        nodenamo = new NodeNamo({ endpoint: Config.DYNAMODB_ENDPOINT})
+        nodenamo = new NodeNamo({ endpoint: Config.DYNAMODB_ENDPOINT })
         await nodenamo.createTable().for(User).execute();
     });
 
