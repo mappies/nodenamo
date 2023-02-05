@@ -203,7 +203,7 @@ export class DynamoDbManager implements IDynamoDbManager
             if (!firstItem) firstItem = response.Items[0];
 
             let processedItemCount = 0;
-            for(let item of response?.Items?.map(item => unmarshall(item)))
+            for(let item of response.Items.map(item => unmarshall(item)))
             {
                 processedItemCount++;
                 if(<any>item[Const.IdColumn] in result) continue;
@@ -213,7 +213,7 @@ export class DynamoDbManager implements IDynamoDbManager
                 // itemCount++;
                 if(!!params && !!params.limit && ++itemCount >= params.limit)
                 {
-                    if(processedItemCount !== response?.Items?.length)
+                    if(processedItemCount !== response.Items.length)
                     {
                         //Initiate lastEvaluationKey to an object so that it will be later set at the end of this method.
                         response.LastEvaluatedKey = {};
