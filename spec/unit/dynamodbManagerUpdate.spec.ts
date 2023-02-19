@@ -61,41 +61,41 @@ describe('DynamoDbManager.Update()', function ()
         assert.isTrue(called);
     });
 
-    // it.only('update() - full object change', async () =>
-    // {
-    //     @DBTable()
-    //     class Entity
-    //     {
-    //         @DBColumn({hash: true})
-    //         id:number;
+    it('update() - full object change', async () =>
+    {
+        @DBTable()
+        class Entity
+        {
+            @DBColumn({hash: true, id: true})
+            id:number;
 
-    //         @DBColumn()
-    //         name:string;
+            @DBColumn()
+            name:string;
 
-    //         @DBColumn({range:true})
-    //         created:number;
+            @DBColumn({range:true})
+            created:number;
 
-    //         @DBColumn({range:true})
-    //         order:number;
-    //     };
+            @DBColumn({range:true})
+            order:number;
+        };
 
-    //     let findResponse = ({Items: <any>[{hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'}, {hash: 'entity#1', range: 'order', id:1, name:'Some Two', created:'created', order:'order'}].map(item => marshall(item))});
-    //     mockedClient.setup(q => q.send(It.is((p:any) => !!p.input.TableName && p.input.IndexName === Const.IdIndexName && p.input.KeyConditionExpression === '#objid = :objid' && p.input.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.input.ExpressionAttributeValues[':objid']['S'] === 'entity#1'))).callback(()=>called=true).returns(async()=>findResponse as QueryCommandOutput);
+        let findResponse = ({Items: <any>[{hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'}, {hash: 'entity#1', range: 'order', id:1, name:'Some Two', created:'created', order:'order'}].map(item => marshall(item))});
+        mockedClient.setup(q => q.send(It.is((p:any) => !!p.input.TableName && p.input.IndexName === Const.IdIndexName && p.input.KeyConditionExpression === '#objid = :objid' && p.input.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.input.ExpressionAttributeValues[':objid']['S'] === 'entity#1'))).callback(()=>called=true).returns(async()=>findResponse as QueryCommandOutput);
 
-    //     mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Put && !!t.Put.TableName && t.Put.Item.hash['S'] === 'entity#1' && t.Put.Item.range['S'] === 'new created' && t.Put.Item.name['S'] === 'New Two' && t.Put.Item.created === 'new created' && t.Put.Item.order === 'new order'))).callback(()=>put=true);
-    //     mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Put && !!t.Put.TableName && t.Put.Item.hash['S'] === 'entity#1' && t.Put.Item.range['S'] === 'new order' && t.Put.Item.name['S'] === 'New Two' && t.Put.Item.created === 'new created' && t.Put.Item.order === 'new order'))).callback(()=>put2=true);
-    //     mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Delete && t.Delete.Key.hash['S'] === 'entity#1' && t.Delete.Key.range['S'] === 'created'))).callback(()=>deleted=true);
-    //     mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Delete && t.Delete.Key.hash['S'] === 'entity#1' && t.Delete.Key.range['S'] === 'order'))).callback(()=>deleted2=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Put && !!t.Put.TableName && t.Put.Item.hash['S'] === 'entity#1' && t.Put.Item.range['S'] === 'new created' && t.Put.Item.name['S'] === 'New Two' && t.Put.Item.created['S'] === 'new created' && t.Put.Item.order['S'] === 'new order'))).callback(()=>put=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Put && !!t.Put.TableName && t.Put.Item.hash['S'] === 'entity#1' && t.Put.Item.range['S'] === 'new order' && t.Put.Item.name['S'] === 'New Two' && t.Put.Item.created['S'] === 'new created' && t.Put.Item.order['S'] === 'new order'))).callback(()=>put2=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Delete && t.Delete.Key.hash['S'] === 'entity#1' && t.Delete.Key.range['S'] === 'created'))).callback(()=>deleted=true);
+        mockedTransaction.setup(t => t.add(It.is((t:any) => !!t.Delete && t.Delete.Key.hash['S'] === 'entity#1' && t.Delete.Key.range['S'] === 'order'))).callback(()=>deleted2=true);
 
-    //     let manager = new DynamoDbManager(mockedClient.object);
-    //     await manager.update(Entity, 1, {name: 'New Two', created: "new created", order: "new order"}, undefined, mockedTransaction.object);
+        let manager = new DynamoDbManager(mockedClient.object);
+        await manager.update(Entity, 1, {name: 'New Two', created: "new created", order: "new order"}, undefined, mockedTransaction.object);
 
-    //     assert.isTrue(called);
-    //     assert.isTrue(put);
-    //     assert.isTrue(put2);
-    //     assert.isTrue(deleted);
-    //     assert.isTrue(deleted2);
-    // });
+        assert.isTrue(called);
+        assert.isTrue(put);
+        assert.isTrue(put2);
+        assert.isTrue(deleted);
+        assert.isTrue(deleted2);
+    });
 
     it('update() - key change', async () =>
     {
@@ -241,7 +241,7 @@ describe('DynamoDbManager.Update()', function ()
         @DBTable({versioning:true})
         class Entity
         {
-            @DBColumn({id: true})
+            @DBColumn()
             id:number;
 
             @DBColumn()
@@ -399,7 +399,7 @@ describe('DynamoDbManager.Update()', function ()
         @DBTable({versioning: true})
         class Entity
         {
-            @DBColumn({id: true})
+            @DBColumn()
             id:number;
 
             @DBColumn()
@@ -459,7 +459,7 @@ describe('DynamoDbManager.Update()', function ()
         @DBTable()
         class Entity
         {
-            @DBColumn({id: true})
+            @DBColumn()
             id:number;
 
             @DBColumn()
@@ -500,7 +500,7 @@ describe('DynamoDbManager.Update()', function ()
         @DBTable()
         class Entity
         {
-            @DBColumn({id: true})
+            @DBColumn()
             id:number;
 
             @DBColumn()
@@ -536,7 +536,7 @@ describe('DynamoDbManager.Update()', function ()
         @DBTable()
         class Entity
         {
-            @DBColumn({id: true})
+            @DBColumn()
             id:number;
 
             @DBColumn()

@@ -1,7 +1,7 @@
 import {assert} from 'chai';
 import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
-import { DynamoDB, QueryCommandOutput, QueryOutput, ServiceOutputTypes } from '@aws-sdk/client-dynamodb';
+import { DynamoDB, QueryCommandOutput } from '@aws-sdk/client-dynamodb';
 import { DBTable, DBColumn } from '../../src';
 import { Const } from '../../src/const';
 import { Reflector } from '../../src/reflector';
@@ -194,7 +194,7 @@ describe('DynamoDbManager.Find()', function ()
         @DBTable()
         class Entity
         {
-            @DBColumn({id: true})
+            @DBColumn()
             id:number;
         };
 
@@ -232,7 +232,7 @@ describe('DynamoDbManager.Find()', function ()
         @DBTable()
         class Entity
         {
-            @DBColumn({id: true})
+            @DBColumn()
             id:number;
         };
 
@@ -271,7 +271,7 @@ describe('DynamoDbManager.Find()', function ()
         @DBTable()
         class Entity
         {
-            @DBColumn({id: true})
+            @DBColumn()
             id:number;
         };
 
@@ -317,7 +317,7 @@ describe('DynamoDbManager.Find()', function ()
         @DBTable()
         class Entity
         {
-            @DBColumn({id: true})
+            @DBColumn()
             id:number;
         };
 
@@ -350,7 +350,7 @@ describe('DynamoDbManager.Find()', function ()
         @DBTable()
         class Entity
         {
-            @DBColumn({id: true})
+            @DBColumn()
             id:number;
         };
 
@@ -383,7 +383,7 @@ describe('DynamoDbManager.Find()', function ()
         @DBTable()
         class Entity
         {
-            @DBColumn({id: true})
+            @DBColumn()
             id:number;
         };
 
