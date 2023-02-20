@@ -10,6 +10,7 @@ import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
 import { VersionError } from '../errors/versionError';
 import { Key } from '../Key';
 import AggregateError from 'aggregate-error';
+import base64url from "base64url";
 
 export class DynamoDbManager implements IDynamoDbManager
 {
@@ -168,7 +169,7 @@ export class DynamoDbManager implements IDynamoDbManager
         {
             try
             {
-                exclusiveStartKey = JSON.parse(Buffer.from(params.exclusiveStartKey, 'base64').toString());
+                exclusiveStartKey = JSON.parse(base64url.decode(Buffer.from(params.exclusiveStartKey).toString()));
             }
             catch(e){}
         }
@@ -229,19 +230,19 @@ export class DynamoDbManager implements IDynamoDbManager
         let lastEvaluatedKey: string
         if(response.LastEvaluatedKey && lastItem)
         {
-            lastEvaluatedKey = Buffer.from(JSON.stringify({
+            lastEvaluatedKey = base64url.encode(JSON.stringify({
                 [Const.HashColumn]: lastItem[Const.HashColumn],
                 [Const.RangeColumn]: lastItem[Const.RangeColumn]
-            })).toString('base64');
+            }));
         }
 
         let firstEvaluatedKey: string;
         if (firstItem)
         {
-            firstEvaluatedKey = Buffer.from(JSON.stringify({
+            firstEvaluatedKey = base64url(JSON.stringify({
                 [Const.HashColumn]: firstItem[Const.HashColumn],
                 [Const.RangeColumn]: firstItem[Const.RangeColumn],
-            })).toString('base64');
+            }));
         }
 
         return { items, lastEvaluatedKey, firstEvaluatedKey }
