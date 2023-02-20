@@ -141,7 +141,7 @@ describe('DynamoDbManager.Update()', function ()
             @DBColumn({id:true, hash: true})
             id:number;
 
-            @DBColumn({hash:true})
+            @DBColumn()
             name:string;
 
             @DBColumn({range:true})
