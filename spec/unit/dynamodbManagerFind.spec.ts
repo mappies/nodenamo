@@ -222,7 +222,7 @@ describe('DynamoDbManager.Find()', function ()
         
         assert.isTrue(page1called);
         assert.isTrue(page2called);
-        assert.equal(entities.lastEvaluatedKey, "eyJoYXNoIjoiOTlfaGFzaCIsInJhbmdlIjoiOTlfcmFuZ2UifQ==");
+        assert.equal(entities.lastEvaluatedKey, "eyJoYXNoIjoiOTlfaGFzaCIsInJhbmdlIjoiOTlfcmFuZ2UifQ");
         assert.equal(entities.items.length, 2);
         assert.deepEqual(entities.items[0], {id:42});
         assert.deepEqual(entities.items[1], {id:99});
@@ -260,7 +260,7 @@ describe('DynamoDbManager.Find()', function ()
         
         assert.isTrue(page1called);
         assert.isTrue(page2called);
-        assert.equal(entities.lastEvaluatedKey, "eyJoYXNoIjoiOTlfaGFzaCIsInJhbmdlIjoiOTlfcmFuZ2UifQ==");
+        assert.equal(entities.lastEvaluatedKey, "eyJoYXNoIjoiOTlfaGFzaCIsInJhbmdlIjoiOTlfcmFuZ2UifQ");
         assert.equal(entities.items.length, 2);
         assert.deepEqual(entities.items[0], {id:42});
         assert.deepEqual(entities.items[1], {id:99});
@@ -332,7 +332,7 @@ describe('DynamoDbManager.Find()', function ()
                                        {filterExpression:'fcondition'},
                                        {limit:2});
         
-        assert.equal(entities.lastEvaluatedKey, 'eyJoYXNoIjoiNDNfaGFzaCIsInJhbmdlIjoiNDNfcmFuZ2UifQ==');
+        assert.equal(entities.lastEvaluatedKey, 'eyJoYXNoIjoiNDNfaGFzaCIsInJhbmdlIjoiNDNfcmFuZ2UifQ');
         assert.equal(entities.items.length, 2);
         assert.deepEqual(entities.items[0], {id:42});
         assert.deepEqual(entities.items[1], {id:43});
@@ -365,7 +365,7 @@ describe('DynamoDbManager.Find()', function ()
                                        {filterExpression:'fcondition'},
                                        {limit:2});
         
-        assert.equal(entities.lastEvaluatedKey, 'eyJoYXNoIjoiNDNfaGFzaCIsInJhbmdlIjoiNDNfcmFuZ2UifQ==');
+        assert.equal(entities.lastEvaluatedKey, 'eyJoYXNoIjoiNDNfaGFzaCIsInJhbmdlIjoiNDNfcmFuZ2UifQ');
         assert.equal(entities.items.length, 2);
         assert.deepEqual(entities.items[0], {id:42});
         assert.deepEqual(entities.items[1], {id:43});
