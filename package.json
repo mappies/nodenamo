@@ -1,6 +1,6 @@
 {
   "name": "nodenamo",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "A powerful ORM for DynamoDb",
   "main": "dist/index.js",
   "typings": "dist/index",
@@ -25,6 +25,7 @@
   "dependencies": {
     "aggregate-error": "^3.0.1",
     "aws-sdk": "^2.597.0",
+    "base64url": "^3.0.1",
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
