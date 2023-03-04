@@ -41,7 +41,7 @@ describe('Multi-values Hash tests', function ()
     let user6:User;
 
     before(async ()=>{
-        nodenamo = new NodeNamo({ endpoint: Config.DYNAMODB_ENDPOINT })
+        nodenamo = new NodeNamo({ endpoint: Config.DYNAMODB_ENDPOINT, region: Config.AWS_REGION })
         await nodenamo.createTable().for(User).execute();
     });
 

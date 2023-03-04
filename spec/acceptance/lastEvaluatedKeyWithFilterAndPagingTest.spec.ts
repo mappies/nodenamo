@@ -37,7 +37,7 @@ describe('lastEvaluatedKeyWithFilterAndPagingTest', function ()
     let user8:User;
 
     before(async ()=>{
-        nodenamo = new NodeNamo({ endpoint: Config.DYNAMODB_ENDPOINT })
+        nodenamo = new NodeNamo({ endpoint: Config.DYNAMODB_ENDPOINT, region: Config.AWS_REGION })
         await nodenamo.createTable().for(User).execute();
 
         user1 = new User(1, 'Some One', 'o1');

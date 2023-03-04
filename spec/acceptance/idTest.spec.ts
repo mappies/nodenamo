@@ -41,11 +41,8 @@ describe('ID tests', function ()
 
     before(async ()=>{
         nodenamo = new NodeNamo({
-            endpoint: 'http://localhost:8000',
-            credentials: {
-                secretAccessKey: 'does-not-matter',
-                accessKeyId: 'does-not-matter'
-            }
+            endpoint: Config.DYNAMODB_ENDPOINT,
+            region: Config.AWS_REGION
         })
         await nodenamo.createTable().for(User).execute();
 
