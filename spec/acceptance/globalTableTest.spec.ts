@@ -238,6 +238,39 @@ describe('Global table tests', function ()
         assert.deepEqual(book, { id: 2, title: 'That Book' });
     });
 
+    it('Delete an item - failed condition, no delete', async () =>
+    {
+        assert.isDefined(await nodenamo.get(1).from(User).execute());
+        assert.isDefined(await nodenamo.get(1).from(Book).execute());
+        assert.equal((await nodenamo.list().from(User).execute()).items.length, 3);
+        assert.equal((await nodenamo.list().from(Book).execute()).items.length, 2);
+
+        let error = undefined;
+
+        try
+        {
+            await nodenamo.delete(1).from(User).where({
+                conditionExpression:"#name = :name",
+                expressionAttributeNames:{
+                    ["#name"]:'name'
+                },
+                expressionAttributeValues:{
+                    [":name"]:"Not Some One"
+                }
+            }).execute();
+        }
+        catch(e)
+        {
+            error = e;
+        }
+        
+        assert.isDefined(error);
+        assert.deepEqual(await nodenamo.get(1).from(User).execute(), { id: 1, name: 'Some One' });
+        assert.isDefined(await nodenamo.get(1).from(Book).execute());
+        assert.equal((await nodenamo.list().from(User).execute()).items.length, 3);
+        assert.equal((await nodenamo.list().from(Book).execute()).items.length, 2);
+    });
+
     it('Delete an item', async () =>
     {
         assert.isDefined(await nodenamo.get(1).from(User).execute());
@@ -250,6 +283,29 @@ describe('Global table tests', function ()
         assert.isUndefined(await nodenamo.get(1).from(User).execute());
         assert.isDefined(await nodenamo.get(1).from(Book).execute());
         assert.equal((await nodenamo.list().from(User).execute()).items.length, 2);
+        assert.equal((await nodenamo.list().from(Book).execute()).items.length, 2);
+    });
+
+    it('Delete an item - condition expression succeeds', async () =>
+    {
+        assert.isDefined(await nodenamo.get(2).from(User).execute());
+        assert.isDefined(await nodenamo.get(1).from(Book).execute());
+        assert.equal((await nodenamo.list().from(User).execute()).items.length, 2);
+        assert.equal((await nodenamo.list().from(Book).execute()).items.length, 2);
+
+        await nodenamo.delete(2).from(User).where({
+            conditionExpression:"#name = :name",
+            expressionAttributeNames:{
+                ["#name"]:'name'
+            },
+            expressionAttributeValues:{
+                [":name"]:"That Two"
+            }
+        }).execute();
+
+        assert.isUndefined(await nodenamo.get(2).from(User).execute());
+        assert.isDefined(await nodenamo.get(1).from(Book).execute());
+        assert.equal((await nodenamo.list().from(User).execute()).items.length, 1);
         assert.equal((await nodenamo.list().from(Book).execute()).items.length, 2);
     });
 

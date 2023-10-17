@@ -75,7 +75,7 @@ export class ValidatedDynamoDbManager implements IDynamoDbManager
     {
         validateType(type);
         validateObjectId(id);
-        validateKeyConditionExpression(type, params);
+        validateDeleteConditionExpression(type, params);
 
         await this.manager.delete(type, id, params, transaction, autoCommit);
     }
@@ -223,6 +223,61 @@ function validateKeyConditionExpression<T extends object>(type:{new(...args: any
         if(!hasHash && hasRange)
         {
             throw new ValidationError('The operation could not be executed because a range value is given but its hash value is undefined.');
+        }
+    }
+
+    //expressionAttributeValues
+    if(param.expressionAttributeValues)
+    {
+        for(let key of Object.keys(param.expressionAttributeValues))
+        {
+            let value = param.expressionAttributeValues[key];
+
+            if(isNullOrUndefined(value) || (typeof value === 'number' && isNaN(value)))
+            {
+                throw new ValidationError(`Invalid value of '${key}'.  Expected a value but found '${value}'`);
+            }
+        }
+    }
+}
+
+function validateDeleteConditionExpression<T extends object>(type:{new(...args: any[]):T}, param:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object})
+{
+    if(param === undefined) return;
+    
+    let instance = new type();
+    let hashes = Reflector.getAllHashKeys(instance).map(hash => Key.parse(hash).propertyName);
+    let ranges = Reflector.getAllRangeKeys(instance).map(range => Key.parse(range).propertyName);
+    let columns = Reflector.getColumns(instance).map(column => Key.parse(column).propertyName);
+    
+    //Add hash/rane/id column here because expressionAttributeNames may include one of those from keyConditions expression.
+    columns = [...columns, Const.HashColumn, Const.RangeColumn, Const.IdColumn];
+
+    //filterExpression
+    if(param.conditionExpression === undefined || param.conditionExpression.trim().length === 0)
+    {
+        throw new ValidationError(`ConditionExpression is not specified in ${JSON.stringify(param)}`);
+    }
+
+    //expressionAttributeNames
+    if(param.expressionAttributeNames)
+    {
+        for(let columnName of Object.values(param.expressionAttributeNames))
+        {
+            if(!columns.includes(columnName))
+            {
+                throw new ValidationError(`The property '${columnName}' specified in ExpressionAttributeNames is not a column.`);
+            }
+
+            if(hashes.includes(columnName))
+            {
+                throw new ValidationError(`The hash property '${columnName}' could not be used in a filter expression. Try using it in a keyConditions expression instead.`);
+            }
+
+            if(ranges.includes(columnName))
+            {
+                throw new ValidationError(`The hash property '${columnName}' could not be used in a filter expression. Try using it in a keyConditions expression instead.`);
+            }
         }
     }
 
