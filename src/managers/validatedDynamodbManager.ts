@@ -75,7 +75,7 @@ export class ValidatedDynamoDbManager implements IDynamoDbManager
     {
         validateType(type);
         validateObjectId(id);
-        validateDeleteConditionExpression(type, params);
+        validateConditionExpression(type, params);
 
         await this.manager.delete(type, id, params, transaction, autoCommit);
     }
@@ -241,7 +241,7 @@ function validateKeyConditionExpression<T extends object>(type:{new(...args: any
     }
 }
 
-function validateDeleteConditionExpression<T extends object>(type:{new(...args: any[]):T}, param:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object})
+function validateConditionExpression<T extends object>(type:{new(...args: any[]):T}, param:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object})
 {
     if(param === undefined) return;
     
@@ -250,8 +250,8 @@ function validateDeleteConditionExpression<T extends object>(type:{new(...args: 
     let ranges = Reflector.getAllRangeKeys(instance).map(range => Key.parse(range).propertyName);
     let columns = Reflector.getColumns(instance).map(column => Key.parse(column).propertyName);
     
-    //Add hash/rane/id column here because expressionAttributeNames may include one of those from keyConditions expression.
-    columns = [...columns, Const.HashColumn, Const.RangeColumn, Const.IdColumn];
+    //Add hash/range/id column here because expressionAttributeNames may include one of those from keyConditions expression.
+    columns = [...columns, Const.HashColumn, Const.RangeColumn, Const.IdColumn, ...hashes, ...ranges];
 
     //filterExpression
     if(param.conditionExpression === undefined || param.conditionExpression.trim().length === 0)
