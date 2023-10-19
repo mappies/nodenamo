@@ -217,7 +217,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
             assert.instanceOf(error, ValidationError);
         });
 
-        it('valid - using the real property name instead of a custom name', async () =>
+        it('invalid - using the real property name instead of a custom name', async () =>
         {
             try
             {
