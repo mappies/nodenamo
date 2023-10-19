@@ -206,7 +206,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
             assert.isUndefined(error)
         });
 
-        it('invalid - hash/range property', async () =>
+        it('invalid - hash/range property are not allowed', async () =>
         {
             try
             {
@@ -217,7 +217,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
             assert.instanceOf(error, ValidationError);
         });
 
-        it('invalid - using the real property name instead of a custom name', async () =>
+        it('invalid - hash/range property are not allowed - referenced by custom name.', async () =>
         {
             try
             {
@@ -249,7 +249,7 @@ describe('ValidationDynamoDbManager - Delete()', function ()
             assert.isUndefined(error);
         });
 
-        it('invalid - customed name property', async () =>
+        it('invalid - custom name property', async () =>
         {
             try
             {

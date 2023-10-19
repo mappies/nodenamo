@@ -246,12 +246,12 @@ function validateConditionExpression<T extends object>(type:{new(...args: any[])
     if(param === undefined) return;
     
     let instance = new type();
-    let hashes = Reflector.getAllHashKeys(instance).map(hash => Key.parse(hash).propertyName);
-    let ranges = Reflector.getAllRangeKeys(instance).map(range => Key.parse(range).propertyName);
+    let hashes = [...(Reflector.getAllHashKeys(instance).map(hash => Key.parse(hash).propertyName)), Const.HashColumn];
+    let ranges = [...(Reflector.getAllRangeKeys(instance).map(range => Key.parse(range).propertyName)), Const.RangeKey];
     let columns = Reflector.getColumns(instance).map(column => Key.parse(column).propertyName);
     
     //Add hash/range/id column here because expressionAttributeNames may include one of those from keyConditions expression.
-    columns = [...columns, Const.HashColumn, Const.RangeColumn, Const.IdColumn, ...hashes, ...ranges];
+    columns = [...columns, Const.HashColumn, Const.RangeColumn, Const.IdColumn];
 
     //filterExpression
     if(param.conditionExpression === undefined || param.conditionExpression.trim().length === 0)
@@ -271,12 +271,12 @@ function validateConditionExpression<T extends object>(type:{new(...args: any[])
 
             if(hashes.includes(columnName))
             {
-                throw new ValidationError(`The hash property '${columnName}' could not be used in a filter expression. Try using it in a keyConditions expression instead.`);
+                throw new ValidationError(`The hash property '${columnName}' could not be used in a condition expression. Try using it in a keyConditions expression instead.`);
             }
 
             if(ranges.includes(columnName))
             {
-                throw new ValidationError(`The hash property '${columnName}' could not be used in a filter expression. Try using it in a keyConditions expression instead.`);
+                throw new ValidationError(`The hash property '${columnName}' could not be used in a condition expression. Try using it in a keyConditions expression instead.`);
             }
         }
     }
