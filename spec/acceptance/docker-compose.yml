@@ -11,8 +11,8 @@ services:
     container_name: nodenamo_node
     environment:
       DYNAMODB_ENDPOINT: http://dynamodb:8000
-      AWS_ACCESS_KEY_ID: a_non_empty_value
-      AWS_SECRET_ACCESS_KEY: a_non_empty_value
+      AWS_ACCESS_KEY_ID: ANONEMPTYKEY
+      AWS_SECRET_ACCESS_KEY: ANONEMPTYKEY
     volumes:
       - ../..:/app
     command:  /bin/sh -c "sleep 1 && cd app && npm run acceptance"
