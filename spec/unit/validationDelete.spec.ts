@@ -206,20 +206,26 @@ describe('ValidationDynamoDbManager - Delete()', function ()
             assert.isUndefined(error)
         });
 
-        it('valid - hash/range property', async () =>
+        it('invalid - hash/range property are not allowed', async () =>
         {
-            await manager.delete(Entity, 42, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'hashProperty', "#m": 'rangeProperty'}});
+            try
+            {
+                await manager.delete(Entity, 42, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'hashProperty', "#m": 'rangeProperty'}});
+            }catch(e) { error = e; }
             
-            assert.isTrue(called);
-            assert.isUndefined(error);
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
         });
 
-        it('valid - using the real property name instead of a custom name', async () =>
+        it('invalid - hash/range property are not allowed - referenced by custom name.', async () =>
         {
-            await manager.delete(Entity, 42, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'realProperty'}});
+            try
+            {
+                await manager.delete(Entity, 42, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'realProperty'}});
+            }catch(e) { error = e; }
 
-            assert.isTrue(called);
-            assert.isUndefined(error);
+            assert.isFalse(called);
+            assert.instanceOf(error, ValidationError);
         });
 
         it('invalid - nonexistent property', async () =>
@@ -234,19 +240,16 @@ describe('ValidationDynamoDbManager - Delete()', function ()
             assert.instanceOf(error, ValidationError);
         });
 
-        it('invalid - non hash/range property', async () =>
+        it('valid - non hash/range property', async () =>
         {
-            try
-            {
-                await manager.delete(Entity, 42, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'regularProperty'}});
-            }
-            catch(e) { error = e; }
 
-            assert.isFalse(called);
-            assert.instanceOf(error, ValidationError);
+            await manager.delete(Entity, 42, {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'regularProperty'}});
+
+            assert.isTrue(called);
+            assert.isUndefined(error);
         });
 
-        it('invalid - customed name property', async () =>
+        it('invalid - custom name property', async () =>
         {
             try
             {
