@@ -174,6 +174,43 @@ describe('DynamoDbManager.Update()', function ()
         assert.isFalse(deleted);
     });
 
+    it('update() - delta change, change from strongly consistent read reflected in transaction - when missing from getOneRows', async () =>
+    {
+        @DBTable()
+        class Entity
+        {
+            @DBColumn({hash:true})
+            id:number;
+
+            @DBColumn()
+            name:string;
+
+            @DBColumn({range:true})
+            created:number;
+
+            @DBColumn({range:true})
+            order:number;
+
+            @DBColumn()
+            recentlyUpdatedField:number;
+        };
+
+        setupStronglyConsistentRead({hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order', recentlyUpdatedField:1}); //recentlyUpdatedField exists in strongly consistent read
+        let findResponse = getMockedQueryResponse({Items: <any>[{hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'}, {hash: 'entity#1', range: 'order', id:1, name:'Some Two', created:'created', order:'order'}]});//recentlyUpdatedField does NOT exist in eventually consistent read
+        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object); 
+        mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'created' && !t.Put.ConditionExpression && t.Put.Item.name === 'New Two' && t.Put.Item.created === 'created' && t.Put.Item.order === 'order' && t.Put.Item.recentlyUpdatedField === 1))).callback(()=>put=true); //recentlyUpdatedField included in update payload
+        mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'order' && !t.Put.ConditionExpression && t.Put.Item.name === 'New Two' && t.Put.Item.created === 'created' && t.Put.Item.order === 'order' && t.Put.Item.recentlyUpdatedField === 1))).callback(()=>put2=true);
+        mockedTransaction.setup(t => t.add(It.is(t => !!t.Delete))).callback(()=>deleted=true);
+
+        let manager = new DynamoDbManager(mockedClient.object);
+        await manager.update(Entity, 1, {name: 'New Two'}, undefined, mockedTransaction.object);
+
+        assert.isTrue(called);
+        assert.isTrue(put);
+        assert.isTrue(put2);
+        assert.isFalse(deleted);
+    });
+
     it('update() - key changed', async () =>
     {
         @DBTable()
