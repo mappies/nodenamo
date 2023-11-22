@@ -105,10 +105,8 @@ export class DynamoDbManager implements IDynamoDbManager
                 [Const.RangeColumn]:  attributeValues[':range']
             },
             ConsistentRead: stronglyConsistent
-        };
-
+       };
         let response =  await this.client.get(query).promise();
-
         if(response.Item)
         {
             return EntityFactory.create(type, response.Item);
@@ -256,7 +254,7 @@ export class DynamoDbManager implements IDynamoDbManager
         let versioningRequired = tableVersioning || (params && params.versionCheck);
 
         //Calculate new representations
-        let rows = await this.getById(id, type);
+        let [rows, idRow]  = await Promise.all([this.getById(id, type),this.getOne(type,id,{stronglyConsistent:true})]);
 
         if(rows.length === 0)
         {
@@ -284,8 +282,8 @@ export class DynamoDbManager implements IDynamoDbManager
         //Must assign data to `instance` so it has @DBColumn() and @DBTable() metadata.
         //EntityFactory is used here to convert an object with custom column names to an object with real property names/
         //And because of an object created by EntityFactory.create() will not have Const.VersionColumn property, we have to re-add it here as well.
-        let desiredObject = Object.assign(instance, Object.assign(Object.assign({}, EntityFactory.create(type, rows[0])), noUndefinedValuesObject));
-        desiredObject[Const.VersionColumn] = rows[0][Const.VersionColumn];
+        let desiredObject = Object.assign(instance, Object.assign(Object.assign({}, EntityFactory.create(type, idRow)), noUndefinedValuesObject));
+        desiredObject[Const.VersionColumn] = idRow[Const.VersionColumn];
 
         //If versionCheck, use the version from the original object.
         //Else, RepresentationFactory.get() will increment the version from DB.
@@ -383,7 +381,6 @@ export class DynamoDbManager implements IDynamoDbManager
         }
 
         if(!autoCommit) return;
-
         try
         {
             await transaction.commit();
@@ -396,7 +393,7 @@ export class DynamoDbManager implements IDynamoDbManager
                 let currentObject:T;
                 try
                 {
-                    currentObject = await this.getOne(type, id);
+                    currentObject = await this.getOne(type, id, {stronglyConsistent:true});
                 }
                 catch(e2)
                 {
