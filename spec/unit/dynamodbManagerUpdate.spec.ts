@@ -20,6 +20,7 @@ describe('DynamoDbManager.Update()', function ()
     let called:boolean;
     let deleted:boolean;
     let deleted2:boolean;
+    let desiredObjectCreatedFromStronglyConsistentRead:boolean;
 
     beforeEach(()=>
     {
@@ -31,6 +32,7 @@ describe('DynamoDbManager.Update()', function ()
         called = false;
         deleted = false;
         deleted2 = false;
+        desiredObjectCreatedFromStronglyConsistentRead = false;
     });
 
     it('update() - no keys', async () =>
@@ -51,13 +53,13 @@ describe('DynamoDbManager.Update()', function ()
             order:number;
         };
 
+        setupStronglyConsistentRead({hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'});
         let findResponse = getMockedQueryResponse({Items: <any>[{hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'}, {hash: 'entity#1', range: 'order', id:1, name:'Some Two', created:'created', order:'order'}]});
         mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
 
         let manager = new DynamoDbManager(mockedClient.object);
 
         await manager.update(Entity, 1, {name: 'New Two'}, undefined, mockedTransaction.object);
-
         assert.isTrue(called);
     });
 
@@ -79,6 +81,7 @@ describe('DynamoDbManager.Update()', function ()
             order:number;
         };
 
+        setupStronglyConsistentRead({hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'});
         let findResponse = getMockedQueryResponse({Items: <any>[{hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'}, {hash: 'entity#1', range: 'order', id:1, name:'Some Two', created:'created', order:'order'}]});
         mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
         mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'new created' && t.Put.Item.name === 'New Two' && t.Put.Item.created === 'new created' && t.Put.Item.order === 'new order'))).callback(()=>put=true);
@@ -94,6 +97,7 @@ describe('DynamoDbManager.Update()', function ()
         assert.isTrue(put2);
         assert.isTrue(deleted);
         assert.isTrue(deleted2);
+        assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
     it('update() - key change', async () =>
@@ -111,6 +115,7 @@ describe('DynamoDbManager.Update()', function ()
             created:number;
         };
 
+        setupStronglyConsistentRead({hash: 'entity#nodenamo', range: 'created#1', id:1, name:'Some One', created:'created', order:'order'});
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'entity#nodenamo', range: 'created#1', id:1, name:'Some One', created:'created', order:'order'},
             {hash: 'entity#Some One', range: 'created', id:1, name:'Some One', created:'created', order:'order'},
@@ -130,6 +135,7 @@ describe('DynamoDbManager.Update()', function ()
         assert.isTrue(put2);
         assert.isTrue(put3);
         assert.isTrue(deleted);
+        assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
     it('update() - delta change', async () =>
@@ -150,6 +156,7 @@ describe('DynamoDbManager.Update()', function ()
             order:number;
         };
 
+        setupStronglyConsistentRead({hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'});
         let findResponse = getMockedQueryResponse({Items: <any>[{hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'}, {hash: 'entity#1', range: 'order', id:1, name:'Some Two', created:'created', order:'order'}]});
         mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
         mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'created' && !t.Put.ConditionExpression && t.Put.Item.name === 'New Two' && t.Put.Item.created === 'created' && t.Put.Item.order === 'order'))).callback(()=>put=true);
@@ -163,6 +170,45 @@ describe('DynamoDbManager.Update()', function ()
         assert.isTrue(put);
         assert.isTrue(put2);
         assert.isFalse(deleted);
+        assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
+    });
+
+    it('update() - delta change, change from strongly consistent read reflected in transaction - when missing from getOneRows', async () =>
+    {
+        @DBTable()
+        class Entity
+        {
+            @DBColumn({hash:true})
+            id:number;
+
+            @DBColumn()
+            name:string;
+
+            @DBColumn({range:true})
+            created:number;
+
+            @DBColumn({range:true})
+            order:number;
+
+            @DBColumn()
+            recentlyUpdatedField:number;
+        };
+
+        setupStronglyConsistentRead({hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order', recentlyUpdatedField:1}); //recentlyUpdatedField exists in strongly consistent read
+        let findResponse = getMockedQueryResponse({Items: <any>[{hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'}, {hash: 'entity#1', range: 'order', id:1, name:'Some Two', created:'created', order:'order'}]});//recentlyUpdatedField does NOT exist in eventually consistent read
+        mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object); 
+        mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'created' && !t.Put.ConditionExpression && t.Put.Item.name === 'New Two' && t.Put.Item.created === 'created' && t.Put.Item.order === 'order' && t.Put.Item.recentlyUpdatedField === 1))).callback(()=>put=true); //recentlyUpdatedField included in update payload
+        mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'order' && !t.Put.ConditionExpression && t.Put.Item.name === 'New Two' && t.Put.Item.created === 'created' && t.Put.Item.order === 'order' && t.Put.Item.recentlyUpdatedField === 1))).callback(()=>put2=true);
+        mockedTransaction.setup(t => t.add(It.is(t => !!t.Delete))).callback(()=>deleted=true);
+
+        let manager = new DynamoDbManager(mockedClient.object);
+        await manager.update(Entity, 1, {name: 'New Two'}, undefined, mockedTransaction.object);
+
+        assert.isTrue(called);
+        assert.isTrue(put);
+        assert.isTrue(put2);
+        assert.isFalse(deleted);
+        assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
     it('update() - key changed', async () =>
@@ -183,6 +229,7 @@ describe('DynamoDbManager.Update()', function ()
             order:number;
         };
 
+        setupStronglyConsistentRead({hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'});
         let findResponse = getMockedQueryResponse({Items: <any>[{hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'}, {hash: 'entity#1', range: 'order', id:1, name:'Some Two', created:'created', order:'order'}]});
         mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
         mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1a' && t.Put.Item.range === 'created' && !!t.Put.ConditionExpression && t.Put.Item.id === '1a'))).callback(()=>put=true);
@@ -198,6 +245,7 @@ describe('DynamoDbManager.Update()', function ()
         assert.isTrue(put2);
         assert.isTrue(deleted);
         assert.isTrue(deleted2);
+        assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
     it('update() - with condition', async () =>
@@ -220,6 +268,7 @@ describe('DynamoDbManager.Update()', function ()
 
         let condition = {conditionExpression: 'condition', expressionAttributeNames: {'#n': 'name'}, expressionAttributeValues: {':v': true}};
 
+        setupStronglyConsistentRead({hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'});
         let findResponse = getMockedQueryResponse({Items: <any>[{hash: 'entity#1', range: 'created', id:1, name:'Some One', created:'created', order:'order'}, {hash: 'entity#1', range: 'order', id:1, name:'Some Two', created:'created', order:'order'}]});
         mockedClient.setup(q => q.query(It.is(p => !!p.TableName && p.IndexName === Const.IdIndexName && p.KeyConditionExpression === '#objid = :objid' && p.ExpressionAttributeNames['#objid'] === Const.IdColumn && p.ExpressionAttributeValues[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse.object);
         mockedTransaction.setup(t => t.add(It.is(t => !!t.Put && !!t.Put.TableName && t.Put.Item.hash === 'entity#1' && t.Put.Item.range === 'created' && t.Put.Item.name === 'New Two' && t.Put.ConditionExpression === 'condition' && t.Put.ExpressionAttributeNames['#n'] === 'name' && t.Put.ExpressionAttributeValues[':v'] === 'true'))).callback(()=>put=true);
@@ -233,6 +282,7 @@ describe('DynamoDbManager.Update()', function ()
         assert.isTrue(put);
         assert.isTrue(put2);
         assert.isFalse(deleted);
+        assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
     it('update() - with a version check (table-level)', async () =>
@@ -247,6 +297,7 @@ describe('DynamoDbManager.Update()', function ()
             name:string;
         };
 
+        setupStronglyConsistentRead({hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'});
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
         ]});
@@ -264,6 +315,7 @@ describe('DynamoDbManager.Update()', function ()
         await manager.update(Entity, 1, {name: 'New Two'}, undefined, mockedTransaction.object);
 
         assert.isTrue(called);
+        assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
     it('update() - with a version check (table-level) (false)', async () =>
@@ -278,6 +330,7 @@ describe('DynamoDbManager.Update()', function ()
             name:string;
         };
 
+        setupStronglyConsistentRead({hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'});
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
         ]});
@@ -295,6 +348,7 @@ describe('DynamoDbManager.Update()', function ()
         await manager.update(Entity, 1, {name: 'New Two'}, undefined, mockedTransaction.object);
 
         assert.isTrue(called);
+        assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
     it('update() - with a version check (table-level) will not be overridden by withVersionCheck(false)', async () =>
@@ -309,6 +363,7 @@ describe('DynamoDbManager.Update()', function ()
             name:string;
         };
 
+        setupStronglyConsistentRead({hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'});
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
         ]});
@@ -326,6 +381,7 @@ describe('DynamoDbManager.Update()', function ()
         await manager.update(Entity, 1, {name: 'New Two'}, {versionCheck:false}, mockedTransaction.object);
 
         assert.isTrue(called);
+        assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
     it('update() - with a version check', async () =>
@@ -340,6 +396,7 @@ describe('DynamoDbManager.Update()', function ()
             name:string;
         };
 
+        setupStronglyConsistentRead({hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'});
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
         ]});
@@ -357,6 +414,7 @@ describe('DynamoDbManager.Update()', function ()
         await manager.update(Entity, 1, {name: 'New Two'}, {versionCheck:true}, mockedTransaction.object);
 
         assert.isTrue(called);
+        assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
     it('update() - with a condition and a version check', async () =>
@@ -371,6 +429,7 @@ describe('DynamoDbManager.Update()', function ()
             name:string;
         };
 
+        setupStronglyConsistentRead({hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'});
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
         ]});
@@ -390,6 +449,7 @@ describe('DynamoDbManager.Update()', function ()
         await manager.update(Entity, 1, {name: 'New Two'}, {conditionExpression: "condition", expressionAttributeNames: {'#n': 'name'}, expressionAttributeValues: {'#n': true}, versionCheck:true}, mockedTransaction.object);
 
         assert.isTrue(called);
+        assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
     it('update() - with a version check - failed because of versioning', async () =>
@@ -403,6 +463,7 @@ describe('DynamoDbManager.Update()', function ()
             @DBColumn()
             name:string;
         };
+        setupStronglyConsistentRead({hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'});
 
         //Simulate object changes from objver 1 to 2.
         let findResponse1 = getMockedQueryResponse({Items: <any>[
@@ -448,6 +509,7 @@ describe('DynamoDbManager.Update()', function ()
         assert.isTrue(calledGetById);
         assert.isTrue(calledGetOne);
         assert.instanceOf(error, VersionError);
+        assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
     it('update() - with a version check - failed because of a non-versioning issue', async () =>
@@ -462,6 +524,7 @@ describe('DynamoDbManager.Update()', function ()
             name:string;
         };
 
+        setupStronglyConsistentRead({id:1, name:'Some One'});
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
         ]});
@@ -489,6 +552,7 @@ describe('DynamoDbManager.Update()', function ()
 
         assert.notInstanceOf(error, VersionError);
         assert.equal(error.message, 'Simulated error');
+        assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
     it('put() - failed from an error', async () =>
@@ -502,6 +566,7 @@ describe('DynamoDbManager.Update()', function ()
             @DBColumn()
             name:string;
         };
+        setupStronglyConsistentRead({hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'});
 
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
@@ -525,6 +590,7 @@ describe('DynamoDbManager.Update()', function ()
 
         assert.isDefined(error);
         assert.equal(error.message, 'Simulated error');
+        assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
     it('put() - failed from a ConditionalCheckFailed', async () =>
@@ -538,6 +604,7 @@ describe('DynamoDbManager.Update()', function ()
             @DBColumn()
             name:string;
         };
+        setupStronglyConsistentRead({hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'});
 
         let findResponse = getMockedQueryResponse({Items: <any>[
             {hash: 'hash', range: 'range', id:1, objver: 1, name:'Some One'},
@@ -560,7 +627,22 @@ describe('DynamoDbManager.Update()', function ()
 
         assert.isDefined(error);
         assert.isTrue(error.message.includes('An object with the same ID or hash-range key already exists in \'Entity\' table'));
+        assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
+
+    function setupStronglyConsistentRead(expectedItem:object)
+    {
+        let stronglyConsistentResponse = getMockedGetResponse(
+            {Item:<any>expectedItem}
+        );
+        mockedClient.setup(q => q.get(It.is(p =>
+            !!p.TableName
+            && p.Key[Const.HashColumn] === 'entity#1'
+            && p.Key[Const.RangeColumn] === 'nodenamo' 
+            && p.ConsistentRead === true)))
+            .callback(()=>desiredObjectCreatedFromStronglyConsistentRead=true)
+            .returns(()=>stronglyConsistentResponse.object);
+    }
 });
 
 function getMockedGetResponse(response:GetItemOutput): IMock<Request<GetItemOutput, AWSError>>

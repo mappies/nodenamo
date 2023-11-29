@@ -83,7 +83,7 @@ export class DynamoDbManager implements IDynamoDbManager
         }
     }
 
-    async getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number, params?:{stronglyConsistent?:boolean}): Promise<T>
+    private async getOneRepresendationById<T extends object>(type:{new(...args: any[]):T}, id:string|number, params?:{stronglyConsistent?:boolean}): Promise<object>
     {
         let obj:T = new type();
         let stronglyConsistent = Reflector.getTableStronglyConsistent(obj) || params?.stronglyConsistent || false;
@@ -109,9 +109,16 @@ export class DynamoDbManager implements IDynamoDbManager
 
         let response =  await this.client.get(query).promise();
 
-        if(response.Item)
+        return response.Item;
+    }
+
+    async getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number, params?:{stronglyConsistent?:boolean}): Promise<T>
+    {
+        const item =  await this.getOneRepresendationById(type,id,params);
+
+        if(item)
         {
-            return EntityFactory.create(type, response.Item);
+            return EntityFactory.create(type,item);
         }
 
         return undefined;
@@ -248,6 +255,17 @@ export class DynamoDbManager implements IDynamoDbManager
         return { items, lastEvaluatedKey, firstEvaluatedKey }
     }
 
+    private assignExistingNonHashRangeValues(to:object,from:object):void
+    {        
+        for(let key of Object.keys(from))
+        {
+            if(from[key] !== undefined && key !== Const.HashColumn && key!== Const.RangeColumn)
+            {
+                to[key] = from[key];
+            }
+        }
+    }    
+
     async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction, autoCommit:boolean = true)
     {
         let instance = new type();
@@ -256,12 +274,14 @@ export class DynamoDbManager implements IDynamoDbManager
         let versioningRequired = tableVersioning || (params && params.versionCheck);
 
         //Calculate new representations
-        let rows = await this.getById(id, type);
-
+        let [rows, stronglyConsistentRow ] = await Promise.all([this.getById(id, type), this.getOneRepresendationById(type,id,{ stronglyConsistent:true})]);
+        
         if(rows.length === 0)
         {
             throw new Error(`Could not update the object '${id}' because it could not be found.`);
         }
+
+        this.assignExistingNonHashRangeValues(rows[0],stronglyConsistentRow);
 
         let getKey = (o:object) => `${o[Const.HashColumn]}|${o[Const.RangeColumn]}`;
 
@@ -434,13 +454,14 @@ export class DynamoDbManager implements IDynamoDbManager
         let versioningRequired = tableVersioning || (params && params.versionCheck);
 
         //Calculate new representations
-        let rows = await this.getById(id, type);
-
-        if(rows.length === 0)
+        let stronglyConsistentRow = await this.getOneRepresendationById(type,id,{ stronglyConsistent:true });
+        if(!stronglyConsistentRow)
         {
             throw new Error(`Could not update the object '${id}' because it could not be found.`);
         }
 
+        //use representation factory to determine which rows to act on.
+        let representations = RepresentationFactory.get(EntityFactory.create(type, stronglyConsistentRow));
         //Setup additionalParams
         let additionalParams:any = {};
 
@@ -448,7 +469,7 @@ export class DynamoDbManager implements IDynamoDbManager
         {
             additionalParams.ConditionExpression = '(#objver <= :objver)';
             additionalParams.ExpressionAttributeNames = {'#objver': Const.VersionColumn};
-            additionalParams.ExpressionAttributeValues = {':objver': rows[0][Const.VersionColumn], ':objverincrementby': 1};
+            additionalParams.ExpressionAttributeValues = {':objver': stronglyConsistentRow[Const.VersionColumn], ':objverincrementby': 1};
 
             if(!params.updateExpression.add)
             {
@@ -498,14 +519,14 @@ export class DynamoDbManager implements IDynamoDbManager
         {
             updateExpression = `DELETE ${params.updateExpression.delete.join(',')} ${updateExpression}`;
         }
-
-        for(let row of rows)
+        
+        for(let representation of representations)
         {
             transaction.add({Update: {
                 TableName: tableName,
                 Key: {
-                    [Const.HashColumn]: row[Const.HashColumn],
-                    [Const.RangeColumn]: row[Const.RangeColumn]
+                    [Const.HashColumn]: representation[Const.HashColumn],
+                    [Const.RangeColumn]: representation[Const.RangeColumn]
                 },
                 UpdateExpression: updateExpression,
                 ...additionalParams
@@ -533,7 +554,7 @@ export class DynamoDbManager implements IDynamoDbManager
                     throw e;
                 }
 
-                if(currentObject && Reflector.getObjectVersion(currentObject) > rows[0][Const.VersionColumn])
+                if(currentObject && Reflector.getObjectVersion(currentObject) > stronglyConsistentRow[Const.VersionColumn])
                 {
                     throw new VersionError(`Could not update the object '${id}' because it has been overwritten by the writes of others.`);
                 }
