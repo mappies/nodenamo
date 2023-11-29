@@ -83,7 +83,7 @@ export class DynamoDbManager implements IDynamoDbManager
         }
     }
 
-    private async getOneItem<T extends object>(type:{new(...args: any[]):T}, id:string|number, params?:{stronglyConsistent?:boolean}): Promise<object>
+    private async getOneRepresendationById<T extends object>(type:{new(...args: any[]):T}, id:string|number, params?:{stronglyConsistent?:boolean}): Promise<object>
     {
         let obj:T = new type();
         let stronglyConsistent = Reflector.getTableStronglyConsistent(obj) || params?.stronglyConsistent || false;
@@ -114,7 +114,7 @@ export class DynamoDbManager implements IDynamoDbManager
 
     async getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number, params?:{stronglyConsistent?:boolean}): Promise<T>
     {
-        const item =  await this.getOneItem(type,id,params);
+        const item =  await this.getOneRepresendationById(type,id,params);
 
         if(item)
         {
@@ -274,7 +274,7 @@ export class DynamoDbManager implements IDynamoDbManager
         let versioningRequired = tableVersioning || (params && params.versionCheck);
 
         //Calculate new representations
-        let [rows, stronglyConsistentRow ] = await Promise.all([this.getById(id, type), this.getOneItem(type,id,{ stronglyConsistent:true})]);
+        let [rows, stronglyConsistentRow ] = await Promise.all([this.getById(id, type), this.getOneRepresendationById(type,id,{ stronglyConsistent:true})]);
         
         if(rows.length === 0)
         {
@@ -454,7 +454,7 @@ export class DynamoDbManager implements IDynamoDbManager
         let versioningRequired = tableVersioning || (params && params.versionCheck);
 
         //Calculate new representations
-        let stronglyConsistentRow = await this.getOneItem(type,id,{ stronglyConsistent:true });
+        let stronglyConsistentRow = await this.getOneRepresendationById(type,id,{ stronglyConsistent:true });
         if(!stronglyConsistentRow)
         {
             throw new Error(`Could not update the object '${id}' because it could not be found.`);
