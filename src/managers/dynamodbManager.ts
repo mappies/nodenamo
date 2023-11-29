@@ -255,6 +255,17 @@ export class DynamoDbManager implements IDynamoDbManager
         return { items, lastEvaluatedKey, firstEvaluatedKey }
     }
 
+    private assignExistingNonHashRangeValues(to:object,from:object):void
+    {        
+        for(let key of Object.keys(to))
+        {
+            if(from[key] !== undefined && key !== Const.HashColumn && key!== Const.RangeColumn)
+            {
+                to[key] = from[key];
+            }
+        }
+    }    
+
     async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction, autoCommit:boolean = true)
     {
         let instance = new type();
@@ -263,12 +274,14 @@ export class DynamoDbManager implements IDynamoDbManager
         let versioningRequired = tableVersioning || (params && params.versionCheck);
 
         //Calculate new representations
-        let rows = await this.getById(id, type);
-
+        let [rows, stronglyConsistentRow ] = await Promise.all([this.getById(id, type), this.getOneItem(type,id,{ stronglyConsistent:true})]);
+        
         if(rows.length === 0)
         {
             throw new Error(`Could not update the object '${id}' because it could not be found.`);
         }
+
+        this.assignExistingNonHashRangeValues(rows[0],stronglyConsistentRow);
 
         let getKey = (o:object) => `${o[Const.HashColumn]}|${o[Const.RangeColumn]}`;
 
@@ -441,13 +454,15 @@ export class DynamoDbManager implements IDynamoDbManager
         let versioningRequired = tableVersioning || (params && params.versionCheck);
 
         //Calculate new representations
-        let rows = await this.getById(id, type);
-
+        let [rows, stronglyConsistentRow ] = await Promise.all([this.getById(id, type), this.getOneItem(type,id,{ stronglyConsistent:true})]);
+        
         if(rows.length === 0)
         {
             throw new Error(`Could not update the object '${id}' because it could not be found.`);
         }
 
+        this.assignExistingNonHashRangeValues(rows[0],stronglyConsistentRow);
+        
         //Setup additionalParams
         let additionalParams:any = {};
 
