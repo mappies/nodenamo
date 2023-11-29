@@ -83,7 +83,7 @@ export class DynamoDbManager implements IDynamoDbManager
         }
     }
 
-    async getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number, params?:{stronglyConsistent?:boolean}): Promise<T>
+    private async getOneItem<T extends object>(type:{new(...args: any[]):T}, id:string|number, params?:{stronglyConsistent?:boolean}): Promise<object>
     {
         let obj:T = new type();
         let stronglyConsistent = Reflector.getTableStronglyConsistent(obj) || params?.stronglyConsistent || false;
@@ -109,9 +109,16 @@ export class DynamoDbManager implements IDynamoDbManager
 
         let response =  await this.client.get(query).promise();
 
-        if(response.Item)
+        return response.Item;
+    }
+
+    async getOne<T extends object>(type:{new(...args: any[]):T}, id:string|number, params?:{stronglyConsistent?:boolean}): Promise<T>
+    {
+        const item =  await this.getOneItem(type,id,params);
+
+        if(item)
         {
-            return EntityFactory.create(type, response.Item);
+            return EntityFactory.create(type,item);
         }
 
         return undefined;
