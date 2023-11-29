@@ -257,7 +257,7 @@ export class DynamoDbManager implements IDynamoDbManager
 
     private assignExistingNonHashRangeValues(to:object,from:object):void
     {        
-        for(let key of Object.keys(to))
+        for(let key of Object.keys(from))
         {
             if(from[key] !== undefined && key !== Const.HashColumn && key!== Const.RangeColumn)
             {
