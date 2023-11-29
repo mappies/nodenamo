@@ -454,15 +454,14 @@ export class DynamoDbManager implements IDynamoDbManager
         let versioningRequired = tableVersioning || (params && params.versionCheck);
 
         //Calculate new representations
-        let [rows, stronglyConsistentRow ] = await Promise.all([this.getById(id, type), this.getOneItem(type,id,{ stronglyConsistent:true})]);
-        
-        if(rows.length === 0)
+        let stronglyConsistentRow = await this.getOneItem(type,id,{ stronglyConsistent:true });
+        if(!stronglyConsistentRow)
         {
             throw new Error(`Could not update the object '${id}' because it could not be found.`);
         }
 
-        this.assignExistingNonHashRangeValues(rows[0],stronglyConsistentRow);
-        
+        //use representation factory to determine which rows to act on.
+        let representations = RepresentationFactory.get(EntityFactory.create(type, stronglyConsistentRow));
         //Setup additionalParams
         let additionalParams:any = {};
 
@@ -470,7 +469,7 @@ export class DynamoDbManager implements IDynamoDbManager
         {
             additionalParams.ConditionExpression = '(#objver <= :objver)';
             additionalParams.ExpressionAttributeNames = {'#objver': Const.VersionColumn};
-            additionalParams.ExpressionAttributeValues = {':objver': rows[0][Const.VersionColumn], ':objverincrementby': 1};
+            additionalParams.ExpressionAttributeValues = {':objver': stronglyConsistentRow[Const.VersionColumn], ':objverincrementby': 1};
 
             if(!params.updateExpression.add)
             {
@@ -520,14 +519,14 @@ export class DynamoDbManager implements IDynamoDbManager
         {
             updateExpression = `DELETE ${params.updateExpression.delete.join(',')} ${updateExpression}`;
         }
-
-        for(let row of rows)
+        
+        for(let representation of representations)
         {
             transaction.add({Update: {
                 TableName: tableName,
                 Key: {
-                    [Const.HashColumn]: row[Const.HashColumn],
-                    [Const.RangeColumn]: row[Const.RangeColumn]
+                    [Const.HashColumn]: representation[Const.HashColumn],
+                    [Const.RangeColumn]: representation[Const.RangeColumn]
                 },
                 UpdateExpression: updateExpression,
                 ...additionalParams
@@ -555,7 +554,7 @@ export class DynamoDbManager implements IDynamoDbManager
                     throw e;
                 }
 
-                if(currentObject && Reflector.getObjectVersion(currentObject) > rows[0][Const.VersionColumn])
+                if(currentObject && Reflector.getObjectVersion(currentObject) > stronglyConsistentRow[Const.VersionColumn])
                 {
                     throw new VersionError(`Could not update the object '${id}' because it has been overwritten by the writes of others.`);
                 }
