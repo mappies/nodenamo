@@ -1,5 +1,5 @@
 import { Insert } from './queries/insert/insert';
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
+import { DynamoDBClient, DynamoDBClientConfig } from "@aws-sdk/client-dynamodb";
 import { DynamoDbManager } from "./managers/dynamodbManager";
 import { Get } from "./queries/get/get";
 import { Find } from "./queries/find/find";
@@ -11,15 +11,34 @@ import { DeleteTable } from './queries/deleteTable/deleteTable';
 import { ValidatedDynamoDbManager } from './managers/validatedDynamodbManager';
 import { IDynamoDbManager } from './interfaces/iDynamodbManager';
 import { On } from './queries/on/on';
-import ITransactionable from './interfaces/iTransactionable';
 import { Transaction } from './queries/transaction/on';
 import { Describe } from './queries/describe/describe';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import ITransactionable from './interfaces/iTransactionable';
+
+const marshallOptions = {
+    // Whether to automatically convert empty strings, blobs, and sets to `null`.
+    convertEmptyValues: false, 
+    // Whether to remove undefined values while marshalling.
+    removeUndefinedValues: true, 
+    // Whether to convert typeof object to map attribute.
+    convertClassInstanceToMap: false, 
+  };
+
+  const unmarshallOptions = 
+  {
+    // Whether to return numbers as a string instead of converting them to native JavaScript numbers.
+    wrapNumbers: false, 
+  };
 
 export class NodeNamo
 {
     private manager:IDynamoDbManager
 
-    constructor(private client:DocumentClient)
+    constructor(private config: DynamoDBClientConfig, private client: DynamoDBDocumentClient = DynamoDBDocumentClient.from(new DynamoDBClient(config), {
+           marshallOptions,
+           unmarshallOptions
+        }))
     {
         this.manager = new ValidatedDynamoDbManager(new DynamoDbManager(this.client));
     }
