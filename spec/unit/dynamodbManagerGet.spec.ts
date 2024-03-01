@@ -1,12 +1,10 @@
 import {assert as assert} from 'chai';
 import { DynamoDbManager } from '../../src/managers/dynamodbManager';
 import { Mock, IMock, It } from 'typemoq';
-import { GetItemCommand, GetItemCommandOutput, GetItemOutput } from '@aws-sdk/client-dynamodb';
 import { DBTable, DBColumn } from '../../src';
 import {Const} from '../../src/const';
 import { Reflector } from '../../src/reflector';
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
-import { marshall } from '@aws-sdk/util-dynamodb';
+import { DynamoDBDocumentClient, GetCommand, GetCommandOutput } from '@aws-sdk/lib-dynamodb';
 
 describe('DynamoDbManager.Get()', function ()
 {
@@ -31,9 +29,9 @@ describe('DynamoDbManager.Get()', function ()
         let obj = {id:42};
         obj[Const.VersionColumn] = 1;
 
-        let response = getMockedGetResponse({Item:marshall(obj)});
+        let response = getMockedGetResponse({Item:obj});
 
-        mockedClient.setup(q => q.send(It.is((p:GetItemCommand) => !!p.input.TableName && p.input.Key?.[Const.HashColumn]['S'] === 'entity#42' && p.input.Key[Const.RangeColumn]['S'] === 'nodenamo'))).callback(()=>called=true).returns(()=>response);
+        mockedClient.setup(q => q.send(It.is((p:GetCommand) => !!p.input.TableName && p.input.Key?.[Const.HashColumn] === 'entity#42' && p.input.Key[Const.RangeColumn] === 'nodenamo'))).callback(()=>called=true).returns(()=>response);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entity = await manager.getOne(Entity, 42);
@@ -68,11 +66,11 @@ describe('DynamoDbManager.Get()', function ()
             let obj = {id:42};
             obj[Const.VersionColumn] = 1;
     
-            let response = getMockedGetResponse({Item:marshall(obj)});
+            let response = getMockedGetResponse({Item:obj});
     
-            mockedClient.setup(q => q.send(It.is((p:GetItemCommand) => !!p.input.TableName && 
-                                                       p.input.Key?.[Const.HashColumn]['S'] === 'entity#42' && 
-                                                       p.input.Key?.[Const.RangeColumn]['S'] === 'nodenamo' &&
+            mockedClient.setup(q => q.send(It.is((p:GetCommand) => !!p.input.TableName && 
+                                                       p.input.Key?.[Const.HashColumn] === 'entity#42' && 
+                                                       p.input.Key?.[Const.RangeColumn] === 'nodenamo' &&
                                                        p.input.ConsistentRead === test.expectedQueryConsistentRead)))
                                      .callback(()=>called=true).returns(()=>response);
     
@@ -94,9 +92,9 @@ describe('DynamoDbManager.Get()', function ()
             id:number;
         };
 
-        let response = getMockedGetResponse({Item:undefined});
+        let response = getMockedGetResponse(<any>{Item:undefined});
 
-        mockedClient.setup(q => q.send(It.is((p:GetItemCommand) => !!p.input.TableName && p.input.Key?.[Const.HashColumn]['S'] === 'entity#42' && p.input.Key?.[Const.RangeColumn]['S'] === 'nodenamo'))).callback(()=>called=true).returns(()=>response);
+        mockedClient.setup(q => q.send(It.is((p:GetCommand) => !!p.input.TableName && p.input.Key?.[Const.HashColumn] === 'entity#42' && p.input.Key?.[Const.RangeColumn] === 'nodenamo'))).callback(()=>called=true).returns(()=>response);
 
         let manager = new DynamoDbManager(mockedClient.object);
         let entity = await manager.getOne(Entity, 42);
@@ -106,7 +104,7 @@ describe('DynamoDbManager.Get()', function ()
     });
 });
 
-function getMockedGetResponse(response: GetItemOutput): Promise<GetItemCommandOutput>
+function getMockedGetResponse(response?: Omit<GetCommandOutput, "$metadata">): Promise<GetCommandOutput>
 {
-    return new Promise((resolve)=>resolve(<GetItemCommandOutput>response));
+    return new Promise((resolve)=>resolve(<GetCommandOutput>response));
 }
