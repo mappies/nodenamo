@@ -16,7 +16,6 @@ A simple usecase without any hash/range keys
 ```javascript
 
 import { DBTable, DBColumn, NodeNamo } from 'nodenamo';
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
 
 @DBTable()
 class User
@@ -38,7 +37,7 @@ class User
     }
 }
 
-let nodenamo = new NodeNamo(new DocumentClient());
+let nodenamo = new NodeNamo({ region: 'us-east-1' });
 
 //Create a table
 await nodenamo.createTable().for(User).execute();
@@ -130,7 +129,10 @@ where:
 Get an object from DynamoDB by the object's ID
 
 ```javascript
+// Get an object
 await nodenamo.get(id).from(T).execute<T>();
+// Get an object with a strongly consistent read
+await nodenamo.get(id).from(T).stronglyConsistent(true).execute<T>();
 ```
 
 where:
@@ -144,6 +146,8 @@ List objects from DynamoDB.
 ```javascript
 //List all objects from T
 await nodenamo.list().from(T).execute<T>();
+//List all objects from T with a strongly consistent read
+await nodenamo.list().from(T).stronglyConsistent(true).execute<T>();
 //List all objects from T that have a certain hash. 
 await nodenamo.list().from(T).by(hash).execute<T>();
 //List all objects from T that have a certain hash and start with a certain range key value. 
@@ -178,6 +182,7 @@ await nodenamo.list()
               .using(indexName)
               .order(false)
               .resume(page.lastEvaluatedKey)
+              .stronglyConsistent(true)
               .execute<T>();
 
 ```

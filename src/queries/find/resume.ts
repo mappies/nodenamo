@@ -3,7 +3,6 @@ import { Execute } from "./execute";
 import { Limit } from './limit';
 import { Order } from "./order";
 import { Using } from "./using";
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import { StronglyConsistent } from "./stronglyConsistent";
 
 export class Resume

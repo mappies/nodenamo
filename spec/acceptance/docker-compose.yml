@@ -13,6 +13,7 @@ services:
       DYNAMODB_ENDPOINT: http://dynamodb:8000
       AWS_ACCESS_KEY_ID: ANONEMPTYKEY
       AWS_SECRET_ACCESS_KEY: ANONEMPTYKEY
+      REGION: us-east-1
     volumes:
       - ../..:/app
     command:  /bin/sh -c "sleep 1 && cd app && npm run acceptance"

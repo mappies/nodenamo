@@ -1,16 +1,17 @@
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { DynamoDbTransaction } from './dynamodbTransaction';
 import { DynamoDbManager } from './dynamodbManager';
 import { Reflector } from '../reflector';
 import { ValidationError } from '../errors/validationError';
-import { isNullOrUndefined } from 'util';
 import {Const} from '../const';
 import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
 import { Key } from '../Key';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+
+const isNullOrUndefined = (value:any) => value === null || value === undefined;
 
 export class ValidatedDynamoDbManager implements IDynamoDbManager
 {
-    get client(): DocumentClient
+    get client(): DynamoDBDocumentClient
     {
         return this.manager.client;
     }

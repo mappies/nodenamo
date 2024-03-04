@@ -1,20 +1,20 @@
-import { DocumentClient, QueryInput, QueryOutput, GetItemInput } from 'aws-sdk/clients/dynamodb';
+import { CreateTableCommand, DeleteTableCommand, QueryInput, QueryOutput, GetItemInput, ScalarAttributeType, KeyType, ProjectionType } from '@aws-sdk/client-dynamodb';
 import { DynamoDbTransaction } from './dynamodbTransaction';
 import { RepresentationFactory } from '../representationFactory';
 import { Reflector } from '../reflector';
 import {Const} from '../const';
 import { EntityFactory } from '../entityFactory';
 import { NodenamoError } from '../errors/nodenamoError';
-import { DynamoDB } from 'aws-sdk/clients/all';
 import { IDynamoDbManager } from '../interfaces/iDynamodbManager';
 import { VersionError } from '../errors/versionError';
 import { Key } from '../Key';
 import AggregateError from 'aggregate-error';
 import base64url from "base64url";
+import { DynamoDBDocumentClient, QueryCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
 
 export class DynamoDbManager implements IDynamoDbManager
 {
-    constructor(public client:DocumentClient)
+    constructor(public client:DynamoDBDocumentClient)
     {
 
     }
@@ -107,8 +107,8 @@ export class DynamoDbManager implements IDynamoDbManager
             ConsistentRead: stronglyConsistent
         };
 
-        let response =  await this.client.get(query).promise();
-
+        let response =  await this.client.send(new GetCommand(query))
+        
         return response.Item;
     }
 
@@ -202,12 +202,12 @@ export class DynamoDbManager implements IDynamoDbManager
 
         do
         {
-            response =  await this.client.query(query).promise();
+            response =  await this.client.send(new QueryCommand(query));
 
             if (!firstItem) firstItem = response.Items[0];
-
+            
             let processedItemCount = 0;
-
+            
             for(let item of response.Items)
             {
                 processedItemCount++;
@@ -215,7 +215,7 @@ export class DynamoDbManager implements IDynamoDbManager
 
                 lastItem = item;
 
-                result[<string>item[Const.IdColumn]] = EntityFactory.create(type, item);
+                result[<string><unknown>item[Const.IdColumn]] = EntityFactory.create(type, item);
 
                 if(!!params && !!params.limit && ++itemCount >= params.limit)
                 {
@@ -231,9 +231,9 @@ export class DynamoDbManager implements IDynamoDbManager
             query.ExclusiveStartKey = response.LastEvaluatedKey;
         }
         while(response.LastEvaluatedKey && itemCount < params.limit)
-
+        
         let items = Object.values(result);
-
+        
         let lastEvaluatedKey: string
         if(response.LastEvaluatedKey && lastItem)
         {
@@ -251,7 +251,7 @@ export class DynamoDbManager implements IDynamoDbManager
                 [Const.RangeColumn]: firstItem[Const.RangeColumn],
             }));
         }
-
+        
         return { items, lastEvaluatedKey, firstEvaluatedKey }
     }
 
@@ -371,7 +371,7 @@ export class DynamoDbManager implements IDynamoDbManager
             if(newKey)
             {
                 representationAdditionalParam.ConditionExpression =
-                    (representationAdditionalParam.ConditionExpression ? `${representationAdditionalParam.ConditionExpression} AND` : '')
+                    (representationAdditionalParam.ConditionExpression ? `${representationAdditionalParam.ConditionExpression} AND ` : '')
                     +
                     '(attribute_not_exists(#hash) AND attribute_not_exists(#range))'
 
@@ -459,7 +459,7 @@ export class DynamoDbManager implements IDynamoDbManager
         {
             throw new Error(`Could not update the object '${id}' because it could not be found.`);
         }
-
+        
         //use representation factory to determine which rows to act on.
         let representations = RepresentationFactory.get(EntityFactory.create(type, stronglyConsistentRow));
         //Setup additionalParams
@@ -478,7 +478,7 @@ export class DynamoDbManager implements IDynamoDbManager
 
             params.updateExpression.add.push('#objver :objverincrementby');
         }
-
+        
         if(params.conditionExpression)
         {
             additionalParams['ConditionExpression'] = additionalParams['ConditionExpression']
@@ -497,7 +497,7 @@ export class DynamoDbManager implements IDynamoDbManager
             addColumnValuePrefix(instance, params.expressionAttributeValues, params.expressionAttributeNames);
             additionalParams['ExpressionAttributeValues'] = Object.assign(params.expressionAttributeValues, additionalParams['ExpressionAttributeValues']);
         }
-
+        
         transaction = transaction || new DynamoDbTransaction(this.client);
 
         let updateExpression = '';
@@ -591,7 +591,7 @@ export class DynamoDbManager implements IDynamoDbManager
         let rows = await this.getById(id, type);
 
         transaction = transaction || new DynamoDbTransaction(this.client);
-
+        
         for(let row of rows)
         {
             let query = {
@@ -601,7 +601,7 @@ export class DynamoDbManager implements IDynamoDbManager
             };
             query.Key[Const.HashColumn] = row[Const.HashColumn];
             query.Key[Const.RangeColumn] = row[Const.RangeColumn];
-
+            
             transaction.add({Delete: query});
         }
 
@@ -630,7 +630,7 @@ export class DynamoDbManager implements IDynamoDbManager
 
         do
         {
-            let response =  await this.client.query(query).promise();
+            let response =  await this.client.send(new QueryCommand(query));
 
             if(response.Items)
             {
@@ -644,26 +644,26 @@ export class DynamoDbManager implements IDynamoDbManager
         return result;
     }
 
-    async createTable<T extends object>(type?:{new(...args: any[]):T}, params?:{onDemand?:boolean, readCapacityUnits?:number, writeCapacityUnits?:number}, dynamoDb?:DynamoDB): Promise<void>
+    async createTable<T extends object>(type?:{new(...args: any[]):T}, params?:{onDemand?:boolean, readCapacityUnits?:number, writeCapacityUnits?:number}): Promise<void>
     {
         let query = {
             AttributeDefinitions: [
-                { AttributeName: 'objid', AttributeType: 'S' },
-                { AttributeName: 'hash', AttributeType: 'S' },
-                { AttributeName: 'range', AttributeType: 'S' }
+                { AttributeName: 'objid', AttributeType: ScalarAttributeType.S },
+                { AttributeName: 'hash', AttributeType: ScalarAttributeType.S },
+                { AttributeName: 'range', AttributeType: ScalarAttributeType.S }
             ],
             KeySchema: [
-                { AttributeName: 'hash', KeyType: 'HASH' },
-                { AttributeName: 'range', KeyType: 'RANGE' }
+                { AttributeName: 'hash', KeyType: KeyType.HASH },
+                { AttributeName: 'range', KeyType: KeyType.RANGE }
             ],
             GlobalSecondaryIndexes: [
                 {
                     IndexName: 'objid-index',
                     KeySchema: [
-                        { AttributeName: "objid", KeyType: "HASH" }
+                        { AttributeName: "objid", KeyType: KeyType.HASH }
                     ],
                     Projection: {
-                        ProjectionType: "ALL"
+                        ProjectionType: ProjectionType.ALL
                     }
                 }
             ],
@@ -686,16 +686,16 @@ export class DynamoDbManager implements IDynamoDbManager
             query['GlobalSecondaryIndexes'][0]['ProvisionedThroughput'] = Object.assign({}, query['ProvisionedThroughput']);
         }
 
-        await (dynamoDb || new DynamoDB(this.client['options'])).createTable(query).promise();
+        await this.client.send(new CreateTableCommand(query));
     }
 
-    async deleteTable<T extends object>(type?:{new(...args: any[]):T}, dynamoDb?:DynamoDB): Promise<void>
+    async deleteTable<T extends object>(type?:{new(...args: any[]):T}): Promise<void>
     {
         let query = {
             TableName: Reflector.getTableName(new type())
         };
 
-        await (dynamoDb || new DynamoDB(this.client['options'])).deleteTable(query).promise();
+        await this.client.send(new DeleteTableCommand(query));
     }
 }
 

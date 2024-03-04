@@ -1,13 +1,12 @@
 import {IMock, Mock, It} from "typemoq";
 import { assert as assert } from 'chai';
 import { DynamoDbTransaction } from '../../src/managers/dynamodbTransaction';
-import { DocumentClient, TransactWriteItem, ConditionCheck, TransactWriteItemsOutput } from 'aws-sdk/clients/dynamodb';
-import { AWSError } from 'aws-sdk/lib/error';
-import { Request } from 'aws-sdk/lib/request';
+import { TransactWriteItem, ConditionCheck } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 
 describe('DynamoDbTransaction', function () 
 {
-    let mockedClient:IMock<DocumentClient>;
+    let mockedClient:IMock<DynamoDBDocumentClient>;
     let called:boolean;
     let transactionOutput:any;
     let putParam:TransactWriteItem;
@@ -15,10 +14,20 @@ describe('DynamoDbTransaction', function ()
     let deleteParam:TransactWriteItem;
     let conditionalCheck:ConditionCheck;
 
+    function matches(val1?:any[], val2?: any[]): boolean {
+        try {
+            assert.deepEqual(val1, val2)
+            return true;
+        }
+        catch(e){
+            return false;
+        }
+    }
+
     beforeEach(() => 
     {
         called = false;
-        mockedClient = Mock.ofType<DocumentClient>();
+        mockedClient = Mock.ofType<DynamoDBDocumentClient>();
         transactionOutput = {on: ()=>{}, send: ()=>{}, promise: ()=>new Promise((resolve)=>resolve({Items:[true]}))}
 
         putParam = { Put: {TableName: 'table', Item: {}}};
@@ -29,8 +38,9 @@ describe('DynamoDbTransaction', function ()
 
     it('execute()', async () => 
     {
-        mockedClient.setup(c => c.transactWrite({TransactItems: [putParam, updateParam, deleteParam]})).callback(()=>called=true).returns(()=>transactionOutput);
-
+        mockedClient.setup(c => c.send(It.is((obj: TransactWriteCommand) => matches(obj.input.TransactItems, [putParam, updateParam, deleteParam]))))
+                    .callback(()=>called=true).returns(()=>transactionOutput);
+            
         let manager = await new DynamoDbTransaction(mockedClient.object)
         manager.add(putParam).add(updateParam).add(deleteParam).commit();
 
@@ -52,9 +62,9 @@ describe('DynamoDbTransaction', function ()
             putParams[i] = createOperation(i);
         }
 
-        mockedClient.setup(c => c.transactWrite({TransactItems: [putParams[0], putParams[1], putParams[2], putParams[3], putParams[4], putParams[5], putParams[6], putParams[7], putParams[8], putParams[9], putParams[10], putParams[11], putParams[12], putParams[13], putParams[14], putParams[15], putParams[16], putParams[17], putParams[18], putParams[19], putParams[20], putParams[21], putParams[22], putParams[23], putParams[24]]})).callback(()=>firstBatchCalled=true).returns(()=>transactionOutput);
-        mockedClient.setup(c => c.transactWrite({TransactItems: [putParams[25], putParams[26]]})).callback(()=>secondBatchCalled=true).returns(()=>transactionOutput);
-        mockedClient.setup(c => c.transactWrite(It.isAny())).callback(()=>otherBatchCalled=true).returns(()=>transactionOutput);
+        mockedClient.setup(c => c.send(It.is((obj: TransactWriteCommand) => matches(obj.input.TransactItems, [putParams[0], putParams[1], putParams[2], putParams[3], putParams[4], putParams[5], putParams[6], putParams[7], putParams[8], putParams[9], putParams[10], putParams[11], putParams[12], putParams[13], putParams[14], putParams[15], putParams[16], putParams[17], putParams[18], putParams[19], putParams[20], putParams[21], putParams[22], putParams[23], putParams[24]])))).callback(()=>firstBatchCalled=true).returns(()=>transactionOutput);
+        mockedClient.setup(c => c.send(It.is((obj: TransactWriteCommand) => matches(obj.input.TransactItems, [putParams[25], putParams[26]])))).callback(()=>secondBatchCalled=true).returns(()=>transactionOutput);
+        mockedClient.setup(c => c.send(It.isAny())).callback(()=>otherBatchCalled=true).returns(()=>transactionOutput);
 
         let manager = await new DynamoDbTransaction(mockedClient.object);
 
@@ -71,18 +81,10 @@ describe('DynamoDbTransaction', function ()
     {
         putParam.ConditionCheck = conditionalCheck;
 
-        mockedClient.setup(c => c.transactWrite({TransactItems: [putParam]})).callback(()=>called=true).returns(()=>transactionOutput);
+        mockedClient.setup(c => c.send(It.is((obj: TransactWriteCommand) => matches(obj.input.TransactItems, [putParam])))).callback(()=>called=true).returns(()=>transactionOutput);
 
         await new DynamoDbTransaction(mockedClient.object).add(putParam).commit();
 
         assert.isTrue(called);
     });
 });
-
-
-function getMockedResponse(response:TransactWriteItemsOutput): IMock<Request<TransactWriteItemsOutput, AWSError>>
-{
-    let mock = Mock.ofType<Request<TransactWriteItemsOutput, AWSError>>();
-    mock.setup(r => r.promise()).returns(async()=><any>response);
-    return mock;
-}

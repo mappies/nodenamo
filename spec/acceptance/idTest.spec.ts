@@ -2,7 +2,6 @@ import {assert as assert} from 'chai';
 import { DBTable, DBColumn } from '../../src';
 import { NodeNamo } from '../../src/nodeNamo';
 import Config from './config';
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 
 @DBTable({name:'nodenamo_acceptance_idTest'})
 class User
@@ -14,12 +13,12 @@ class User
     name:string;
 
     @DBColumn()
-    description:string
+    description:string;
 
     @DBColumn()
-    obj:object;
+    obj:object|undefined;
 
-    secret:string;
+    secret:string|undefined;
 
     constructor(id:number, name:string, description:string, secret?:string, obj?:object)
     {
@@ -39,8 +38,13 @@ describe('ID tests', function ()
     let user3:User;
     let user4:User;
 
-    before(async ()=>{
-        nodenamo = new NodeNamo(new DocumentClient({ endpoint: Config.DYNAMODB_ENDPOINT, region: 'us-east-1' }))
+    before(async ()=>
+    {
+        nodenamo = new NodeNamo({ 
+            endpoint: Config.DYNAMODB_ENDPOINT, 
+            region: 'us-east-1'
+        })
+        
         await nodenamo.createTable().for(User).execute();
 
         user1 = new User(1, 'Some One', 'Description 1');
@@ -118,12 +122,12 @@ describe('ID tests', function ()
         assert.equal(page2.items.length, 1);
         assert.deepEqual(page2.items[0], user2);
         assert.deepEqual(page2.items[0].secret, undefined);
-
+        
         let page3 = await nodenamo.list().from(User).limit(1).resume(page2.lastEvaluatedKey).execute<User>();
 
         assert.equal(page3.items.length, 1);
         assert.deepEqual(page3.items[0], user3);
-
+        
         let page4 = await nodenamo.list().from(User).limit(1).resume(page3.lastEvaluatedKey).execute<User>();
 
         assert.equal(page4.items.length, 1);
@@ -131,7 +135,7 @@ describe('ID tests', function ()
         assert.isUndefined(page4.lastEvaluatedKey);
         
         let page3again = await nodenamo.list().from(User).limit(1).resume(page4.firstEvaluatedKey).order(false).execute<User>();
-
+        
         assert.equal(page3again.items.length, 1);
         assert.deepEqual(page3again.items[0], user3);
         assert.equal(page3again.firstEvaluatedKey, page3.firstEvaluatedKey);
@@ -150,7 +154,7 @@ describe('ID tests', function ()
         assert.deepEqual(page1again.items[0], user1);
         assert.equal(page1again.firstEvaluatedKey, page1.firstEvaluatedKey);
         assert.isUndefined(page1again.lastEvaluatedKey);
-
+        
         let page0 = await nodenamo.list().from(User).limit(1).resume(page1.firstEvaluatedKey).order(false).execute<User>();
         let page0again = await nodenamo.list().from(User).limit(1).resume(page1again.firstEvaluatedKey).order(false).execute<User>();
         
