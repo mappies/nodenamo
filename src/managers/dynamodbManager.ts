@@ -371,7 +371,7 @@ export class DynamoDbManager implements IDynamoDbManager
             if(newKey)
             {
                 representationAdditionalParam.ConditionExpression =
-                    (representationAdditionalParam.ConditionExpression ? `${representationAdditionalParam.ConditionExpression} AND` : '')
+                    (representationAdditionalParam.ConditionExpression ? `${representationAdditionalParam.ConditionExpression} AND ` : '')
                     +
                     '(attribute_not_exists(#hash) AND attribute_not_exists(#range))'
 
@@ -396,10 +396,8 @@ export class DynamoDbManager implements IDynamoDbManager
                 Key: {}
             }
 
-            deleteParam.Key = {
-                [Const.HashColumn]: entry[Const.HashColumn],
-                [Const.RangeColumn]: entry[Const.RangeColumn]
-            };
+            deleteParam.Key[Const.HashColumn] = entry[Const.HashColumn];
+            deleteParam.Key[Const.RangeColumn] = entry[Const.RangeColumn];
 
             transaction.add({Delete: deleteParam});
         }
@@ -603,7 +601,6 @@ export class DynamoDbManager implements IDynamoDbManager
             };
             query.Key[Const.HashColumn] = row[Const.HashColumn];
             query.Key[Const.RangeColumn] = row[Const.RangeColumn];
-            query.Key = query.Key;
             
             transaction.add({Delete: query});
         }

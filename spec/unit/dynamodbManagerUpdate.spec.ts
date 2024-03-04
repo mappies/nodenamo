@@ -304,16 +304,17 @@ describe('DynamoDbManager.Update()', function ()
         mockedTransaction.setup(t => t.add(It.is(t =>
             !!t.Put
             && t.Put.Item?.name === 'New Two'
-            && t.Put.Item?.[Const.VersionColumn]['N'] === '2'
-            && t.Put.ConditionExpression === '(#objver < :objver)'
+            && t.Put.Item?.[Const.VersionColumn] === 2
+            && t.Put.ConditionExpression === '(attribute_not_exists(#objver) OR #objver < :objver) AND (attribute_not_exists(#hash) AND attribute_not_exists(#range))'
             && t.Put.ExpressionAttributeNames?.['#objver'] === Const.VersionColumn
-            && t.Put.ExpressionAttributeValues?.[':objver']['N'] === '2' ))).callback(()=>put=true);
+            && t.Put.ExpressionAttributeValues?.[':objver'] === 2 ))).callback(()=>put=true);
 
         let manager = new DynamoDbManager(mockedClient.object);
 
         await manager.update(Entity, 1, {name: 'New Two'}, undefined, mockedTransaction.object);
 
         assert.isTrue(called);
+        assert.isTrue(put);
         assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
@@ -337,9 +338,10 @@ describe('DynamoDbManager.Update()', function ()
         mockedTransaction.setup(t => t.add(It.is(t =>
             !!t.Put
             && t.Put.Item?.name === 'New Two'
-            && t.Put.Item?.[Const.VersionColumn]['N'] === '2'
-            && !t.Put.ConditionExpression
-            && !t.Put.ExpressionAttributeNames
+            && t.Put.Item?.[Const.VersionColumn] === 2
+            && t.Put.ConditionExpression === '(attribute_not_exists(#hash) AND attribute_not_exists(#range))'
+            && t.Put.ExpressionAttributeNames?.['#hash'] === Const.HashColumn
+            && t.Put.ExpressionAttributeNames?.['#range'] === Const.RangeColumn
             && !t.Put.ExpressionAttributeValues))).callback(()=>put=true);
 
         let manager = new DynamoDbManager(mockedClient.object);
@@ -347,6 +349,7 @@ describe('DynamoDbManager.Update()', function ()
         await manager.update(Entity, 1, {name: 'New Two'}, undefined, mockedTransaction.object);
 
         assert.isTrue(called);
+        assert.isTrue(put);
         assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
@@ -370,16 +373,17 @@ describe('DynamoDbManager.Update()', function ()
         mockedTransaction.setup(t => t.add(It.is(t =>
             !!t.Put
             && t.Put.Item?.name === 'New Two'
-            && t.Put.Item?.[Const.VersionColumn]['N'] === '2'
-            && t.Put.ConditionExpression === '(#objver < :objver)'
+            && t.Put.Item?.[Const.VersionColumn] === 2
+            && t.Put.ConditionExpression === '(attribute_not_exists(#objver) OR #objver < :objver) AND (attribute_not_exists(#hash) AND attribute_not_exists(#range))'
             && t.Put.ExpressionAttributeNames?.['#objver'] === Const.VersionColumn
-            && t.Put.ExpressionAttributeValues?.[':objver']['N'] === '2' ))).callback(()=>put=true);
+            && t.Put.ExpressionAttributeValues?.[':objver'] === 2 ))).callback(()=>put=true);
 
         let manager = new DynamoDbManager(mockedClient.object);
 
         await manager.update(Entity, 1, {name: 'New Two'}, {versionCheck:false}, mockedTransaction.object);
 
         assert.isTrue(called);
+        assert.isTrue(put);
         assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
@@ -403,16 +407,17 @@ describe('DynamoDbManager.Update()', function ()
         mockedTransaction.setup(t => t.add(It.is(t =>
             !!t.Put
             && t.Put.Item?.name === 'New Two'
-            && t.Put.Item?.[Const.VersionColumn]['N'] === '2'
-            && t.Put.ConditionExpression === '(#objver < :objver)'
+            && t.Put.Item?.[Const.VersionColumn] === 2
+            && t.Put.ConditionExpression === '(attribute_not_exists(#objver) OR #objver < :objver) AND (attribute_not_exists(#hash) AND attribute_not_exists(#range))'
             && t.Put.ExpressionAttributeNames?.['#objver'] === Const.VersionColumn
-            && t.Put.ExpressionAttributeValues?.[':objver']['N'] === '2' ))).callback(()=>put=true);
+            && t.Put.ExpressionAttributeValues?.[':objver'] === 2 ))).callback(()=>put=true);
 
         let manager = new DynamoDbManager(mockedClient.object);
 
         await manager.update(Entity, 1, {name: 'New Two'}, {versionCheck:true}, mockedTransaction.object);
 
         assert.isTrue(called);
+        assert.isTrue(put);
         assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
@@ -436,18 +441,19 @@ describe('DynamoDbManager.Update()', function ()
         mockedTransaction.setup(t => t.add(It.is(t =>
             !!t.Put
             && t.Put.Item?.name === 'New Two'
-            && t.Put.Item?.[Const.VersionColumn]['N'] === '2'
-            && t.Put.ConditionExpression === '(#objver < :objver) and (condition)'
+            && t.Put.Item?.[Const.VersionColumn] === 2
+            && t.Put.ConditionExpression === '(attribute_not_exists(#objver) OR #objver < :objver) and (condition) AND (attribute_not_exists(#hash) AND attribute_not_exists(#range))'
             && t.Put.ExpressionAttributeNames?.['#objver'] === Const.VersionColumn
             && t.Put.ExpressionAttributeNames['#n'] === 'name'
-            && t.Put.ExpressionAttributeValues?.[':objver']['N'] === '2'
-            && t.Put.ExpressionAttributeValues?.[':n']['BOOL'] === true))).callback(()=>put=true);
+            && t.Put.ExpressionAttributeValues?.[':objver'] === 2
+            && t.Put.ExpressionAttributeValues?.[':n'] === true))).callback(()=>put=true);
 
         let manager = new DynamoDbManager(mockedClient.object);
 
-        await manager.update(Entity, 1, {name: 'New Two'}, {conditionExpression: "condition", expressionAttributeNames: {'#n': 'name'}, expressionAttributeValues: {'#n': true}, versionCheck:true}, mockedTransaction.object);
+        await manager.update(Entity, 1, {name: 'New Two'}, {conditionExpression: "condition", expressionAttributeNames: {'#n': 'name'}, expressionAttributeValues: {':n': true}, versionCheck:true}, mockedTransaction.object);
 
         assert.isTrue(called);
+        assert.isTrue(put);
         assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 

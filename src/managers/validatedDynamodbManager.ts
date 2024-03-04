@@ -1,4 +1,3 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDbTransaction } from './dynamodbTransaction';
 import { DynamoDbManager } from './dynamodbManager';
 import { Reflector } from '../reflector';
