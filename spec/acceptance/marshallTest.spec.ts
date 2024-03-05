@@ -54,7 +54,7 @@ describe('Marshall tests', function ()
 
         person1 = new Person(1) // Need options.removeUndefinedValues because child1.spouse is undefined
         person2 = new Person(2) // Need options.removeUndefinedValues because child2.spouse is undefined
-        father = new Person(0, undefined, [person1], Gender.Male);
+        father = new Person(0, undefined, [person1], Gender.Male); // Need options.convertClassInstanceToMap because of a nested object
         mother = new Person(3, undefined, undefined, Gender.Female);
     });
 
