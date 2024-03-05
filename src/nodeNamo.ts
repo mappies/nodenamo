@@ -16,11 +16,20 @@ import { Describe } from './queries/describe/describe';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import ITransactionable from './interfaces/iTransactionable';
 
+const marshallOptions = {
+    // Whether to remove undefined values while marshalling.
+    removeUndefinedValues: true, 
+    // Whether to convert typeof object to map attribute.
+    convertClassInstanceToMap: true
+}
+
+const translateConfig = { marshallOptions }
+
 export class NodeNamo
 {
     private manager:IDynamoDbManager
 
-    constructor(config: DynamoDBClientConfig, private client: DynamoDBDocumentClient = DynamoDBDocumentClient.from(new DynamoDBClient(config)))
+    constructor(config: DynamoDBClientConfig, private client: DynamoDBDocumentClient = DynamoDBDocumentClient.from(new DynamoDBClient(config), translateConfig))
     {
         this.manager = new ValidatedDynamoDbManager(new DynamoDbManager(this.client));
     }
