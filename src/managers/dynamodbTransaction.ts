@@ -59,36 +59,41 @@ export class DynamoDbTransaction
                 {
                     await transactionRequest;
                 }
-                catch(e)
+                catch(error)
                 {
-                    try {
-                        let error = JSON.parse(e.httpResponse.body.toString());
-
-                        if(error.CancellationReasons)
-                        {
-                            let reasons = error.CancellationReasons;
-
-                            for(let j = 0; j < reasons.length ; j++)
-                            {
-                                if(reasons[j].Code === 'None') continue;
-
-                                let e = new Error(`${reasons[j].Code}: ${reasons[j].Message}: ${JSON.stringify(transactions[j])}`);
-                                
-                                errors.push(e);
-                            }
-                        }
-                        else
-                        {
-                            errors.push(new Error(error.message));
-                        }
-
-                    } 
-                    catch (err) 
+                    if (error.name === "TransactionCanceledException")
                     {
-                        errors.push(err);
+                        try {    
+                            if(error.CancellationReasons)
+                            {
+                                let reasons = error.CancellationReasons;
+    
+                                for(let j = 0; j < reasons.length ; j++)
+                                {
+                                    if(reasons[j].Code === 'None') continue;
+    
+                                    let e = new Error(`${reasons[j].Code}: ${reasons[j].Message}: ${JSON.stringify(transactions[j])}`);
+                                    
+                                    errors.push(e);
+                                }
+                            }
+                            else
+                            {
+                                errors.push(new Error(error.Message));
+                            }
+    
+                        } 
+                        catch (err) 
+                        {
+                            errors.push(err);
+                        }
+                    }
+                    else
+                    {
+                        errors.push(error)
                     }
 
-                    throw new AggregateError([e, ...errors]);
+                    throw new AggregateError([error, ...errors]);
                 }
             }
         }
