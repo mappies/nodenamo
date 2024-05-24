@@ -47,7 +47,7 @@ describe('DynamoDbTransaction', function ()
         assert.isTrue(called);
     });
 
-    it('execute() - more than 10 operations', async () => 
+    it('execute() - more than 100 operations', async () => 
     {
         let firstBatchCalled = false;
         let secondBatchCalled = false;
@@ -57,13 +57,18 @@ describe('DynamoDbTransaction', function ()
 
         let putParams:any[] = [];
 
-        for(let i = 0 ; i <= 26; i++)
+        const defaultMaxTransactions = 100;
+
+        for(let i = 0 ; i <= defaultMaxTransactions + 1; i++)
         {
             putParams[i] = createOperation(i);
         }
 
-        mockedClient.setup(c => c.send(It.is((obj: TransactWriteCommand) => matches(obj.input.TransactItems, [putParams[0], putParams[1], putParams[2], putParams[3], putParams[4], putParams[5], putParams[6], putParams[7], putParams[8], putParams[9], putParams[10], putParams[11], putParams[12], putParams[13], putParams[14], putParams[15], putParams[16], putParams[17], putParams[18], putParams[19], putParams[20], putParams[21], putParams[22], putParams[23], putParams[24]])))).callback(()=>firstBatchCalled=true).returns(()=>transactionOutput);
-        mockedClient.setup(c => c.send(It.is((obj: TransactWriteCommand) => matches(obj.input.TransactItems, [putParams[25], putParams[26]])))).callback(()=>secondBatchCalled=true).returns(()=>transactionOutput);
+        const batch1 = putParams.slice(0, defaultMaxTransactions);
+        const batch2 = putParams.slice(defaultMaxTransactions);
+
+        mockedClient.setup(c => c.send(It.is((obj: TransactWriteCommand) => matches(obj.input.TransactItems, batch1)))).callback(()=>firstBatchCalled=true).returns(()=>transactionOutput);
+        mockedClient.setup(c => c.send(It.is((obj: TransactWriteCommand) => matches(obj.input.TransactItems, batch2)))).callback(()=>secondBatchCalled=true).returns(()=>transactionOutput);
         mockedClient.setup(c => c.send(It.isAny())).callback(()=>otherBatchCalled=true).returns(()=>transactionOutput);
 
         let manager = await new DynamoDbTransaction(mockedClient.object);
