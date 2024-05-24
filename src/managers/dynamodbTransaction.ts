@@ -2,7 +2,7 @@ import { ConditionCheck, Delete, Put, TransactWriteItem, Update  } from "@aws-sd
 import AggregateError from 'aggregate-error';
 import { DynamoDBDocumentClient, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 
-const MAX_AWS_TRANSACTION_OPERATIONS = Number(process.env.MAX_AWS_TRANSACTION_OPERATIONS) || 25;
+const MAX_AWS_TRANSACTION_OPERATIONS = Number(process.env.MAX_AWS_TRANSACTION_OPERATIONS) || 100;
 
 // We need a type to represent @aws-sdk/client-dynamodb's TransactItem but in @aws-sdk/lib-dynamodb's way.
 // The following type is the type of @aws-sdk/lib-dynamodb's TransactWriteCommandInput.TransactItems
