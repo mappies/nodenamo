@@ -4,18 +4,19 @@ import { WithVersionCheck } from './withVersionCheck';
 import ITransactionable from '../../interfaces/iTransactionable';
 import { DynamoDbTransaction } from '../../managers/dynamodbTransaction';
 import { ReturnValue } from '../../interfaces/returnValue';
-import { Returning } from './returning';
+import { Where } from './where';
 
-export class Where implements ITransactionable
+export class Returning implements ITransactionable
 {
-    constructor(private manager:IDynamoDbManager, private type:{new(...args: any[])}, private obj:object, private params?:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object,  returnValue?:ReturnValue, versionCheck?:boolean})
+    constructor(private manager:IDynamoDbManager, private type:{new(...args: any[])}, private obj:object, private params?:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, returnValue?:ReturnValue, versionCheck?:boolean}, private returnValue?:ReturnValue)
     {
-
+        this.params = this.params || {};
+        this.params['returnValue'] = this.returnValue;
     }
 
-    returning(returnValue:ReturnValue): Returning
+    where(conditionExpression:string, expressionAttributeNames?:object, expressionAttributeValues?:object): Where
     {
-        return new Returning(this.manager, this.type, this.obj, this.params, returnValue);
+        return new Where(this.manager, this.type, this.obj, {...this.params, ...{conditionExpression, expressionAttributeNames, expressionAttributeValues}})
     }
 
     withVersionCheck(versionCheck:boolean = true): WithVersionCheck

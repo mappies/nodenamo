@@ -7,6 +7,7 @@ import {Const} from '../../src/const';
 import { VersionError } from '../../src/errors/versionError';
 import AggregateError from 'aggregate-error';
 import { DynamoDBDocumentClient, GetCommand, GetCommandOutput, QueryCommand, QueryCommandOutput  } from '@aws-sdk/lib-dynamodb';
+import { ReturnValue } from '../../src/interfaces/returnValue';
 
 
 describe('DynamoDbManager.Update()', function ()
@@ -635,18 +636,74 @@ describe('DynamoDbManager.Update()', function ()
         assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
     });
 
-    function setupStronglyConsistentRead(expectedItem:object)
+    [
+        {   
+            updatePayload: {name: 'New Two', created: "New Created"}, 
+            returnValue: undefined,
+            expectedReturn: undefined,
+        },
+        {   
+            updatePayload: {name: 'New Two', created: "New Created"}, 
+            returnValue: ReturnValue.None,
+            expectedReturn: undefined,
+        },
+        {   
+            updatePayload: {name: 'New Two', created: "New Created"}, 
+            returnValue: ReturnValue.AllNew,
+            expectedReturn: {id:1, name:'New Two', created:'New Created', order:'original order'}
+        },
+        {   
+            updatePayload: {name: 'New Two', created: "New Created"}, 
+            returnValue: ReturnValue.AllOld,
+            expectedReturn: {id:1, name:'original name', created:'original created', order:'original order'}
+        },
+    ]
+    .forEach(test =>
     {
-        let stronglyConsistentResponse = getMockedGetResponse(
-            {Item:expectedItem}
-        );
+        it(`update() - returning ${test.returnValue}`, async () =>
+        {
+            @DBTable()
+            class Entity
+            {
+                @DBColumn({hash:true})
+                id:number;
+
+                @DBColumn()
+                name:string;
+
+                @DBColumn({range:true})
+                created:string;
+
+                @DBColumn({range:true})
+                order:string;
+            };
+
+            let consistentReadPayload = [{hash: 'entity#1', range: 'created', id:1, name:'original name', created:'original created', order:'original order'}];
+            consistentReadPayload.push({...consistentReadPayload[0], ...test.updatePayload});
+            setupStronglyConsistentRead(consistentReadPayload);
+
+            let findResponse = getMockedQueryResponse({Items: <any>[{hash: 'entity#1', range: 'created', id:1, name:'original name', created:'original created', order:'original order'}, {hash: 'entity#1', range: 'original order', id:1, name:'original name', created:'original created', order:'original order'}]});
+            mockedClient.setup(q => q.send(It.is((p:QueryCommand) => !!p.input.TableName && p.input.IndexName === Const.IdIndexName && p.input.KeyConditionExpression === '#objid = :objid' && p.input.ExpressionAttributeNames?.['#objid'] === Const.IdColumn && p.input.ExpressionAttributeValues?.[':objid'] === 'entity#1'))).callback(()=>called=true).returns(()=>findResponse);
+            
+            let manager = new DynamoDbManager(mockedClient.object);
+            let result = await manager.update(Entity, 1, test.updatePayload, {returnValue: test.returnValue}, mockedTransaction.object);
+
+            assert.isTrue(called);
+            assert.isTrue(desiredObjectCreatedFromStronglyConsistentRead);
+
+            assert.deepEqual(result, test.expectedReturn);
+        });
+    });
+
+    function setupStronglyConsistentRead(expectedItem:object|object[])
+    {
         mockedClient.setup(q => q.send(It.is((p:GetCommand) =>
             !!p.input.TableName
             && p.input.Key?.[Const.HashColumn] === 'entity#1'
             && p.input.Key?.[Const.RangeColumn] === 'nodenamo' 
             && p.input.ConsistentRead === true)))
             .callback(()=>desiredObjectCreatedFromStronglyConsistentRead=true)
-            .returns(()=>stronglyConsistentResponse);
+            .returns(()=>Array.isArray(expectedItem) ? getMockedGetResponse({Item:expectedItem.shift()}) : getMockedGetResponse({Item: expectedItem}));
     }
 });
 

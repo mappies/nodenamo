@@ -2,6 +2,7 @@ import {assert as assert} from 'chai';
 import { DBTable, DBColumn } from '../../src';
 import { NodeNamo } from '../../src/nodeNamo';
 import Config from './config';
+import { ReturnValue } from '../../src/interfaces/returnValue';
 
 @DBTable({name:'nodenamo_acceptance_idTest'})
 class User
@@ -232,8 +233,10 @@ describe('ID tests', function ()
 
         user3.name = 'This Three';
         user3['extra'] = 'invalid';
-        await nodenamo.update(user3).from(User).execute();
+        let result = await nodenamo.update(user3).from(User).execute();
 
+        assert.isUndefined(result);
+        
         user = await nodenamo.get(3).from(User).execute();
         assert.deepEqual(user, {id:3, name: 'This Three', description: 'Description 3', secret: undefined, obj:{array:[], bool:true, empty:'', num:1, obj:{n:1,e:''}, str:'string'}});
     });
@@ -270,6 +273,31 @@ describe('ID tests', function ()
         user = await nodenamo.get(4).from(User).execute();
 
         assert.deepEqual(user, {id:4, name: 'Some Four', description: '', secret: undefined, obj:undefined});
+    });
+
+    it('Update an item - return AllOld', async () =>
+    {
+        let originalUser = await nodenamo.get(2).from(User).execute<User>();
+
+        let result = await nodenamo.update({id: 2, name: 'New Two'}).from(User).returning(ReturnValue.AllOld).execute();
+
+        assert.deepEqual(result, originalUser);
+    });
+
+    it('Update an item - return AllNew', async () =>
+    {
+        let originalUser = await nodenamo.get(2).from(User).execute<User>();
+
+        let result = await nodenamo.update({id: 2, name: 'Newest Two'}).from(User).returning(ReturnValue.AllNew).execute();
+
+        assert.deepEqual(result, {...originalUser, name: 'Newest Two'});
+    });
+
+    it('Update an item - return None', async () =>
+    {
+        let result = await nodenamo.update({id: 2, name: 'Newer Two'}).from(User).returning(ReturnValue.None).execute();
+
+        assert.isUndefined(result);
     });
 
     it('On item', async () =>

@@ -3,15 +3,16 @@ import { Reflector } from "../../reflector";
 import { Key } from '../../Key';
 import { DynamoDbTransaction } from '../../managers/dynamodbTransaction';
 import { Reexecutable } from '../Reexecutable';
+import { ReturnValue } from '../../interfaces/returnValue';
 
 export class Execute extends Reexecutable
 {
-    constructor(private manager:IDynamoDbManager, private type:{new(...args: any[])}, private obj:object, private params?:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, private transaction?:DynamoDbTransaction)
+    constructor(private manager:IDynamoDbManager, private type:{new(...args: any[])}, private obj:object, private params?:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean, returnValue?:ReturnValue}, private transaction?:DynamoDbTransaction)
     {
         super()
     }
 
-    async execute(): Promise<void>
+    async execute<T extends object>(): Promise<T>
     {
         return await super.execute(async ()=>
         {

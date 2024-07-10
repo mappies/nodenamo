@@ -4,6 +4,8 @@ import { Where } from "./where";
 import { WithVersionCheck } from './withVersionCheck';
 import ITransactionable from '../../interfaces/iTransactionable';
 import { DynamoDbTransaction } from '../../managers/dynamodbTransaction';
+import { ReturnValue } from '../../interfaces/returnValue';
+import { Returning } from './returning';
 
 export class From implements ITransactionable
 {
@@ -22,7 +24,12 @@ export class From implements ITransactionable
         return new Where(this.manager, this.type, this.obj, {conditionExpression, expressionAttributeNames, expressionAttributeValues})
     }
 
-    async execute(transaction?:DynamoDbTransaction): Promise<void>
+    returning(returnValue:ReturnValue): Returning
+    {
+        return new Returning(this.manager, this.type, this.obj, undefined, returnValue)
+    }
+
+    async execute<T extends object>(transaction?:DynamoDbTransaction): Promise<T>
     {
         return await new Execute(this.manager, this.type, this.obj, undefined, transaction).execute();
     }

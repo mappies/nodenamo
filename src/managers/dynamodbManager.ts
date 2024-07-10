@@ -11,6 +11,7 @@ import { Key } from '../Key';
 import AggregateError from 'aggregate-error';
 import base64url from "base64url";
 import { DynamoDBDocumentClient, QueryCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
+import { ReturnValue } from '../interfaces/returnValue';
 
 export class DynamoDbManager implements IDynamoDbManager
 {
@@ -266,12 +267,13 @@ export class DynamoDbManager implements IDynamoDbManager
         }
     }    
 
-    async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction, autoCommit:boolean = true)
+    async update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean, returnValue?:ReturnValue}, transaction?:DynamoDbTransaction, autoCommit:boolean = true): Promise<T>
     {
         let instance = new type();
         let tableName = Reflector.getTableName(instance);
         let tableVersioning = Reflector.getTableVersioning(instance);
         let versioningRequired = tableVersioning || (params && params.versionCheck);
+        let returnValue:T = undefined;
 
         //Calculate new representations
         let [rows, stronglyConsistentRow ] = await Promise.all([this.getById(id, type), this.getOneRepresendationById(type,id,{ stronglyConsistent:true})]);
@@ -443,6 +445,17 @@ export class DynamoDbManager implements IDynamoDbManager
             }
 
             throw e;
+        }
+
+        //Return
+        switch(params?.returnValue)
+        {
+            case ReturnValue.AllOld:
+                return EntityFactory.create(type, stronglyConsistentRow);
+            case ReturnValue.AllNew:
+                return await this.getOne(type, id, {stronglyConsistent:true});
+            default:
+                return undefined;
         }
     }
 

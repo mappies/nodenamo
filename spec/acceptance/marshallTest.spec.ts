@@ -97,7 +97,9 @@ describe('Marshall tests', function ()
 
         person.children.push(person2);
 
-        await nodenamo.update(person).from(Person).execute();
+        let result = await nodenamo.update(person).from(Person).execute();
+
+        assert.isUndefined(result);
 
         person = await nodenamo.get(0).from(Person).execute();
         assert.equal(person.children.length, 2);
