@@ -629,8 +629,8 @@ describe('DynamoDbManager.Apply()', function ()
             error = e;
         }
 
-        assert.notInstanceOf(error, VersionError);
         assert.equal(error?.message, 'Simulated error');
+        assert.notInstanceOf(error, VersionError);
         assert.isTrue(representationsToUpdateCreatedFromStronglyConsistentRead);
     });
 
