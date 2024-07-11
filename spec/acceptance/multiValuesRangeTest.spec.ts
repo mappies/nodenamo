@@ -284,6 +284,43 @@ describe('Multi-values range tests', function ()
         assert.deepEqual(user, {id:6, name: 'Mr. Six', account: 3000, ranges: ['2020#6', 'true#6', 'Some Six#6'] });
     });
 
+    it('On item - return None', async () =>
+    {
+        let result = await nodenamo.on(6)
+                                   .from(User)
+                                   .set(['#name=:name'], {'#name': 'name'}, {':name': 'That name - None'})
+                                   .returning(ReturnValue.None)
+                                   .execute();
+
+        assert.isUndefined(result);
+    });
+
+    it('On item - return AllOld', async () =>
+    {
+        let originalUser = await nodenamo.get(6).from(User).execute<User>();
+
+        let result = await nodenamo.on(6)
+                                   .from(User)
+                                   .set(['#name=:name'], {'#name': 'name'}, {':name': 'That name - AllOld'})
+                                   .returning(ReturnValue.AllOld)
+                                   .execute();
+
+        assert.deepEqual(result, originalUser);
+    });
+
+    it('On item - return AllNew', async () =>
+    {
+        let originalUser = await nodenamo.get(6).from(User).execute<User>();
+
+        let result = await nodenamo.on(6)
+                                   .from(User)
+                                   .set(['#name=:name'], {'#name': 'name'}, {':name': 'That name - AllNew'})
+                                   .returning(ReturnValue.AllNew)
+                                   .execute();
+
+        assert.deepEqual(result, {...originalUser, name: 'That name - AllNew'});
+    });
+
     it('Delete an item', async () =>
     {
         assert.isDefined(await nodenamo.get(1).from(User).execute());

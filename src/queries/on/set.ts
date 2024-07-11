@@ -7,10 +7,12 @@ import { Remove } from './remove';
 import { WithVersionCheck } from './withVersionCheck';
 import ITransactionable from '../../interfaces/iTransactionable';
 import { DynamoDbTransaction } from '../../managers/dynamodbTransaction';
+import { Returning } from './returning';
+import { ReturnValue } from '../../interfaces/returnValue';
 
 export class Set implements ITransactionable
 {
-    constructor(private manager:IDynamoDbManager, private type:{new(...args: any[])}, private id:string|number, private params:{updateExpression:{set?:string[], remove?:string[], add?:string[], delete?:string[]}, conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, setExpressions:string[], expressionAttributeNames?:object, expressionAttributeValues?:object)
+    constructor(private manager:IDynamoDbManager, private type:{new(...args: any[])}, private id:string|number, private params:{updateExpression:{set?:string[], remove?:string[], add?:string[], delete?:string[]}, conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean, returnValue?:ReturnValue}, setExpressions:string[], expressionAttributeNames?:object, expressionAttributeValues?:object)
     {
 
         if(this.params === undefined) this.params = <any>{};
@@ -52,7 +54,12 @@ export class Set implements ITransactionable
         return new Where(this.manager, this.type, this.id, this.params, {conditionExpression, expressionAttributeNames, expressionAttributeValues})
     }
 
-    async execute(transaction?:DynamoDbTransaction): Promise<void>
+    returning(returnValue:ReturnValue): Returning
+    {
+        return new Returning(this.manager, this.type, this.id, this.params, returnValue);
+    }
+
+    async execute<T extends object>(transaction?:DynamoDbTransaction): Promise<T>
     {
         return await new Execute(this.manager, this.type, this.id, this.params, transaction).execute();
     }
