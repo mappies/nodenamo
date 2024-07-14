@@ -7,6 +7,7 @@ import {Const} from '../../src/const';
 import { VersionError } from '../../src/errors/versionError';
 import AggregateError from 'aggregate-error';
 import { DynamoDBDocumentClient, GetCommand  } from '@aws-sdk/lib-dynamodb';
+import { ReturnValue } from '../../src/interfaces/returnValue';
 
 describe('DynamoDbManager.Apply()', function ()
 {
@@ -634,16 +635,68 @@ describe('DynamoDbManager.Apply()', function ()
         assert.isTrue(representationsToUpdateCreatedFromStronglyConsistentRead);
     });
 
+    [
+        {   
+            updatePayload: {name: 'New Two', created: "New Created"}, 
+            returnValue: undefined,
+            expectedReturn: undefined,
+        },
+        {   
+            updatePayload: {name: 'New Two', created: "New Created"}, 
+            returnValue: ReturnValue.None,
+            expectedReturn: undefined,
+        },
+        {   
+            updatePayload: {name: 'New Two', created: "New Created"}, 
+            returnValue: ReturnValue.AllNew,
+            expectedReturn: {id:1, name:'New Two', created:'New Created'}
+        },
+        {   
+            updatePayload: {name: 'New Two', created: "New Created"}, 
+            returnValue: ReturnValue.AllOld,
+            expectedReturn: {id:1, name:'original name', created:'original created'}
+        },
+    ]
+    .forEach(test =>
+    {
+        it(`apply() - returning ${test.returnValue}`, async () =>
+        {
+            @DBTable()
+            class Entity
+            {
+                @DBColumn({ id:true })
+                id:number;
+
+                @DBColumn()
+                name:string;
+
+                @DBColumn()
+                created:string;
+            };
+            
+
+            let consistentReadPayload = [{hash: 'nodenamoentity#1', range: 'nodenamo', objid:"nodenamoentity#1", id:1, name:'original name', created:'original created'}];
+            consistentReadPayload.push({...consistentReadPayload[0], ...test.updatePayload});
+            setupStronglyConsistentRead(consistentReadPayload);
+
+            let manager = new DynamoDbManager(mockedClient.object);
+
+            let result = await manager.apply(Entity, 1, {updateExpression: {set: ['set1', 'set2']}, expressionAttributeNames: {'#k':'key'}, expressionAttributeValues: {':v': 42}, returnValue: test.returnValue}, mockedTransaction.object);
+
+            assert.isTrue(representationsToUpdateCreatedFromStronglyConsistentRead);
+
+            assert.deepEqual(result, test.expectedReturn);
+        });
+    });
+    
     function setupStronglyConsistentRead(expectedItem:object)
     {
-        let stronglyConsistentResponse = <any>{Item:expectedItem}
-
         mockedClient.setup(c => c.send(It.is((p: GetCommand) =>
             !!p.input.TableName
             && p.input.Key?.[Const.HashColumn] === 'entity#1'
             && p.input.Key?.[Const.RangeColumn] === 'nodenamo' 
             && p.input.ConsistentRead === true)))
             .callback(()=>representationsToUpdateCreatedFromStronglyConsistentRead=true)
-            .returns(()=> new Promise((resolve) => resolve(stronglyConsistentResponse)));
+            .returns(()=>Array.isArray(expectedItem) ? <any>{Item:expectedItem.shift()} : <any>{Item: expectedItem});
     }
 });

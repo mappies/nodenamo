@@ -236,7 +236,7 @@ describe('ID tests', function ()
         let result = await nodenamo.update(user3).from(User).execute();
 
         assert.isUndefined(result);
-        
+
         user = await nodenamo.get(3).from(User).execute();
         assert.deepEqual(user, {id:3, name: 'This Three', description: 'Description 3', secret: undefined, obj:{array:[], bool:true, empty:'', num:1, obj:{n:1,e:''}, str:'string'}});
     });
@@ -304,16 +304,55 @@ describe('ID tests', function ()
     {
         let user = await nodenamo.get(4).from(User).execute<User>();
 
-        await nodenamo.on(4)
-                      .from(User)
-                      .set(['#desc=:desc'], {'#desc': 'description'}, {':desc': 'That description'})
-                      .add(['#obj :obj'], {'#obj': 'obj'}, {':obj': 42})
-                      .remove(['#name'], {'#name': 'name'})
-                      .execute();
+        let result = await nodenamo.on(4)
+                                   .from(User)
+                                   .set(['#desc=:desc'], {'#desc': 'description'}, {':desc': 'That description'})
+                                   .add(['#obj :obj'], {'#obj': 'obj'}, {':obj': 42})
+                                   .remove(['#name'], {'#name': 'name'})
+                                   .execute();
 
         user = await nodenamo.get(4).from(User).execute();
 
+        assert.isUndefined(result);
+
         assert.deepEqual(user, {id:4, name: undefined, description: 'That description', secret: undefined, obj:<any>42});
+    });
+
+    it('On item - return None', async () =>
+    {
+        let result = await nodenamo.on(4)
+                                   .from(User)
+                                   .set(['#name=:name'], {'#name': 'name'}, {':name': 'That name - None'})
+                                   .returning(ReturnValue.None)
+                                   .execute();
+
+        assert.isUndefined(result);
+    });
+
+    it('On item - return AllOld', async () =>
+    {
+        let originalUser = await nodenamo.get(4).from(User).execute<User>();
+
+        let result = await nodenamo.on(4)
+                                   .from(User)
+                                   .set(['#name=:name'], {'#name': 'name'}, {':name': 'That name - AllOld'})
+                                   .returning(ReturnValue.AllOld)
+                                   .execute();
+
+        assert.deepEqual(result, originalUser);
+    });
+
+    it('On item - return AllNew', async () =>
+    {
+        let originalUser = await nodenamo.get(4).from(User).execute<User>();
+
+        let result = await nodenamo.on(4)
+                                   .from(User)
+                                   .set(['#name=:name'], {'#name': 'name'}, {':name': 'That name - AllNew'})
+                                   .returning(ReturnValue.AllNew)
+                                   .execute();
+
+        assert.deepEqual(result, {...originalUser, name: 'That name - AllNew'});
     });
 
     it('Delete an item', async () =>

@@ -53,12 +53,13 @@ let user1 = await nodenamo.get(1).from(User).execute<User>();
 
 //Update the user
 user1.name = 'This One';
-await nodenamo.update(user1).from(User).execute(); 
-    /* Returns { items: [ User { id: 1, name: 'This One', email: 'some.one@example.com' } ],
-                 lastEvaluatedKey: undefined } */
+let originalUser = await nodenamo.update(user1).from(User).returning(ReturnValue.AllOld).execute(); 
+    /* Returns User { id: 1, name: 'Some One', email: 'some.one@example.com' } */
 
 //List all users
 let users = await nodenamo.list().from(User).execute<User>();
+    /* Returns { items: [ User { id: 1, name: 'This One', email: 'some.one@example.com' } ],
+                 lastEvaluatedKey: undefined } */
 
 //Delete the user by id
 await nodenamo.delete(1).from(User).execute();
@@ -192,6 +193,44 @@ where:
  * `hash` is the value of a hash key defined by `@DBColumn({hash:true})`
  * `range` is the prefix value of a range key defined by `@DBColumn({range:true})`
  * `indexName` is the name of an index to be used with the query.
+
+### <a name='Update'>Update an object</a>
+
+Get an object from DynamoDB by the object's ID
+
+```javascript
+// Update an object
+await nodenamo.update(object).from(T).execute<T>();
+
+// Update an object with a condition expression
+await nodenamo.update(object).from(T).where(conditionExpression, expressionAttributeNames, expressionAttributeValues).execute<T>();
+
+// Update an object and requesting for a return value.
+import { ReturnValue } from 'nodenamo';
+
+await nodenamo.update(object).from(T).returning(ReturnValue.AllOld).execute<T>();
+
+// Update an object with a version check
+await nodenamo.update(object).from(T).withVersionCheck().execute<T>();
+
+/***
+ * All operations above can be chained together.
+ ***/
+await nodenamo.update(obj)
+              .from(T)
+              .where(conditionExpression, expressionAttributeNames, expressionAttributeValues)
+              .withVersionCheck()
+              .returning(ReturnValue.AllNew)
+              .execute<T>();
+
+```
+
+where:
+ * `obj` is an object retrieved from the <a href='#Get'>Get</a> or <a href='#List'>List</a> operations or an object created from a class decorated with `@DBTable()`
+ * `T` is a class decorated with `@DBTable()`
+ * `conditionExpression` is a string representing a conditional expression for DynamoDB's PUT operation. For example, `"#name = :name"`
+ * `expressionAttributeNames` is an object representing attribute names for the conditionExpression. For example, `{ '#name': 'name' }`
+ * `expressionAttributeValues` is an object representing attribute values for the conditionExpression. For example, `{ ':name': 'Some One' }`
 
  ### Delete an object<a name='Delete'></a>
 

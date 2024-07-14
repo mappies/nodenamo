@@ -63,13 +63,13 @@ export class ValidatedDynamoDbManager implements IDynamoDbManager
         return await this.manager.update(type, id, obj, params, transaction, autoCommit);
     }
 
-    async apply<T extends object>(type:{new(...args: any[]):T}, id:string|number, params:{updateExpression:{set?:string[], remove?:string[], add?:string[], delete?:string[]}, conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction, autoCommit:boolean = true)
+    async apply<T extends object>(type:{new(...args: any[]):T}, id:string|number, params:{updateExpression:{set?:string[], remove?:string[], add?:string[], delete?:string[]}, conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction, autoCommit:boolean = true): Promise<T>
     {
         validateType(type);
         validateObjectId(id);
         validateUpdateExpression(type, params);
         validateVersioning(type, params);
-        await this.manager.apply(type, id, params, transaction, autoCommit)
+        return await this.manager.apply(type, id, params, transaction, autoCommit)
     }
 
     async delete<T extends object>(type:{new(...args: any[]):T}, id:string|number,  params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction, autoCommit:boolean = true): Promise<void>

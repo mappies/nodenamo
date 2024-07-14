@@ -410,6 +410,43 @@ describe('Multi-values Hash tests', function ()
         assert.deepEqual(user, new User({id:6, name: 'Mr. Six', roles: ['user', 'admin']}));
     });
 
+    it('On item - return None', async () =>
+    {
+        let result = await nodenamo.on(6)
+                                   .from(User)
+                                   .set(['#name=:name'], {'#name': 'name'}, {':name': 'That name - None'})
+                                   .returning(ReturnValue.None)
+                                   .execute();
+
+        assert.isUndefined(result);
+    });
+
+    it('On item - return AllOld', async () =>
+    {
+        let originalUser = await nodenamo.get(6).from(User).execute<User>();
+
+        let result = await nodenamo.on(6)
+                                   .from(User)
+                                   .set(['#name=:name'], {'#name': 'name'}, {':name': 'That name - AllOld'})
+                                   .returning(ReturnValue.AllOld)
+                                   .execute();
+
+        assert.deepEqual(result, originalUser);
+    });
+
+    it('On item - return AllNew', async () =>
+    {
+        let originalUser = await nodenamo.get(6).from(User).execute<User>();
+
+        let result = await nodenamo.on(6)
+                                   .from(User)
+                                   .set(['#name=:name'], {'#name': 'name'}, {':name': 'That name - AllNew'})
+                                   .returning(ReturnValue.AllNew)
+                                   .execute();
+
+        assert.deepEqual(result, {...originalUser, name: 'That name - AllNew'});
+    });
+
     it('Delete an item', async () =>
     {
         assert.isDefined(await nodenamo.get(1).from(User).execute());
