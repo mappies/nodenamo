@@ -209,7 +209,9 @@ describe('Global table tests', function ()
         assert.deepEqual(book, { id: 2, title: 'Another Book' });
 
         user.name = 'This Two';
-        await nodenamo.update(user).from(User).execute();
+        let result = await nodenamo.update(user).from(User).execute();
+
+        assert.isUndefined(result);
         
         user = await nodenamo.get(2).from(User).execute();
         assert.deepEqual(user, { id: 2, name: 'This Two' });

@@ -2,7 +2,6 @@ import {assert as assert} from 'chai';
 import { DBTable, DBColumn } from '../../src';
 import { NodeNamo } from '../../src/nodeNamo';
 import Config from './config';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 
 @DBTable({name:'nodenamo_acceptance_multiValuesHashRangeTest'})
 class User
@@ -270,7 +269,9 @@ describe('Multi-values Hash/Range tests', function ()
 
         user.name = 'This Three';
         user['extra'] = 'invalid';
-        await nodenamo.update(user).from(User).execute();
+        let result = await nodenamo.update(user).from(User).execute();
+
+        assert.isUndefined(result);
 
         user = await nodenamo.get(3).from(User).execute();
         assert.deepEqual(user, new User({ id: 3, name: 'This Three', roles: ['user', 'admin'], departments: ['IT', 'HR'], createdTimestamp: 2014 }));

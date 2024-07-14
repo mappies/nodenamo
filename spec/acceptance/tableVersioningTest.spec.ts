@@ -2,7 +2,6 @@ import {assert as assert} from 'chai';
 import { DBTable, DBColumn } from '../../src';
 import { NodeNamo } from '../../src/nodeNamo';
 import Config from './config';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { Reflector } from '../../src/reflector';
 import { VersionError } from '../../src/errors/versionError';
 
@@ -85,7 +84,9 @@ describe('Table versioning tests', function ()
         assert.deepEqual(user2, { id: 1, name: 'Some One', age: 16 });
         assert.equal(Reflector.getObjectVersion(user2), 1);
 
-        await nodenamo.update({id: 1, name: 'I am first'}).from(User).execute();
+        let result = await nodenamo.update({id: 1, name: 'I am first'}).from(User).execute();
+
+        assert.isUndefined(result);
         
         let user3 = await nodenamo.get(1).from(User).execute();
         assert.deepEqual(user3, { id: 1, name: 'I am first', age: 16 });

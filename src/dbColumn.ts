@@ -1,8 +1,8 @@
 import { Reflector } from "./reflector";
 
-export function DBColumn(params:{id?:boolean, name?:string, hash?:boolean|string, range?:boolean|string} = {}) 
+export function DBColumn(params:{id?:boolean, name?:string, hash?:boolean|string, range?:boolean|string} = {}): any
 {
-    return function(target: Object, propertyName: string): void
+    return function(target: Object, propertyName: string)
     {
         let value = params.name || propertyName;
         

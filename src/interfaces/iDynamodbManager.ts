@@ -1,5 +1,6 @@
 import { DynamoDbTransaction } from '../managers/dynamodbTransaction';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { ReturnValue } from './returnValue';
 
 export interface IDynamoDbManager
 {
@@ -15,9 +16,9 @@ export interface IDynamoDbManager
                                  params?:{limit?:number, fetchSize?:number, indexName?:string, order?:number, exclusiveStartKey?:string, projections?:string[], stronglyConsistent?:boolean})
                                  : Promise<{items:T[], lastEvaluatedKey: string, firstEvaluatedKey: string}>;
 
-    update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction, autoCommit?:boolean): Promise<void>;
+    update<T extends object>(type:{new(...args: any[]):T}, id:string|number, obj:object, params?:{conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean, returnValue?:ReturnValue}, transaction?:DynamoDbTransaction, autoCommit?:boolean): Promise<T>;
 
-    apply<T extends object>(type:{new(...args: any[]):T}, id:string|number, params:{updateExpression:{set?:string[], remove?:string[], add?:string[], delete?:string[]}, conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction, autoCommit?:boolean): Promise<void>;
+    apply<T extends object>(type:{new(...args: any[]):T}, id:string|number, params:{updateExpression:{set?:string[], remove?:string[], add?:string[], delete?:string[]}, conditionExpression?:string, expressionAttributeValues?:object, expressionAttributeNames?:object, versionCheck?:boolean}, transaction?:DynamoDbTransaction, autoCommit?:boolean): Promise<T>;
 
     delete<T extends object>(type:{new(...args: any[]):T}, id:string|number,  params?:{conditionExpression:string, expressionAttributeValues?:object, expressionAttributeNames?:object}, transaction?:DynamoDbTransaction, autoCommit?:boolean): Promise<void>;
 

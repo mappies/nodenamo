@@ -2,7 +2,7 @@ import {assert as assert} from 'chai';
 import { DBTable, DBColumn } from '../../src';
 import { NodeNamo } from '../../src/nodeNamo';
 import Config from './config';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { ReturnValue } from '../../src/interfaces/returnValue';
 
 @DBTable({name:'nodenamo_acceptance_hashTest'})
 class User
@@ -288,7 +288,9 @@ describe('Hash tests', function ()
 
         user.name = 'This Three';
         user['extra'] = 'invalid';
-        await nodenamo.update(user).from(User).execute();
+        let result = await nodenamo.update(user).from(User).execute();
+
+        assert.isUndefined(result);
 
         user = await nodenamo.get(3).from(User).execute();
         assert.deepEqual(user, { id: 3, name: 'This Three', account: 3000 });
@@ -367,6 +369,45 @@ describe('Hash tests', function ()
         assert.deepEqual((await nodenamo.list().from(User).execute()).items.length, 6);
     });
 
+    it('Update an item - return AllOld', async () =>
+    {
+        let originalUser = await nodenamo.get(2).from(User).execute<User>();
+
+        let result = await nodenamo.update({id: 2, name: 'Newer Two'}).from(User).returning(ReturnValue.AllOld).execute();
+
+        assert.deepEqual(result, originalUser);
+    });
+
+    it('Update an item - return AllNew', async () =>
+    {
+        let originalUser = await nodenamo.get(2).from(User).execute<User>();
+
+        let result = await nodenamo.update({id: 2, name: 'Newest Two'}).from(User).returning(ReturnValue.AllNew).execute();
+
+        assert.deepEqual(result, {...originalUser, name: 'Newest Two'});
+    });
+
+    it('Update an item - return None', async () =>
+    {
+        let result = await nodenamo.update({id: 2, name: 'Newer Two'}).from(User).returning(ReturnValue.None).execute();
+
+        assert.isUndefined(result);
+    });
+
+    it('Update an item - with all combinations', async () =>
+    {
+        let originalUser = await nodenamo.get(2).from(User).execute<User>();
+
+        let result = await nodenamo.update({id: 2, name: 'Another Two'})
+                                   .from(User)
+                                   .where('#account=:account', {'#account': 'account'}, {':account': originalUser.account})
+                                   .returning(ReturnValue.AllOld)
+                                   .withVersionCheck()
+                                   .execute();
+
+        assert.deepEqual(result, originalUser);
+    });
+
     it('On item', async () =>
     {
         let user = await nodenamo.get(6).from(User).execute<User>();
@@ -379,6 +420,43 @@ describe('Hash tests', function ()
         user = await nodenamo.get(6).from(User).execute();
 
         assert.deepEqual(user, {id:6, name: 'Mr. Six', account: 6000});
+    });
+
+    it('On item - return None', async () =>
+    {
+        let result = await nodenamo.on(6)
+                                   .from(User)
+                                   .set(['#name=:name'], {'#name': 'name'}, {':name': 'That name - None'})
+                                   .returning(ReturnValue.None)
+                                   .execute();
+
+        assert.isUndefined(result);
+    });
+
+    it('On item - return AllOld', async () =>
+    {
+        let originalUser = await nodenamo.get(6).from(User).execute<User>();
+
+        let result = await nodenamo.on(6)
+                                   .from(User)
+                                   .set(['#name=:name'], {'#name': 'name'}, {':name': 'That name - AllOld'})
+                                   .returning(ReturnValue.AllOld)
+                                   .execute();
+
+        assert.deepEqual(result, originalUser);
+    });
+
+    it('On item - return AllNew', async () =>
+    {
+        let originalUser = await nodenamo.get(6).from(User).execute<User>();
+
+        let result = await nodenamo.on(6)
+                                   .from(User)
+                                   .set(['#name=:name'], {'#name': 'name'}, {':name': 'That name - AllNew'})
+                                   .returning(ReturnValue.AllNew)
+                                   .execute();
+
+        assert.deepEqual(result, {...originalUser, name: 'That name - AllNew'});
     });
 
     it('Delete an item', async () =>

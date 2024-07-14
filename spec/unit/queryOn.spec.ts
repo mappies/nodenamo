@@ -4,6 +4,7 @@ import { IMock, Mock } from 'typemoq';
 import { DBTable } from '../../src/dbTable';
 import { DBColumn } from '../../src/dbColumn';
 import { On } from '../../src/queries/on/on';
+import { ReturnValue } from '../../src/interfaces/returnValue';
 
 @DBTable()
 class Entity {
@@ -108,6 +109,41 @@ describe('Query.On', function ()
         assert.isTrue(called);
     });
 
+    it('withVersionCheck() - with returning', async ()=>
+    {
+        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, expressionAttributeNames: {n1:'n1'}, expressionAttributeValues: {v1:'v1'}, versionCheck: true, returnValue: ReturnValue.AllOld}, undefined, true)).callback(()=>called=true);
+
+        new On(mockedManager.object, 1).from(Entity)
+                                       .add(['add1'], {n1:'n1'}, {v1:'v1'})
+                                       .withVersionCheck()
+                                       .returning(ReturnValue.AllOld)
+                                       .execute();
+        assert.isTrue(called);
+    });
+
+    it('returning()', async ()=>
+    {
+        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, expressionAttributeNames: {n1:'n1'}, expressionAttributeValues: {v1:'v1'}, returnValue: ReturnValue.AllNew}, undefined, true)).callback(()=>called=true);
+
+        new On(mockedManager.object, 1).from(Entity)
+                                       .add(['add1'], {n1:'n1'}, {v1:'v1'})
+                                       .returning(ReturnValue.AllNew)
+                                       .execute();
+        assert.isTrue(called);
+    });
+
+    it('returning() - with a version check', async ()=>
+    {
+        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, expressionAttributeNames: {n1:'n1'}, expressionAttributeValues: {v1:'v1'}, versionCheck: true, returnValue: ReturnValue.AllNew}, undefined, true)).callback(()=>called=true);
+
+        new On(mockedManager.object, 1).from(Entity)
+                                       .add(['add1'], {n1:'n1'}, {v1:'v1'})
+                                       .returning(ReturnValue.AllNew)
+                                       .withVersionCheck()
+                                       .execute();
+        assert.isTrue(called);
+    });
+
     it('where()', async ()=>
     {
         mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, conditionExpression: 'condition', expressionAttributeNames: {n1:'n1', n2:'n2'}, expressionAttributeValues: {v1:'v1', v2:'v2'}}, undefined, true)).callback(()=>called=true);
@@ -132,6 +168,45 @@ describe('Query.On', function ()
 
         new On(mockedManager.object, 1).from(Entity).add(['add1'], {n1:'n1'}, {v1:'v1'}).where('condition', {n2:'n2'}, {v2:'v2'}).withVersionCheck(false).execute();
 
+        assert.isTrue(called);
+    });
+
+    it('where() - with a version check and returning', async ()=>
+    {
+        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, conditionExpression: 'condition', expressionAttributeNames: {n1:'n1', n2:'n2'}, expressionAttributeValues: {v1:'v1', v2:'v2'}, versionCheck: true, returnValue: ReturnValue.AllOld}, undefined, true)).callback(()=>called=true);
+
+        new On(mockedManager.object, 1).from(Entity)
+                                       .add(['add1'], {n1:'n1'}, {v1:'v1'})
+                                       .where('condition', {n2:'n2'}, {v2:'v2'})
+                                       .withVersionCheck()
+                                       .returning(ReturnValue.AllOld)
+                                       .execute();
+        assert.isTrue(called);
+    });
+
+    it('where() - with returning', async ()=>
+    {
+        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, conditionExpression: 'condition', expressionAttributeNames: {n1:'n1', n2:'n2'}, expressionAttributeValues: {v1:'v1', v2:'v2'}, returnValue: ReturnValue.AllOld}, undefined, true)).callback(()=>called=true);
+
+        new On(mockedManager.object, 1).from(Entity)
+                                       .add(['add1'], {n1:'n1'}, {v1:'v1'})
+                                       .where('condition', {n2:'n2'}, {v2:'v2'})
+                                       .returning(ReturnValue.AllOld)
+                                       .execute();
+
+        assert.isTrue(called);
+    });
+
+    it('where() - with returning and versionCheck', async ()=>
+    {
+        mockedManager.setup(m => m.apply(Entity, 1, {updateExpression: {add: ['add1']}, conditionExpression: 'condition', expressionAttributeNames: {n1:'n1', n2:'n2'}, expressionAttributeValues: {v1:'v1', v2:'v2'}, versionCheck: true, returnValue: ReturnValue.AllOld}, undefined, true)).callback(()=>called=true);
+
+        new On(mockedManager.object, 1).from(Entity)
+                                       .add(['add1'], {n1:'n1'}, {v1:'v1'})
+                                       .where('condition', {n2:'n2'}, {v2:'v2'})
+                                       .returning(ReturnValue.AllOld)
+                                       .withVersionCheck()
+                                       .execute();
         assert.isTrue(called);
     });
 });
